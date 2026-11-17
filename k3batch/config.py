@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import tomllib
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -113,6 +114,8 @@ def _check_limits(where: str, limits: dict[str, Any]) -> None:
     for key, value in limits.items():
         if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
             raise ConfigError(f"{where}: {key} must be a positive number")
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ConfigError(f"{where}: {key} must be a finite number")
     if "memory_mb" in limits and not isinstance(limits["memory_mb"], int):
         raise ConfigError(f"{where}: memory_mb must be a whole number of megabytes")
 

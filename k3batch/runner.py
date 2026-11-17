@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -36,14 +37,26 @@ def error_lines(output: str, limit: int = 5) -> str:
 
 
 def expand(
-    runner: tuple[str, ...], description: dict[str, Any], *, timeout: float = 600
+    runner: tuple[str, ...],
+    description: dict[str, Any],
+    *,
+    timeout: float = 600,
+    execute: Callable[[list[str], float], subprocess.CompletedProcess[str]] | None = None,
 ) -> tuple[list[Task], dict[str, Any]]:
     """Asks the runner for the tasks of a batch description and for its versions."""
     command = [*runner, "expand", json.dumps(description)]
     try:
-        done = subprocess.run(
-            command, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL, check=False
-        )
+        if execute is None:
+            done = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                stdin=subprocess.DEVNULL,
+                check=False,
+            )
+        else:
+            done = execute(command, timeout)
     except FileNotFoundError:
         raise RunnerError(f"cannot start the runner: {runner[0]} not found") from None
     except subprocess.TimeoutExpired:
