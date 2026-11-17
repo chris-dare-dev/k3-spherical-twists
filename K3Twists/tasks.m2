@@ -44,6 +44,7 @@ expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
         flatten apply(chosen "sources", c -> apply(chosen "targets", e -> new HashTable from {
                     "id" => concatenate("ext_pair/", surfaceLabel s, "/", c#0, "/", e#0),
                     "kind" => "ext_pair",
+                    "comparison" => "fields",
                     "set" => i,
                     "group" => "ext_pair " | surfaceLabel s,
                     "cost" => extPairCost(c, e),
@@ -89,6 +90,7 @@ expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
         apply(names, name -> new HashTable from {
                 "id" => concatenate("invariant/", surfaceLabel s, "/", name),
                 "kind" => "invariant",
+                "comparison" => "equals",
                 "set" => i,
                 "group" => "invariant " | surfaceLabel s,
                 "cost" => if member(name, fast) then 1 else 50,
@@ -116,6 +118,7 @@ runInvariant = task -> (
 expandSynthetic = (i, set, surfaces) -> apply(set#"items", item -> new HashTable from {
         "id" => "synthetic/" | item#"name",
         "kind" => "synthetic",
+        "comparison" => "equals",
         "set" => i,
         "group" => "synthetic",
         "cost" => opt(item, "cost", 0),

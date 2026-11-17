@@ -8,7 +8,7 @@ from typing import Any
 
 
 class Status(StrEnum):
-    """How a task ended.  Every status is terminal: a rerun skips the task unless told to retry it."""
+    """How an attempt ended. Reuse and retry policies are applied separately."""
 
     OK = "ok"  # a value was computed; it agrees with the predicted value, or there is none
     MISMATCH = "mismatch"  # a value was computed and differs from the predicted value

@@ -21,8 +21,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from .config import BatchConfig, ConfigError
+from .identity import RECORD_SCHEMA, implementation_fingerprint, recheck, task_identities
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
 from .runner import REPOSITORY, error_lines, parse_result, run_command
@@ -36,6 +38,26 @@ def _die_with_scheduler() -> None:
     # runs in the task process before the command starts: the kernel kills the process if the scheduler
     # goes away, so no computation outlives the program that enforces its limits
     _libc.prctl(_PR_SET_PDEATHSIG, signal.SIGKILL)
+
+
+@dataclass(frozen=True)
+class PlannedTask:
+    task: Task
+    limits: Limits
+    computation_id: str
+    check_id: str
+    record_id: str
+    reused: bool
+    check: dict[str, Any]
+
+    def manifest_entry(self) -> dict[str, Any]:
+        return self.task.payload | {
+            "limits": self.limits.as_dict(),
+            "computation_id": self.computation_id,
+            "check_id": self.check_id,
+            "record_id": self.record_id,
+            "check": self.check,
+        }
 
 
 @dataclass
@@ -79,23 +101,64 @@ class Scheduler:
         self.progress = progress
         self.tick = tick
         self._started = 0
+        self._active_plan: dict[str, PlannedTask] = {}
 
-    def pending(self) -> list[tuple[Task, Limits]]:
-        """The tasks without a record that counts, cheapest first, each with its limits."""
-        finished = self.store.finished(self.retry)
-        todo = [(task, self.config.limits_for(task)) for task in self.tasks if task.id not in finished]
-        for task, limits in todo:
-            if limits.memory_mb > self.config.memory_budget_mb:
+    def plan(self) -> list[PlannedTask]:
+        """Select existing attempts and reserve identifiers for work this run will start."""
+        implementation = implementation_fingerprint(self.runner, self.stamp.get("runner", {}))
+        latest = {
+            record["computation_id"]: record
+            for record in self.store.records()
+            if record.get("schema_version") == RECORD_SCHEMA
+            and isinstance(record.get("computation_id"), str)
+            and isinstance(record.get("check_id"), str)
+            and isinstance(record.get("record_id"), str)
+        }
+        plan = []
+        for task in self.tasks:
+            limits = self.config.limits_for(task)
+            computation_id, check_id = task_identities(task, implementation)
+            previous = latest.get(computation_id)
+            check = recheck(task, previous, check_id) if previous is not None else {}
+            reused = previous is not None and self._can_reuse(previous, limits, check)
+            if not reused and limits.memory_mb > self.config.memory_budget_mb:
                 raise ConfigError(
                     f"task {task.id} has a memory limit of {limits.memory_mb} MB, "
                     f"above the budget of {self.config.memory_budget_mb} MB"
                 )
-        order = {task.id: index for index, task in enumerate(self.tasks)}
-        return sorted(todo, key=lambda item: (item[0].cost, order[item[0].id]))
+            plan.append(
+                PlannedTask(
+                    task,
+                    limits,
+                    computation_id,
+                    check_id,
+                    previous["record_id"] if reused and previous is not None else uuid4().hex,
+                    reused,
+                    check if reused else {},
+                )
+            )
+        return plan
 
-    def run(self) -> Counter[str]:
-        """Computes every pending task and returns how many ended with each status."""
-        pending = self.pending()
+    def _can_reuse(self, record: dict[str, Any], limits: Limits, check: dict[str, Any]) -> bool:
+        status = check.get("status", record["status"])
+        if status in self.retry:
+            return False
+        previous_limits = record.get("limits", {})
+        if status == Status.TIMEOUT and limits.time_seconds > previous_limits.get("time_seconds", 0):
+            return False
+        return not (status == Status.MEMORY and limits.memory_mb > previous_limits.get("memory_mb", 0))
+
+    def pending(self, plan: Sequence[PlannedTask] | None = None) -> list[tuple[Task, Limits]]:
+        """Unfulfilled work in cost order, preserving batch order at tied costs."""
+        members = self.plan() if plan is None else plan
+        todo = [(entry.task, entry.limits) for entry in members if not entry.reused]
+        return sorted(todo, key=lambda entry: entry[0].cost)
+
+    def run(self, plan: Sequence[PlannedTask] | None = None) -> Counter[str]:
+        """Execute a plan and return how many new attempts ended with each status."""
+        members = self.plan() if plan is None else plan
+        self._active_plan = {entry.task.id: entry for entry in members}
+        pending = self.pending(members)
         total = len(pending)
         outcome: Counter[str] = Counter()
         running: list[_Running] = []
@@ -238,7 +301,17 @@ class Scheduler:
             "started_at": entry.started_at,
             "log": str(entry.log.relative_to(self.run_dir)) if keep_log else None,
         }
-        return record | self.stamp
+        planned = self._active_plan[entry.task.id]
+        return (
+            record
+            | self.stamp
+            | {
+                "schema_version": RECORD_SCHEMA,
+                "computation_id": planned.computation_id,
+                "check_id": planned.check_id,
+                "record_id": planned.record_id,
+            }
+        )
 
 
 def _raise_interrupt(signum: int, frame: object) -> None:
