@@ -1,0 +1,42 @@
+# The table of Ext groups: every ordered pair of the catalogue on four surfaces, about 2000 tasks.
+# The cost of a pair is the rank of the sheaf Hom(E, F).  The limits below are starting values; the
+# records of a run say what each task needed, and `--retry timeout,memory` with larger limits
+# computes again what was stopped.
+
+name = "ext-table"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 12000
+
+[limits]
+time_seconds = 900
+memory_mb = 2000
+
+[[limits.tier]]
+min_cost = 9
+time_seconds = 3600
+memory_mb = 6000
+
+# two bundles of rank 9 or more: one at a time, with the whole budget
+[[limits.tier]]
+min_cost = 80
+time_seconds = 14400
+memory_mb = 12000
+
+[[surfaces]]
+d = 2
+
+[[surfaces]]
+d = 3
+
+[[surfaces]]
+d = 3
+special_quadric = true
+
+[[surfaces]]
+d = 4
+
+[[tasks]]
+kind = "ext_pair"
+sheaves = "all"

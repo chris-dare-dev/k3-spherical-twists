@@ -1,0 +1,30 @@
+# What a time limit and a memory limit look like in the records: six pairs on the quartic next to
+# two synthetic tasks, one that sleeps past its time limit and one that allocates past its memory
+# limit.  Both are stopped and recorded; the pairs are computed.
+
+name = "limits-demo"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 3000
+
+[limits]
+time_seconds = 300
+memory_mb = 600
+
+[[surfaces]]
+d = 2
+
+[[tasks]]
+kind = "ext_pair"
+sources = ["O(1H)", "M_H", "M_x"]
+targets = ["M_x", "O_x"]
+
+[[tasks]]
+kind = "synthetic"
+limits = { time_seconds = 5 }
+items = [{ name = "sleeps-past-its-time-limit", sleep_seconds = 300 }]
+
+[[tasks]]
+kind = "synthetic"
+items = [{ name = "allocates-past-its-memory-limit", allocate_mb = 2000, sleep_seconds = 300 }]

@@ -1,0 +1,25 @@
+# Cohomology of I_x, M_H, M_x and Q against the predicted values, for d = 2, 3, 4: 45 tasks,
+# a few seconds.
+
+name = "invariants"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 4000
+
+[limits]
+time_seconds = 600
+memory_mb = 1000
+
+[[surfaces]]
+d = 2
+
+[[surfaces]]
+d = 3
+
+[[surfaces]]
+d = 4
+
+[[tasks]]
+kind = "invariant"
+names = "fast"

@@ -1,25 +1,47 @@
-# Targets run Macaulay2 from the repository root.  D is the degree parameter d (2, 3 or 4);
-# LIMIT is a wall-clock limit in seconds for one run of the invariants.
+# Targets run from the repository root.
+#   make test                              fast tests: Macaulay2 package and scheduler
+#   make test-slow                         the Macaulay2 tests that take longer
+#   make run BATCH=batches/invariants.toml compute the tasks of a batch that have no record yet
+#   make report BATCH=batches/invariants.toml REPORT_ARGS=--full
+# ARGS is passed to k3batch, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
-D      ?= 2
-LIMIT  ?= 2400
+PYTHON ?= python3
+BATCH  ?= batches/quartic-sample.toml
+ARGS   ?=
+REPORT_ARGS ?=
 
-.PHONY: test test-slow test-all invariants invariants-slow all-degrees
+K3BATCH  = $(PYTHON) -m k3batch
+RUNNER   = --runner '$(M2) --script runners/task-runner.m2'
+RUN_DIR  = results/$(basename $(notdir $(BATCH)))
 
-test:
+.PHONY: test test-m2 test-python test-slow test-all lint format plan run report
+
+test: test-m2 test-python
+
+test-m2:
 	$(M2) --script runners/run-tests.m2 fast
+
+test-python:
+	$(PYTHON) -m unittest discover -s tests -t .
 
 test-slow:
 	$(M2) --script runners/run-tests.m2 slow
 
-test-all:
-	$(M2) --script runners/run-tests.m2 all
+test-all: test test-slow
 
-invariants:
-	K3D=$(D) timeout $(LIMIT) $(M2) --script scripts/sheaf-invariants.m2
+lint:
+	ruff check k3batch tests
+	ruff format --check k3batch tests
+	mypy
 
-invariants-slow:
-	K3D=$(D) K3SLOW=1 timeout $(LIMIT) $(M2) --script scripts/sheaf-invariants.m2
+format:
+	ruff format k3batch tests
 
-all-degrees:
-	for d in 2 3 4; do K3D=$$d timeout $(LIMIT) $(M2) --script scripts/sheaf-invariants.m2 || exit 1; done
+plan:
+	$(K3BATCH) plan $(BATCH) $(RUNNER) $(ARGS)
+
+run:
+	$(K3BATCH) run $(BATCH) $(RUNNER) $(ARGS)
+
+report:
+	$(K3BATCH) report $(RUN_DIR) $(REPORT_ARGS)

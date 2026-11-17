@@ -1,0 +1,18 @@
+# Ext groups between five sheaves on the quartic: 25 ordered pairs, about half a minute.
+
+name = "quartic-sample"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 4000
+
+[limits]
+time_seconds = 300
+memory_mb = 1000
+
+[[surfaces]]
+d = 2
+
+[[tasks]]
+kind = "ext_pair"
+sheaves = ["O", "O(1H)", "M_H", "M_x", "O_x"]

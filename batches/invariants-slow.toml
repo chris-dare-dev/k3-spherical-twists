@@ -1,0 +1,19 @@
+# Seven of the invariants again as Ext groups of sheaves, on the quartic.  The global Ext
+# computation is practical for d = 2 only; it takes minutes.
+
+name = "invariants-slow"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 8000
+
+[limits]
+time_seconds = 2400
+memory_mb = 2000
+
+[[surfaces]]
+d = 2
+
+[[tasks]]
+kind = "invariant"
+names = "slow"
