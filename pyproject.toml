@@ -1,0 +1,19 @@
+[project]
+name = "k3batch"
+version = "0.2"
+description = "Runs batches of Macaulay2 tasks for K3Twists under time and memory limits"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = []
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "PIE", "RET", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["k3batch"]
