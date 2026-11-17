@@ -5,13 +5,11 @@ protect symbol catalogueMetadata
 twistName = (name, t) -> name | (if t == 0 then "" else "(" | toString t | "H)")
 
 -- A list of {name, class, locally free, constructor}.  Nothing is built until a constructor is called.
-catalogueSpecs = K -> (
-    d := K#"d";
-    n := K#"n";
-    X := K#"variety";
+catalogueSpecsFor = (d, specialQuadric, K) -> (
+    n := d + 2;
     tw := (name, F, v, lf, ts) -> apply(ts, t -> {twistName(name, t), twistVector(d, v, t), lf, () -> (F())(t)});
     dualOf := (name, F) -> () -> cached(K, name, () -> dual F());
-    out := tw("O", () -> OO_X^1, {1, 0, 1}, true, {-2, -1, 0, 1, 2, 3})
+    out := tw("O", () -> (X := K#"variety"; OO_X^1), {1, 0, 1}, true, {-2, -1, 0, 1, 2, 3})
         | tw("I_x", () -> pointIdealSheaf K, {1, 0, 0}, false, {-1, 0, 1, 2})
         | {{"O_x", {0, 0, 1}, false, () -> pointSheaf K}}
         | tw("M_H", () -> kernelBundle K, {n - 1, -1, 1}, true, {0, 1})
@@ -20,11 +18,13 @@ catalogueSpecs = K -> (
         | tw("M_x^dual", dualOf("M_x^dual", () -> pointKernelBundle K), {n - 2, 1, 1}, true, {0})
         | tw("E_2", () -> tracelessKernelBundle K, {n^2 - n - 1, -n, n - 1}, true, {0, 1})
         | tw("M_2H", () -> quadricKernelBundle K, {4 * d + 1, -2, 1}, true, {0, 1});
-    if K#"specialQuadric" then out = out
+    if specialQuadric then out = out
         | tw("U", () -> mukaiBundle K, {2, 1, 2}, true, {-1, 0})
         | tw("U^dual", dualOf("U^dual", () -> mukaiBundle K), {2, -1, 2}, true, {0, 1});
     out
     )
+
+catalogueSpecs = K -> catalogueSpecsFor(K#"d", K#"specialQuadric", K)
 
 -- {name, class, locally free} for every sheaf of the catalogue; no sheaf is built
 catalogueClasses = method()

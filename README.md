@@ -204,6 +204,33 @@ The process boundary is the task because Macaulay2 cannot be relied on to stop i
 
 A process per task costs the start of Macaulay2 and the loading of the package, 0.4 seconds, plus the construction of the two sheaves of the task. The catalogue builds each sheaf on request for that reason: building all of it takes 0.02 seconds on the quartic, 4.6 seconds for d = 3 and 1.1 seconds for d = 4, almost all of it for the duals of M_H and M_x.
 
+### Runner protocol
+
+The bundled Macaulay2 runner uses separate request and response files. Python invokes
+`M2 --script runners/task-runner.m2 protocol-v2 REQUEST RESPONSE` and keeps process
+diagnostics in the usual task log. A request is one UTF-8 JSON object with `version`
+(2), `operation_version` (1), `request_id`, `operation` (`expand` or `run`), and
+`payload`. The payload is a batch description for expansion and one expanded task
+for execution. The response echoes the request fields except its payload and adds
+`type`, `payload`, and `outputs`.
+
+| Response type | Payload |
+| --- | --- |
+| `expansion` | `tasks`, `count`, and `versions` |
+| `result` | `status`, `value`, `predicted`, `agrees`, `method`, and timing |
+| `failure` | `code` and `message`. Detailed diagnostics are on the process output. |
+
+Task kinds register their own input and result checks along with an expansion
+function, computation function, kind version, and requirement names. Planning uses
+catalogue and prediction metadata from the surface parameters. Each task constructs
+and validates its surface when it runs. A kind may provide output descriptors with
+`name`, `media_type`, and `digest`. These descriptors travel with the result
+record. The runner does not persist or resolve the artifacts they describe.
+
+Custom shell runners use the legacy `expand` and `run` commands with argv JSON
+and marker lines. The bundled M2 entry point also accepts those modes for direct use
+and for compatibility with older drivers.
+
 ## Tests
 
 ```bash

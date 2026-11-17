@@ -56,7 +56,8 @@ export {
     "Slow",
     -- tasks
     "expandBatch",
-    "runTask"
+    "runTask",
+    "registerTaskKind"
     }
 
 load "./K3Twists/numerical/lattices.m2"
@@ -68,6 +69,9 @@ load "./K3Twists/studies/catalogueClasses.m2"
 load "./K3Twists/catalogue.m2"
 load "./K3Twists/invariants.m2"
 load "./K3Twists/tasks.m2"
+load "./K3Twists/tasks/ext-pair.m2"
+load "./K3Twists/tasks/invariant.m2"
+load "./K3Twists/tasks/synthetic.m2"
 
 beginDocumentation()
 

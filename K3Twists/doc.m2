@@ -484,3 +484,39 @@ doc ///
             @TT "\"predicted\""@ value, @TT "\"agrees\""@, the @TT "\"method\""@ and the seconds spent
             building the sheaves and computing.
 ///
+
+doc ///
+    Key
+        registerTaskKind
+        (registerTaskKind, String, HashTable)
+    Headline
+        make a computation kind available to the batch functions
+    Usage
+        registerTaskKind(name, descriptor)
+    Inputs
+        name:String
+            an unused kind name
+        descriptor:HashTable
+            a version, requirement names, three validators, an expander and a computation function
+    Description
+        Text
+            Load a kind's module before calling @TO expandBatch@ or @TO runTask@.
+            The descriptor has a positive integer @TT "version"@ and a string list
+            @TT "requirements"@. The @TT "validate_set"@, @TT "validate_task"@, and
+            @TT "validate_result"@ functions check their inputs and raise an error for
+            invalid fields. The @TT "expand"@ function accepts the set index, task-set
+            parameters, and normalized surface specifications. It returns a list of
+            tasks without building those surfaces. The @TT "run"@ function accepts
+            one task and returns its observation and prediction.
+        Text
+            A task has @TT "id"@, @TT "kind"@, @TT "group"@, @TT "set"@ and @TT "cost"@
+            fields and any scientific inputs used by the kind. The registry adds the
+            kind version and requirements. A computation returns @TT "value"@,
+            @TT "predicted"@, @TT "agrees"@, @TT "method"@, @TT "setup_seconds"@ and
+            @TT "compute_seconds"@. It may also return a list @TT "outputs"@ of
+            references with a name, media type and digest. The registry derives the
+            status from the observation and the comparison.
+    SeeAlso
+        expandBatch
+        runTask
+///

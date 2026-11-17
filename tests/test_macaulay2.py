@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
 from k3batch.config import parse_config
 from k3batch.memory import CgroupGuard, MemoryGuard, PollingGuard
-from k3batch.runner import DEFAULT_RUNNER, expand
+from k3batch.runner import DEFAULT_RUNNER, RunnerInvocation, expand, parse_result
 from k3batch.scheduler import Scheduler
 from k3batch.store import ResultStore
+from k3batch.wire import WireError
 
 BATCH = {
     "name": "macaulay2",
@@ -100,6 +103,82 @@ class Macaulay2Runner(unittest.TestCase):
 @unittest.skipUnless(CgroupGuard.available(), "systemd-run --user --scope is not available")
 class Macaulay2RunnerUnderCgroupLimits(Macaulay2Runner):
     guard_class = CgroupGuard
+
+
+@unittest.skipUnless(shutil.which(DEFAULT_RUNNER[0]), "Macaulay2 is not installed")
+class Macaulay2FileProtocol(unittest.TestCase):
+    def invoke(self, command: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(command, text=True, capture_output=True, check=check, timeout=25)
+
+    def test_legacy_and_file_transports_produce_the_same_tasks_and_values(self) -> None:
+        value = {
+            "integer": 2**90 + 1,
+            "fraction": -0.1501,
+            "optional": None,
+            "string": 'quote: " and braces: { }',
+            "real_zero": 0.0,
+        }
+        description = {
+            "surfaces": [{"d": 2, "seed": None}],
+            "tasks": [
+                {"kind": "ext_pair", "sheaves": ["O"]},
+                {"kind": "invariant", "names": ["rank M_x"]},
+                {"kind": "synthetic", "items": [{"name": "fixture", "value": value}]},
+            ],
+        }
+        expanded = self.invoke([*DEFAULT_RUNNER, "expand", json.dumps(description)])
+        legacy = [json.loads(line[6:]) for line in expanded.stdout.splitlines() if line.startswith("@task ")]
+        tasks, versions = expand(DEFAULT_RUNNER, description)
+        self.assertEqual(versions["protocol_version"], 2)
+        self.assertEqual([task.payload for task in tasks], legacy)
+
+        with tempfile.TemporaryDirectory() as scratch:
+            for task, expected in zip(tasks, ({"dims": [1, 0, 1], "chi": 2}, 2, value), strict=True):
+                with self.subTest(kind=task.kind):
+                    old = self.invoke([*DEFAULT_RUNNER, "run", json.dumps(task.payload)])
+                    invocation = RunnerInvocation.prepare(DEFAULT_RUNNER, "run", task.payload, Path(scratch))
+                    try:
+                        new = self.invoke(invocation.command)
+                        result = invocation.task_result(new.stdout, new.returncode)
+                        self.assertNotIn("@result", new.stdout)
+                    finally:
+                        invocation.cleanup()
+                    old_result = parse_result(old.stdout)
+                    assert old_result is not None and result is not None
+                    selected = ("status", "value", "predicted", "agrees", "method")
+                    self.assertEqual(
+                        {key: result[key] for key in selected}, {key: old_result[key] for key in selected}
+                    )
+                    self.assertEqual(result["value"], expected)
+                    if task.kind == "synthetic":
+                        self.assertIs(type(result["value"]["real_zero"]), float)
+
+    def test_macaulay2_validates_file_headers_and_reports_a_structured_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as scratch:
+            invocation = RunnerInvocation.prepare(DEFAULT_RUNNER, "expand", {}, Path(scratch))
+            request = Path(invocation.command[-2])
+            assert invocation.request is not None
+            for fields, expected in (
+                ({"version": 8}, "unsupported protocol version"),
+                ({"operation_version": 3}, "unsupported operation version"),
+                ({"payload": {"tasks": [{"kind": "synthetic"}]}}, "synthetic set is missing items"),
+            ):
+                with self.subTest(fields=fields):
+                    envelope = json.loads(request.read_text(encoding="utf-8")) | fields
+                    request.write_text(json.dumps(envelope), encoding="utf-8")
+                    done = self.invoke(invocation.command, check=False)
+                    self.assertNotEqual(done.returncode, 0)
+                    self.assertIn(expected, done.stderr + done.stdout)
+                    with self.assertRaisesRegex(WireError, "invalid_request|operation_failed"):
+                        invocation.request.read(done.returncode)
+                    # Restore the original envelope before the next mutation.
+                    envelope.update({"version": 2, "operation_version": 1, "payload": {}})
+                    request.write_text(json.dumps(envelope), encoding="utf-8")
+            request.write_text(request.read_text(encoding="utf-8") + "{}", encoding="utf-8")
+            done = self.invoke(invocation.command, check=False)
+            self.assertNotEqual(done.returncode, 0)
+            self.assertIn("expected exactly one request object", done.stderr + done.stdout)
+            invocation.cleanup()
 
 
 if __name__ == "__main__":
