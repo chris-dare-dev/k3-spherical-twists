@@ -8,19 +8,13 @@ timed = f -> (r := elapsedTiming f(); (r#0, r#1))
 
 -- Surfaces ---------------------------------------------------------------------------------------
 
-surfaceSpec = s -> new HashTable from {
-    "d" => s#"d",
-    "seed" => opt(s, "seed", 1),
-    "characteristic" => opt(s, "characteristic", 32003),
-    "special_quadric" => opt(s, "special_quadric", false)
-    }
+surfaceSpec = normalizeK3SurfaceSpec
 
 surfaceLabel = s -> concatenate(
     "d", toString s#"d", if s#"special_quadric" then "q" else "",
     "-p", toString s#"characteristic", "-s", toString s#"seed")
 
-surfaceFromSpec = s -> k3Surface(s#"d", Seed => s#"seed", Characteristic => s#"characteristic",
-    SpecialQuadric => s#"special_quadric")
+surfaceFromSpec = s -> realizeK3Surface k3Recipe s
 
 -- Kind "ext_pair": Ext^i(E, F) for two sheaves of the catalogue ------------------------------------
 

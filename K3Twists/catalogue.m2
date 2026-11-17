@@ -76,7 +76,8 @@ catalogueExtRow = (a, b, expectedHalfDegree) -> (
     d := (degree X) // 2;
     if expectedHalfDegree =!= null and expectedHalfDegree != d then
         error "extTableRow degree does not match the catalogue surface";
-    chi := -mukaiPairing(d, a#2, b#2);
+    H := X.cache#(symbol k3Model);
+    chi := -mukaiPairing(studyMukaiClass(H, a#2), studyMukaiClass(H, b#2));
     how := extMethod(a#3, a#2#0, b#3, b#2#0);
     dims := if how == "Hom sheaf" then extViaHom(a#1, b#1)
         else if how == "Serre duality" then reverse extViaHom(b#1, a#1)
