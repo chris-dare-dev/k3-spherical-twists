@@ -1,5 +1,7 @@
 -- The sheaves of the study with their classes, and the Ext groups between two of them.
 
+protect symbol catalogueMetadata
+
 twistName = (name, t) -> name | (if t == 0 then "" else "(" | toString t | "H)")
 
 -- A list of {name, class, locally free, constructor}.  Nothing is built until a constructor is called.
@@ -28,18 +30,25 @@ catalogueSpecs = K -> (
 catalogueClasses = method()
 catalogueClasses K3Surface := List => K -> apply(catalogueSpecs K, s -> take(s, 3))
 
+realizeCatalogueEntry = spec -> (
+    (name, v, locallyFree, constructor) := toSequence spec;
+    F := constructor();
+    F.cache#(symbol catalogueMetadata, name) = {v, locallyFree};
+    F.cache#(symbol localFreeness) = locallyFree;
+    {name, F, v, locallyFree}
+    )
+
 -- {name, sheaf, class, locally free} for one sheaf of the catalogue
 catalogueEntry = method()
 catalogueEntry(K3Surface, String) := List => (K, name) -> (
     found := select(catalogueSpecs K, s -> s#0 == name);
     if #found == 0 then error("no sheaf named " | name | " in the catalogue");
-    s := first found;
-    {s#0, (s#3)(), s#1, s#2}
+    realizeCatalogueEntry first found
     )
 
 -- {name, sheaf, class, locally free} for every sheaf of the catalogue
 catalogue = method()
-catalogue K3Surface := List => K -> apply(catalogueSpecs K, s -> {s#0, (s#3)(), s#1, s#2})
+catalogue K3Surface := List => K -> apply(catalogueSpecs K, realizeCatalogueEntry)
 
 -- How Ext^i(E, F) is computed for two entries or two rows of catalogueClasses: as the cohomology of
 -- the sheaf Hom(E, F) when E is locally free, by Serre duality when only F is, and not at all when
@@ -50,9 +59,23 @@ extMethod = (lfE, rankE, lfF, rankF) -> (
     else "not computed"
     )
 
--- One row of the table of Ext groups: {name of E, name of F, dimensions or null, chi predicted, method}.
-extTableRow = method()
-extTableRow(ZZ, List, List) := List => (d, a, b) -> (
+checkCatalogueEntry = a -> (
+    if #a != 4 or not instance(a#0, String) or not instance(a#1, CoherentSheaf) then
+        error "extTableRow expects entries from catalogue or catalogueEntry";
+    evidence := (symbol catalogueMetadata, a#0);
+    F := a#1;
+    if not F.cache#?evidence or F.cache#evidence =!= {a#2, a#3} then
+        error "extTableRow requires catalogue class and local-freeness metadata"
+    )
+
+catalogueExtRow = (a, b, expectedHalfDegree) -> (
+    scan({a, b}, checkCatalogueEntry);
+    X := commonExtVariety(a#1, b#1);
+    if not X.cache#?(symbol k3Model) then
+        error "extTableRow requires a surface constructed by k3Surface";
+    d := (degree X) // 2;
+    if expectedHalfDegree =!= null and expectedHalfDegree != d then
+        error "extTableRow degree does not match the catalogue surface";
     chi := -mukaiPairing(d, a#2, b#2);
     how := extMethod(a#3, a#2#0, b#3, b#2#0);
     dims := if how == "Hom sheaf" then extViaHom(a#1, b#1)
@@ -60,5 +83,10 @@ extTableRow(ZZ, List, List) := List => (d, a, b) -> (
         else null;
     {a#0, b#0, dims, chi, how}
     )
+
+-- One row of the table of Ext groups: {name of E, name of F, dimensions or null, chi predicted, method}.
+extTableRow = method()
+extTableRow(List, List) := List => (a, b) -> catalogueExtRow(a, b, null)
+extTableRow(ZZ, List, List) := List => (d, a, b) -> catalogueExtRow(a, b, d)
 extTableRow(K3Surface, String, String) := List => (K, nameE, nameF) ->
-    extTableRow(K#"d", catalogueEntry(K, nameE), catalogueEntry(K, nameF))
+    extTableRow(catalogueEntry(K, nameE), catalogueEntry(K, nameF))

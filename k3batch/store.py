@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import fcntl
 import json
 import os
@@ -17,9 +18,9 @@ class StoreLocked(RuntimeError):
 class ResultStore:
     """An append-only file of records, written by one scheduler at a time.
 
-    Each record is written with a single `write` on a file opened for appending and then synced, so a
-    record is either whole or absent.  A scheduler that is killed in the middle of a write leaves at most
-    one incomplete last line, which is ignored when the file is read and closed off by the next writer.
+    Each append writes and syncs a complete record before returning. An interrupted write can leave
+    an incomplete last line. Readers skip and count invalid lines, and the next writer closes off
+    the tail at a newline before appending.
     """
 
     def __init__(self, path: Path) -> None:
@@ -27,25 +28,33 @@ class ResultStore:
         self.unreadable_lines = 0
         self._fd: int | None = None
         self._lock_fd: int | None = None
+        self._write_failed = False
 
     # reading ---------------------------------------------------------------------------------------
 
     def records(self) -> list[dict[str, Any]]:
         """Every record in the file, oldest first."""
         self.unreadable_lines = 0
-        if not self.path.exists():
+        try:
+            handle = self.path.open("rb")
+        except FileNotFoundError:
             return []
         records = []
-        with self.path.open("r", encoding="utf-8") as handle:
+        with handle:
             for line in handle:
-                if not line.strip():
-                    continue
                 try:
-                    record = json.loads(line)
-                except json.JSONDecodeError:
+                    decoded = line.decode("utf-8")
+                    if not decoded.strip():
+                        continue
+                    record = json.loads(decoded)
+                except (UnicodeDecodeError, json.JSONDecodeError):
                     self.unreadable_lines += 1
                     continue
-                if isinstance(record, dict) and "task_id" in record and "status" in record:
+                if (
+                    isinstance(record, dict)
+                    and isinstance(record.get("task_id"), str)
+                    and isinstance(record.get("status"), str)
+                ):
                     records.append(record)
                 else:
                     self.unreadable_lines += 1
@@ -63,32 +72,36 @@ class ResultStore:
 
     def open(self) -> None:
         """Takes the lock and opens the file for appending."""
+        if self._lock_fd is not None:
+            raise RuntimeError("the store is already open for writing")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._lock_fd = os.open(self.path.with_name(self.path.name + ".lock"), os.O_RDWR | os.O_CREAT, 0o644)
         try:
-            fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            os.close(self._lock_fd)
-            self._lock_fd = None
-            raise StoreLocked(f"another run is writing to {self.path}") from None
-        self._fd = os.open(self.path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
-        if self._ends_mid_line():
-            os.write(self._fd, b"\n")
-
-    def _ends_mid_line(self) -> bool:
-        size = self.path.stat().st_size
-        if size == 0:
-            return False
-        with self.path.open("rb") as handle:
-            handle.seek(size - 1)
-            return handle.read(1) != b"\n"
+            try:
+                fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise StoreLocked(f"another run is writing to {self.path}") from None
+            self._fd = os.open(self.path, os.O_RDWR | os.O_APPEND | os.O_CREAT, 0o644)
+            size = os.fstat(self._fd).st_size
+            if size and os.pread(self._fd, 1, size - 1) != b"\n":
+                _write_synced(self._fd, b"\n")
+        except BaseException:
+            self.close()
+            raise
+        self._write_failed = False
 
     def append(self, record: dict[str, Any]) -> None:
         if self._fd is None:
             raise RuntimeError("the store is not open for writing")
+        if self._write_failed:
+            raise RuntimeError("reopen the result store before appending after an I/O failure")
         line = json.dumps(record, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
-        os.write(self._fd, line.encode("utf-8"))
-        os.fsync(self._fd)
+        try:
+            _write_synced(self._fd, line.encode("utf-8"))
+        except BaseException:
+            # A partial line needs recovery under the writer lock before appending another.
+            self._write_failed = True
+            raise
 
     def close(self) -> None:
         for fd in (self._fd, self._lock_fd):
@@ -103,3 +116,13 @@ class ResultStore:
 
     def __exit__(self, *exc: object) -> None:
         self.close()
+
+
+def _write_synced(fd: int, data: bytes) -> None:
+    remaining = memoryview(data)
+    while remaining:
+        written = os.write(fd, remaining)
+        if written == 0:
+            raise OSError(errno.EIO, "writing the result store made no progress")
+        remaining = remaining[written:]
+    os.fsync(fd)

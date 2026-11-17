@@ -170,8 +170,12 @@ doc ///
     Description
         Text
             @TT "extDims"@ computes $Ext^i(E, F)$ of sheaves directly, which is practical on the
-            quartic only.  @TT "extViaHom"@ computes the cohomology of the sheaf $Hom(E, F)$, which
-            equals $Ext^i(E, F)$ when $E$ is locally free.
+            quartic only. Both methods require sheaves on the same variety.
+            @TT "extViaHom"@ uses the cohomology of the sheaf $Hom(E, F)$ once it has evidence
+            that $E$ is locally free. This includes bundles constructed by the package, free
+            graded modules, and presentations certified by Fitting ideals on standard-graded
+            projective varieties over a field. Use @TO extDims@ for direct Ext if the shortcut
+            cannot establish local freeness.
         Example
             K = k3Surface 2;
             X = K#"variety";
@@ -329,18 +333,21 @@ doc ///
 doc ///
     Key
         extTableRow
+        (extTableRow, List, List)
         (extTableRow, ZZ, List, List)
         (extTableRow, K3Surface, String, String)
     Headline
         the Ext groups between two sheaves of the catalogue
     Usage
         extTableRow(K, nameE, nameF)
+        extTableRow(a, b)
         extTableRow(d, a, b)
     Inputs
         K:K3Surface
         nameE:String
         nameF:String
         d:ZZ
+            for the three-argument form, half the surface degree
         a:List
             an entry of the catalogue, for $E$
         b:List
@@ -356,6 +363,10 @@ doc ///
             neither is locally free nothing is computed and the dimensions are @TT "null"@.
 
             The predicted Euler characteristic is the negative of the @TO mukaiPairing@ of the classes.
+            The two entries must come from the catalogue of the same constructed surface.
+            Their classes and local-freeness information are checked against the catalogue data.
+            The pairing uses the degree of that surface. The three-argument form also checks that
+            $2d$ agrees with the surface degree.
         Example
             K = k3Surface 2;
             extTableRow(K, "M_x", "O_x")

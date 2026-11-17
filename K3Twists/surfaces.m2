@@ -3,6 +3,7 @@
 
 K3Surface = new Type of HashTable
 K3Surface.synonym = "K3 surface"
+protect symbol k3Model
 
 completeIntersectionDegrees = new HashTable from {2 => {4}, 3 => {2, 3}, 4 => {2, 2, 2}};
 
@@ -12,6 +13,8 @@ k3Surface = method(Options => {Characteristic => 32003, Seed => 1, SpecialQuadri
 k3Surface ZZ := K3Surface => opts -> d -> (
     if not completeIntersectionDegrees#?d then error "expected d = 2, 3 or 4";
     degs := completeIntersectionDegrees#d;
+    if not instance(opts.Characteristic, ZZ) or opts.Characteristic <= 0 or not isPrime opts.Characteristic then
+        error "k3Surface requires a positive prime characteristic";
     kk := ZZ/(opts.Characteristic);
     x := getSymbol "x";
     N := d + 1;
@@ -27,12 +30,14 @@ k3Surface ZZ := K3Surface => opts -> d -> (
     if codim I != #degs then error "the random forms are not a complete intersection; change the seed";
     if dim(I + minors(#degs, jacobian I)) != 0 then error "the surface is singular; change the seed";
     S := R / I;
+    X := Proj S;
+    X.cache#(symbol k3Model) = true;
     new K3Surface from {
         "d" => d,
         "n" => d + 2,
         "degrees" => degs,
         "ring" => S,
-        "variety" => Proj S,
+        "variety" => X,
         "point" => ideal drop(gens S, 1),
         "specialQuadric" => opts.SpecialQuadric,
         "seed" => opts.Seed,
