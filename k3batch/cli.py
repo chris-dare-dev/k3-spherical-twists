@@ -228,6 +228,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     commands = {"plan": _command_plan, "run": _command_run, "report": _command_report}
     try:
         return commands[arguments.command](arguments)
-    except (ConfigError, RunnerError, StoreLocked, RuntimeError, FileNotFoundError) as problem:
+    except (ConfigError, RunnerError, StoreLocked, RuntimeError, OSError) as problem:
         print(f"k3batch: {problem}", file=sys.stderr)
         return EXIT_USAGE
