@@ -133,12 +133,17 @@ The batches in `batches/`:
 
 ### What a run guarantees
 
-- **One process per task.** Each task runs in its own Macaulay2 process. A task that fails, hangs or runs out of memory cannot affect another task or its record.
-- **Limits are enforced from outside.** The scheduler measures the wall time of each process and kills it at the time limit. The memory limit is a control-group limit set through `systemd-run --user --scope` where that is available (`--memory-guard cgroup`); elsewhere the scheduler reads the resident size of each process every 20 ms and kills it over the limit (`--memory-guard poll`).
-- **A memory budget.** A task starts only when a worker is free and its memory limit fits in what remains of the budget. A run is refused if the budget is more than the memory available on the machine at that moment, unless `--overcommit` is given.
+- **One runner per task.** Each task runs in its own Macaulay2 process and writes a separate result record.
+- **Limits are enforced from outside.** A watchdog owns each job tree, including planning jobs, and checks its wall deadline independently of scheduler logging and record writes. The planner has a 600-second limit and uses the run's memory budget. A task starts when a worker slot and enough memory budget are available.
+- **Run and job memory budgets.** With `--memory-guard cgroup`, a transient cgroup v2 slice caps total runner memory and CPU across the run. Each job has its own memory cap and runtime limit under the run slice. Both slices disable swap. The run CPU quota defaults to the number of worker slots, and a single job may use available cores under that quota.
+- **Coordinator headroom.** The initial memory check accounts for the run budget plus 64 MiB for the coordinator and 16 MiB per worker watchdog. These allowances are estimates outside the runner slice. Concurrent runs have separate limits and share the host's available memory. `--overcommit` opts out of the initial memory preflight.
 - **One record per finished attempt.** The scheduler appends and syncs a complete JSON record in `results/<name>/results.jsonl` before counting an attempt as recorded. An interrupted write can leave an incomplete final line. Reports count unreadable lines, and the next writer starts its records on a new line.
 - **Exact resumption.** A rerun can reuse the latest record with the same computation fingerprint. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
-- **No orphans.** Task processes are killed by the kernel if the scheduler itself is killed. Two runs cannot write to the same results.
+- **Job cleanup.** The watchdog cancels and reaps its job on coordinator death or interruption. The cgroup backend also has systemd scope deadlines. Two runs cannot write to the same results.
+
+The default `--memory-guard auto` uses cgroup v2 when the systemd user manager can enforce the required controllers. Explicit `--memory-guard cgroup` requires those controllers. `--memory-guard poll` samples the job's process tree RSS and has no kernel memory, swap, or CPU quota. Samples can overshoot and can count shared pages more than once.
+
+Runner jobs have a 16 MiB per-file limit, including standard output and error directed to regular files. A job's private temporary directory is checked periodically against a 128 MiB budget for allocated blocks and directory entries. Output and scratch limits are per job. The run's retained logs are cumulative. Planning and task deadlines apply independently, and temporary resource bookkeeping is removed when the watchdog can complete cleanup. A coordinator killed during slice creation can leave an empty transient unit.
 
 ### Records
 
@@ -170,7 +175,7 @@ A record carries the task, its outcome and where it came from:
 | `error` | Macaulay2 reported an error; the message is in the record |
 | `crashed` | the process ended without a result for another reason |
 
-`peak_rss_mb` is the largest resident size of the task's process, as the kernel reports it when the process ends. The output of an attempt that times out, exceeds its memory limit, errors or crashes is kept in `results/<name>/logs/`. Each attempt uses a distinct log filename so its record continues to point to the original output after a retry. Next to the records, `runs.jsonl` has one line per run with the configuration as it was resolved, the command line, the versions and the memory available at the start, and `manifest.json` lists the tasks of the latest run with their limits.
+`peak_rss_mb` is the largest resident size of the task's process, as the kernel reports it when the process ends. The watchdog measures `wall_seconds` through process exit. If the watchdog dies before reporting, the coordinator measures through collection. Records also include the requested and effective resource controls. In cgroup mode they include the cgroup memory peak and memory events. A signal alone is not evidence of a local memory kill. In polling mode the recorded RSS sample is separate from the leader's kernel RSS high-water mark. The output of an attempt that times out, exceeds its memory limit, errors or crashes is kept in `results/<name>/logs/`. Each attempt uses a distinct log filename so its record continues to point to the original output after a retry. Next to the records, `runs.jsonl` has one line per run with the configuration as it was resolved, the command line, the versions and the memory available at the start, and `manifest.json` lists the tasks of the latest run with their limits.
 
 `run` exits with status 0 when every task of the batch is `ok` or `unsupported`, 1 when a task is `mismatch`, `error` or `crashed`, 3 when nothing failed but tasks were stopped at a limit, and 2 when the batch cannot be run as asked.
 

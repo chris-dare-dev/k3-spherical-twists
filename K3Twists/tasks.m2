@@ -37,16 +37,8 @@ checkFields = (h, label, required, optional) -> (
     )
 
 checkSurfaceSpec = s -> (
-    if not instance(s, HashTable) or not s#?"d" then error "surface must have a degree parameter d";
-    normalized := surfaceSpec s;
-    if not instance(normalized#"d", ZZ) or not completeIntersectionDegrees#?(normalized#"d") then
-        error "expected d = 2, 3 or 4";
-    if not instance(normalized#"seed", ZZ) then error "surface seed must be an integer";
-    p := normalized#"characteristic";
-    if not instance(p, ZZ) or p <= 0 or not isPrime p then error "surface characteristic must be prime";
-    if not isBoolean normalized#"special_quadric" then error "special_quadric must be boolean";
-    if normalized#"special_quadric" and normalized#"d" != 3 then error "SpecialQuadric is for d = 3";
-    normalized
+    if not instance(s, HashTable) then error "surface must be an object";
+    surfaceSpec s
     )
 
 taskKindField = {("kind", isString)}

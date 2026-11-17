@@ -17,6 +17,7 @@ from uuid import uuid4
 
 from . import __version__, report
 from .config import BatchConfig, ConfigError, load_config
+from .execution import LocalBackend
 from .identity import RECORD_SCHEMA
 from .memory import available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
@@ -55,15 +56,18 @@ def _parser() -> argparse.ArgumentParser:
             "--runner", help="command that expands batches and runs tasks (default: the Macaulay2 runner)"
         )
 
+        command.add_argument(
+            "--memory-guard",
+            choices=["auto", "cgroup", "poll"],
+            default="auto",
+            help="resource control mode (default: enforced cgroups when available, otherwise sampled)",
+        )
+
     plan = commands.add_parser("plan", help="list what a run would compute, without computing")
     batch_arguments(plan)
 
     run = commands.add_parser("run", help="compute the tasks of a batch that lack reusable results")
     batch_arguments(run)
-    run.add_argument(
-        "--memory-guard", choices=["auto", "cgroup", "poll"], default="auto",
-        help="how memory limits are enforced (default: cgroup where systemd offers it, else poll)",
-    )  # fmt: skip
     run.add_argument(
         "--overcommit", action="store_true",
         help="run even if the memory budget is above the memory now available",
@@ -116,10 +120,12 @@ def _plan_lines(
 
 def _command_plan(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
-    tasks, runner_versions = expand(runner, config.description)
+    guard = choose_guard(arguments.memory_guard)
+    with LocalBackend(guard, config.memory_budget_mb, config.workers) as backend:
+        tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
     scheduler = Scheduler(
         config=config, tasks=tasks, store=ResultStore(run_dir / "results.jsonl"),
-        run_dir=run_dir, runner=runner, guard=choose_guard("poll"), retry=retry,
+        run_dir=run_dir, runner=runner, guard=guard, retry=retry,
         stamp={"runner": runner_versions},
     )  # fmt: skip
     plan = scheduler.plan()
@@ -133,19 +139,20 @@ def _command_plan(arguments: argparse.Namespace) -> int:
 def _command_run(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
     free = available_mb()
-    if free is not None and config.memory_budget_mb > free and not arguments.overcommit:
+    guard = choose_guard(arguments.memory_guard)
+    backend = LocalBackend(guard, config.memory_budget_mb, config.workers)
+    requested = config.memory_budget_mb + backend.coordinator_headroom_mb
+    if free is not None and requested > free and not arguments.overcommit:
         raise ConfigError(
-            f"the memory budget is {config.memory_budget_mb} MB but only {free} MB is available now; "
+            f"the memory budget and coordinator headroom use {requested} MB but only {free} MB is available; "
             "lower --memory-budget, or pass --overcommit to run anyway"
         )
-    guard = choose_guard(arguments.memory_guard)
-    tasks, runner_versions = expand(runner, config.description)
-
     started_at = datetime.now(UTC)
     run_id = uuid4().hex
     code = code_version()
     store = ResultStore(run_dir / "results.jsonl")
-    with store:
+    with store, backend:
+        tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
         scheduler = Scheduler(
             config=config, tasks=tasks, store=store, run_dir=run_dir, runner=runner, guard=guard,
             stamp={"run_id": run_id, "runner": runner_versions, "code": code},
@@ -174,6 +181,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
                 "runner": runner_versions,
                 "code": code,
                 "memory_guard": guard.name,
+                "resource_controls": backend.controls(),
                 "memory_available_mb": free,
                 "host": socket.gethostname(),
                 "cpus": os.cpu_count(),
