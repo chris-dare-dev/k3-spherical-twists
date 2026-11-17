@@ -43,10 +43,22 @@ if tier === "list" then (
     exit 0;
     );
 
-<< "# d = " << d << ", n = " << K#"n" << ", " << #cat << " sheaves; light pairs, limit " << limit << " s each" << endl << flush;
-scan(cat, a -> << "# class of " << a#0 << " = " << toString a#2 << (if a#3 then "" else "  (not locally free)") << endl);
+-- With K3RESUME = FILE, pairs that already have a line in FILE are skipped, and "# start E F" is
+-- printed before each pair, so a process killed at its memory limit can be restarted after that pair.
+resumeFile = getenv "K3RESUME";
+finished = new MutableHashTable;
+if resumeFile =!= "" and fileExists resumeFile then scan(lines get resumeFile, l -> (
+    w := select(separate(" ", l), x -> x != "");
+    if #w >= 3 and not match("^#", l) and (match("^\\{", w#2) or member(w#2, {"null", "timeout", "killed"}))
+    then finished#(w#0, w#1) = true;
+    ));
+if #(keys finished) == 0 then (
+    << "# d = " << d << ", n = " << K#"n" << ", " << #cat << " sheaves; light pairs, limit " << limit << " s each" << endl << flush;
+    scan(cat, a -> << "# class of " << a#0 << " = " << toString a#2 << (if a#3 then "" else "  (not locally free)") << endl);
+    );
 (done, bad, late) = (0, 0, 0);
-scan(cat, a -> scan(cat, b -> if isLight(a, b) then (
+scan(cat, a -> scan(cat, b -> if isLight(a, b) and not finished#?(a#0, b#0) then (
+    << "# start " << a#0 << " " << b#0 << endl << flush;
     t0 := currentTime();
     row := try (alarm limit; r := extTableRow(d, a, b); alarm 0; r) else (alarm 0; {a#0, b#0, "timeout", -mukaiPairing(d, a#2, b#2), "timeout"});
     st := report(a, b, row, t0);
