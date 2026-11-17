@@ -32,7 +32,9 @@ extPairCost = (c, e) -> (
     )
 
 expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
-        classes := catalogueClasses surfaceFromSpec s;
+        K := surfaceFromSpec s;
+        d := (degree K#"variety") // 2;
+        classes := catalogueClasses K;
         chosen := key -> (
             want := opt(set, key, opt(set, "sheaves", "all"));
             if want === "all" then classes
@@ -47,7 +49,7 @@ expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
                     "set" => i,
                     "group" => "ext_pair " | surfaceLabel s,
                     "cost" => extPairCost(c, e),
-                    "predicted" => new HashTable from {"chi" => -mukaiPairing(s#"d", c#1, e#1)},
+                    "predicted" => new HashTable from {"chi" => -mukaiPairing(d, c#1, e#1)},
                     "surface" => s,
                     "source" => c#0,
                     "target" => e#0
@@ -59,7 +61,7 @@ runExtPair = task -> (
     (setup, entries) := timed(() -> (
             K := surfaceFromSpec s;
             {catalogueEntry(K, task#"source"), catalogueEntry(K, task#"target")}));
-    (compute, row) := timed(() -> extTableRow(s#"d", entries#0, entries#1));
+    (compute, row) := timed(() -> extTableRow(entries#0, entries#1));
     dims := row#2;
     chi := if dims === null then null else dims#0 - dims#1 + dims#2;
     new HashTable from {
