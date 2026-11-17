@@ -4,10 +4,16 @@ M2     ?= M2
 D      ?= 2
 LIMIT  ?= 2400
 
-.PHONY: test invariants invariants-slow all-degrees
+.PHONY: test test-slow test-all invariants invariants-slow all-degrees
 
 test:
-	$(M2) --script scripts/run-tests.m2
+	$(M2) --script runners/run-tests.m2 fast
+
+test-slow:
+	$(M2) --script runners/run-tests.m2 slow
+
+test-all:
+	$(M2) --script runners/run-tests.m2 all
 
 invariants:
 	K3D=$(D) timeout $(LIMIT) $(M2) --script scripts/sheaf-invariants.m2
