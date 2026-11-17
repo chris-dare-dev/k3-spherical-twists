@@ -77,7 +77,7 @@ python3 -m k3batch run batches/quartic-sample.toml
 python3 -m k3batch report results/quartic-sample
 ```
 
-`plan` lists the tasks a run would compute, with their costs and limits, and computes nothing. `run` computes every task that has no record yet. `report` prints tables from the records. `make plan`, `make run` and `make report` do the same with `BATCH=batches/….toml`.
+`plan` lists the tasks a run would compute, with their costs and limits, and computes nothing. `run` computes each task that lacks a reusable record for its exact computation. `report` prints tables from the records. `make plan`, `make run` and `make report` do the same with `BATCH=batches/….toml`.
 
 ### The batch file
 
@@ -133,7 +133,7 @@ The batches in `batches/`:
 - **Limits are enforced from outside.** The scheduler measures the wall time of each process and kills it at the time limit. The memory limit is a control-group limit set through `systemd-run --user --scope` where that is available (`--memory-guard cgroup`); elsewhere the scheduler reads the resident size of each process every 20 ms and kills it over the limit (`--memory-guard poll`).
 - **A memory budget.** A task starts only when a worker is free and its memory limit fits in what remains of the budget. A run is refused if the budget is more than the memory available on the machine at that moment, unless `--overcommit` is given.
 - **One record per finished attempt.** The scheduler appends and syncs a complete JSON record in `results/<name>/results.jsonl` before counting an attempt as recorded. An interrupted write can leave an incomplete final line. Reports count unreadable lines, and the next writer starts its records on a new line.
-- **Exact resumption.** A rerun computes the tasks that have no record and nothing else. An interrupted run leaves no record for the tasks that were in flight, so a rerun computes them. `--retry timeout,memory` computes again the tasks whose latest record has one of those statuses, for example after raising a limit.
+- **Exact resumption.** A rerun can reuse the latest record with the same computation fingerprint. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
 - **No orphans.** Task processes are killed by the kernel if the scheduler itself is killed. Two runs cannot write to the same results.
 
 ### Records
@@ -142,6 +142,7 @@ A record carries the task, its outcome and where it came from:
 
 ```json
 {"task_id": "ext_pair/d2-p32003-s1/M_H/M_x",
+ "schema_version": 1, "computation_id": "…", "check_id": "…", "record_id": "…",
  "task": {"kind": "ext_pair", "source": "M_H", "target": "M_x", "cost": 6,
           "surface": {"d": 2, "seed": 1, "characteristic": 32003, "special_quadric": false}, "…": "…"},
  "status": "ok",
@@ -170,6 +171,14 @@ A record carries the task, its outcome and where it came from:
 `run` exits with status 0 when every task of the batch is `ok` or `unsupported`, 1 when a task is `mismatch`, `error` or `crashed`, 3 when nothing failed but tasks were stopped at a limit, and 2 when the batch cannot be run as asked.
 
 ### Reports
+
+The scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
+
+`report` defaults to the latest run. Use `python3 -m k3batch report results/quartic-sample --run <id>` to select an earlier run using its printed ID or its ID in `runs.jsonl`. Reports from before run manifests were introduced remain readable. Use `--legacy` to read unversioned historical records from a directory that also has versioned runs. Unversioned records are ineligible for automatic reuse.
+
+Computation fingerprints include the expanded operation and scientific inputs, local package source contents, runner versions, and the launcher and recognized runner script contents. Placement fields (`id`, `set`, `group`, and `cost`) describe the report and schedule. This detects different edits in a dirty worktree. Keep the implementation stable while a run is active. Custom runners should include their external code and runtime versions in their expansion metadata.
+
+A runner may declare `comparison = "equals"` for full-value comparison or `comparison = "fields"` for comparing named fields of an object. This declaration promises that the prediction and comparison mode leave the calculated observation unchanged. The scheduler can then check a changed prediction against the earlier observation while retaining both checks in their respective run manifests. Changes to hashed source files still invalidate the implementation fingerprint.
 
 `report` prints, as Markdown: a summary by group and status, the computed values that differ from the predicted ones, the tasks stopped at a limit with their limits, wall time and peak memory, the errors, and the pairs with no method. `--full` lists every computed value against its predicted value. For the sample batch:
 

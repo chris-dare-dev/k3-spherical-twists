@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from .identity import RECORD_SCHEMA
 from .model import Status
 from .store import ResultStore
 
@@ -39,32 +41,77 @@ def _name(record: dict[str, Any]) -> str:
     return f"`{record['task_id']}`"
 
 
-def load_manifest(run_dir: Path) -> list[dict[str, Any]]:
-    """The tasks of the run's latest expansion; empty if the run has no manifest."""
-    path = run_dir / "manifest.json"
-    if not path.exists():
-        return []
-    tasks: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8")).get("tasks", [])
-    return tasks
+def load_manifest(run_dir: Path, run_id: str | None = None) -> dict[str, Any]:
+    """Read the latest manifest or a specific run's immutable manifest."""
+    if run_id is None:
+        path = run_dir / "manifest.json"
+        if not path.exists():
+            return {}
+    else:
+        if not re.fullmatch(r"[0-9a-f]{32}", run_id):
+            raise RuntimeError(f"invalid run ID: {run_id!r}")
+        path = run_dir / "runs" / f"{run_id}.json"
+        if not path.exists():
+            raise RuntimeError(f"run {run_id} is not in {run_dir}")
+    manifest: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return manifest
 
 
-def render(run_dir: Path, *, full: bool = False) -> str:
-    """The report of a run directory, as Markdown."""
+def selected_results(store: ResultStore, manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Resolve the attempts pinned by a manifest, with label lookup for legacy reports."""
+    if "schema_version" not in manifest:
+        return store.latest()
+    if manifest["schema_version"] != RECORD_SCHEMA:
+        raise RuntimeError(f"unsupported manifest schema version: {manifest['schema_version']}")
+
+    attempts = {
+        record["record_id"]: record
+        for record in store.records()
+        if record.get("schema_version") == RECORD_SCHEMA and isinstance(record.get("record_id"), str)
+    }
+    selected = {}
+    for task in manifest["tasks"]:
+        attempt = attempts.get(task["record_id"])
+        if attempt is None or attempt.get("computation_id") != task["computation_id"]:
+            continue
+        selected[task["id"]] = (
+            attempt
+            | task["check"]
+            | {
+                "task": task,
+                "task_id": task["id"],
+                "check_id": task["check_id"],
+            }
+        )
+    return selected
+
+
+def render(run_dir: Path, *, full: bool = False, run_id: str | None = None, legacy: bool = False) -> str:
+    """The report for a selected run, as Markdown."""
     store = ResultStore(run_dir / "results.jsonl")
-    latest = store.latest()
-    manifest = load_manifest(run_dir)
+    manifest = load_manifest(run_dir, run_id)
+    if legacy:
+        if "schema_version" in manifest:
+            manifest = {}
+        selected = {record["task_id"]: record for record in store.records() if "schema_version" not in record}
+    else:
+        selected = selected_results(store, manifest)
     groups: dict[str, Counter[str]] = defaultdict(Counter)
     known = set()
-    for task in manifest:
+    for task in manifest.get("tasks", []):
         known.add(task["id"])
-        record = latest.get(task["id"])
+        record = selected.get(task["id"])
         groups[task.get("group", task["kind"])][record["status"] if record else NOT_RUN] += 1
-    for task_id, record in latest.items():
+    for task_id, record in selected.items():
         if task_id not in known:
             groups[record["task"].get("group", record["task"].get("kind", "?"))][record["status"]] += 1
-    records = sorted(latest.values(), key=lambda r: (r["task"].get("group", ""), r["task_id"]))
+    records = sorted(selected.values(), key=lambda r: (r["task"].get("group", ""), r["task_id"]))
 
     lines = [f"# Results in {run_dir.name}", ""]
+    if legacy:
+        lines.append("- selection: unversioned historical records")
+    if "run_id" in manifest:
+        lines.append(f"- run: `{manifest['run_id']}`")
     lines += _provenance(records, store.unreadable_lines)
 
     lines += ["## Summary", ""]

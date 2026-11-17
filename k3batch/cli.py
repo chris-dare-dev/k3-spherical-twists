@@ -13,13 +13,15 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from . import __version__, report
 from .config import BatchConfig, ConfigError, load_config
+from .identity import RECORD_SCHEMA
 from .memory import available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
 from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError, code_version, expand
-from .scheduler import Scheduler
+from .scheduler import PlannedTask, Scheduler
 from .store import ResultStore, StoreLocked
 
 EXIT_OK = 0
@@ -56,7 +58,7 @@ def _parser() -> argparse.ArgumentParser:
     plan = commands.add_parser("plan", help="list what a run would compute, without computing")
     batch_arguments(plan)
 
-    run = commands.add_parser("run", help="compute the tasks of a batch that have no record yet")
+    run = commands.add_parser("run", help="compute the tasks of a batch that lack reusable results")
     batch_arguments(run)
     run.add_argument(
         "--memory-guard", choices=["auto", "cgroup", "poll"], default="auto",
@@ -70,6 +72,9 @@ def _parser() -> argparse.ArgumentParser:
 
     rep = commands.add_parser("report", help="print tables from the records of a run directory")
     rep.add_argument("run_dir", type=Path)
+    report_selection = rep.add_mutually_exclusive_group()
+    report_selection.add_argument("--run", metavar="ID", help="select a run by ID (default: latest)")
+    report_selection.add_argument("--legacy", action="store_true", help="report unversioned results")
     rep.add_argument(
         "--full", action="store_true", help="list every computed value against its predicted value"
     )
@@ -93,11 +98,11 @@ def _prepare(arguments: argparse.Namespace) -> tuple[BatchConfig, tuple[str, ...
 
 
 def _plan_lines(
-    config: BatchConfig, tasks: Sequence[Task], pending: Sequence[tuple[Task, Limits]]
+    config: BatchConfig, plan: Sequence[PlannedTask], pending: Sequence[tuple[Task, Limits]]
 ) -> list[str]:
-    recorded = len(tasks) - len(pending)
+    recorded = len(plan) - len(pending)
     lines = [
-        f"batch {config.name}: {len(tasks)} tasks, {len(pending)} to compute, {recorded} already recorded",
+        f"batch {config.name}: {len(plan)} tasks, {len(pending)} to compute, {recorded} already recorded",
         f"workers {config.workers}, memory budget {config.memory_budget_mb} MB",
     ]
     classes: Counter[tuple[float, int]] = Counter(
@@ -111,13 +116,15 @@ def _plan_lines(
 
 def _command_plan(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
-    tasks, _ = expand(runner, config.description)
+    tasks, runner_versions = expand(runner, config.description)
     scheduler = Scheduler(
         config=config, tasks=tasks, store=ResultStore(run_dir / "results.jsonl"),
         run_dir=run_dir, runner=runner, guard=choose_guard("poll"), retry=retry,
+        stamp={"runner": runner_versions},
     )  # fmt: skip
-    pending = scheduler.pending()
-    print("\n".join(_plan_lines(config, tasks, pending)))
+    plan = scheduler.plan()
+    pending = scheduler.pending(plan)
+    print("\n".join(_plan_lines(config, plan, pending)))
     for task, limits in pending:
         print(f"{task.cost:8g}  {limits.time_seconds:8g} s  {limits.memory_mb:7d} MB  {task.id}")
     return EXIT_OK
@@ -135,7 +142,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
     tasks, runner_versions = expand(runner, config.description)
 
     started_at = datetime.now(UTC)
-    run_id = f"{started_at:%Y%m%dT%H%M%SZ}-{os.getpid()}"
+    run_id = uuid4().hex
     code = code_version()
     store = ResultStore(run_dir / "results.jsonl")
     with store:
@@ -144,14 +151,16 @@ def _command_run(arguments: argparse.Namespace) -> int:
             stamp={"run_id": run_id, "runner": runner_versions, "code": code},
             retry=retry, progress=None if arguments.quiet else _print_progress,
         )  # fmt: skip
-        pending = scheduler.pending()
-        _write_json(
-            run_dir / "manifest.json",
-            {
-                "batch": config.name,
-                "tasks": [task.payload | {"limits": config.limits_for(task).as_dict()} for task in tasks],
-            },
-        )
+        plan = scheduler.plan()
+        pending = scheduler.pending(plan)
+        manifest = {
+            "schema_version": RECORD_SCHEMA,
+            "run_id": run_id,
+            "batch": config.name,
+            "tasks": [entry.manifest_entry() for entry in plan],
+        }
+        _write_json(run_dir / "runs" / f"{run_id}.json", manifest)
+        _write_json(run_dir / "manifest.json", manifest)
         _append_json(
             run_dir / "runs.jsonl",
             {
@@ -172,18 +181,21 @@ def _command_run(arguments: argparse.Namespace) -> int:
                 "pending": len(pending),
             },
         )
-        print("\n".join(_plan_lines(config, tasks, pending)), file=sys.stderr)
-        print(f"memory guard: {guard.name}; results in {run_dir}", file=sys.stderr)
+        print("\n".join(_plan_lines(config, plan, pending)), file=sys.stderr)
+        print(f"run {run_id}, memory guard: {guard.name}, results in {run_dir}", file=sys.stderr)
         try:
-            outcome = scheduler.run()
+            outcome = scheduler.run(plan)
         except KeyboardInterrupt:
             print("interrupted: tasks in flight were stopped and have no record", file=sys.stderr)
             return EXIT_INTERRUPTED
 
+        selected = report.selected_results(store, manifest)
+        if len(selected) != len(plan):
+            raise RuntimeError(f"missing results for {len(plan) - len(selected)} tasks in run {run_id}")
+
     summary = ", ".join(f"{count} {status}" for status, count in sorted(outcome.items())) or "nothing to do"
     print(f"this run: {summary}", file=sys.stderr)
-    latest = store.latest()
-    statuses = Counter(latest[task.id]["status"] for task in tasks if task.id in latest)
+    statuses = Counter(record["status"] for record in selected.values())
     if statuses[Status.MISMATCH] or statuses[Status.ERROR] or statuses[Status.CRASHED]:
         return EXIT_FAILED
     if any(count for status, count in statuses.items() if status not in COMPLETED_STATUSES):
@@ -219,7 +231,9 @@ def _append_json(path: Path, content: dict[str, Any]) -> None:
 def _command_report(arguments: argparse.Namespace) -> int:
     if not (arguments.run_dir / "results.jsonl").exists():
         raise ConfigError(f"no results.jsonl in {arguments.run_dir}")
-    sys.stdout.write(report.render(arguments.run_dir, full=arguments.full))
+    sys.stdout.write(
+        report.render(arguments.run_dir, full=arguments.full, run_id=arguments.run, legacy=arguments.legacy)
+    )
     return EXIT_OK
 
 

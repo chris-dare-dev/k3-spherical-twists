@@ -144,6 +144,100 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(self.journal.started().count("fake/sleeper"), 2)
         self.assertEqual(len(self.journal.started()), 4)
 
+    def test_changed_definition_and_removed_task_only_affect_the_new_report(self) -> None:
+        first = self.k3batch("run", self.batch(AGREEING, DIFFERING))
+        self.assertEqual(first.returncode, EXIT_FAILED, first.stderr)
+        old_manifest = json.loads((self.run_dir / "manifest.json").read_text())
+        old_id = old_manifest["run_id"]
+
+        revised = self.batch(items('{ name = "a", value = 2, predicted = 2 }'))
+        plan = self.k3batch("plan", revised)
+        self.assertIn("1 tasks, 1 to compute, 0 already recorded", plan.stdout)
+        second = self.k3batch("run", revised)
+        self.assertEqual(second.returncode, EXIT_OK, second.stderr)
+        self.assertEqual(self.journal.started().count("fake/a"), 2)
+        self.assertEqual(json.loads((self.run_dir / "runs" / f"{old_id}.json").read_text()), old_manifest)
+
+        latest = self.k3batch("report", self.run_dir, "--full").stdout
+        self.assertIn("| fake | 1 | 1 |", latest)
+        self.assertIn("| `fake/a` | 2 | 2 | yes |", latest)
+        self.assertNotIn("fake/differs", latest)
+        pinned = self.k3batch("report", self.run_dir, "--run", old_id, "--full").stdout
+        self.assertIn("| `fake/a` | 1 | 1 | yes |", pinned)
+        self.assertIn("| `fake/differs` | 1 | 2 |", pinned)
+
+    def test_revised_prediction_compares_an_existing_observation(self) -> None:
+        original = self.batch(items('{ name = "a", value = 1, predicted = 2, comparison = "equals" }'))
+        initial = self.k3batch("run", original)
+        self.assertEqual(initial.returncode, EXIT_FAILED, initial.stderr)
+        old_manifest = json.loads((self.run_dir / "manifest.json").read_text())
+        revised = self.batch(items('{ name = "a", value = 1, predicted = 1, comparison = "equals" }'))
+        result = self.k3batch("run", revised)
+        self.assertEqual(result.returncode, EXIT_OK, result.stderr)
+        new_task = json.loads((self.run_dir / "manifest.json").read_text())["tasks"][0]
+        self.assertEqual(new_task["record_id"], old_manifest["tasks"][0]["record_id"])
+        self.assertNotEqual(new_task["check_id"], old_manifest["tasks"][0]["check_id"])
+        self.assertEqual(len(self.records()), 1)
+        self.assertEqual(self.journal.started(), ["fake/a"])
+        self.assertIn("| `fake/a` | 1 | 1 | yes |", self.k3batch("report", self.run_dir, "--full").stdout)
+        old = self.k3batch("report", self.run_dir, "--run", old_manifest["run_id"], "--full")
+        self.assertIn("| `fake/a` | 1 | 2 |", old.stdout)
+
+    def test_increasing_a_wall_time_limit_retries_a_timeout(self) -> None:
+        batch = self.batch(items('{ name = "slow", sleep = 0.4 }', limits="limits = { time_seconds = 0.1 }"))
+        first = self.k3batch("run", batch)
+        self.assertEqual(first.returncode, EXIT_LIMITS, first.stderr)
+        batch = self.batch(items('{ name = "slow", sleep = 0.4 }', limits="limits = { time_seconds = 5 }"))
+        second = self.k3batch("run", batch)
+        self.assertEqual(second.returncode, EXIT_OK, second.stderr)
+        before, after = self.records()
+        pinned = self.k3batch("report", self.run_dir, "--run", before["run_id"]).stdout
+        self.assertIn("| `fake/slow` | timeout | 0 | 0.1 |", pinned)
+        self.assertEqual(before["computation_id"], after["computation_id"])
+        self.assertNotEqual(before["record_id"], after["record_id"])
+        self.assertEqual((before["status"], after["status"]), ("timeout", "ok"))
+
+    def test_legacy_rows_are_readable_but_are_recomputed(self) -> None:
+        batch = self.batch(AGREEING)
+        first = self.k3batch("run", batch)
+        self.assertEqual(first.returncode, EXIT_OK, first.stderr)
+        legacy = [
+            {key: value for key, value in record.items() if key not in {"schema_version", "record_id"}}
+            for record in self.records()
+        ]
+        (self.run_dir / "results.jsonl").write_text("".join(json.dumps(row) + "\n" for row in legacy))
+        (self.run_dir / "manifest.json").unlink()
+        report = self.k3batch("report", self.run_dir, "--full")
+        self.assertIn("| `fake/a` | 1 | 1 | yes |", report.stdout)
+        again = self.k3batch("run", batch)
+        self.assertEqual(again.returncode, EXIT_OK, again.stderr)
+        self.assertEqual(self.journal.started().count("fake/a"), 2)
+        self.assertEqual(self.records()[:2], legacy)
+        historic = self.k3batch("report", self.run_dir, "--legacy", "--full")
+        self.assertEqual(historic.returncode, EXIT_OK, historic.stderr)
+        self.assertIn("unversioned historical records", historic.stdout)
+        self.assertIn("| `fake/a` | 1 | 1 | yes |", historic.stdout)
+
+    def test_an_edited_runner_with_the_same_version_invalidates_prior_results(self) -> None:
+        script = self.scratch / "runner.py"
+        original = FAKE_RUNNER.read_text()
+        script.write_text(original)
+        self.runner = shlex.join([sys.executable, str(script), "--journal", str(self.journal.path)])
+        batch = self.batch(items('{ name = "a", value = 1 }'))
+        first = self.k3batch("run", batch)
+        self.assertEqual(first.returncode, EXIT_OK, first.stderr)
+
+        script.write_text(
+            original.replace('task.get("value", len(held))', 'task.get("value", len(held)) + 2')
+        )
+        second = self.k3batch("run", batch)
+        self.assertEqual(second.returncode, EXIT_OK, second.stderr)
+        before, after = self.records()
+        self.assertEqual(before["runner"], after["runner"])
+        self.assertEqual(before["task"], after["task"])
+        self.assertEqual((before["value"], after["value"]), (1, 3))
+        self.assertNotEqual(before["computation_id"], after["computation_id"])
+
     def test_what_cannot_run_is_refused_before_any_task_starts(self) -> None:
         batch = self.batch(AGREEING)
         refused = [
