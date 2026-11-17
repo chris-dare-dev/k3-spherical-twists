@@ -38,6 +38,16 @@ DIFFERING = items('{ name = "differs", value = 1, predicted = 2 }')
 SLEEPING = items('{ name = "sleeper", sleep = 60 }', limits="limits = { time_seconds = 0.3 }")
 
 
+def still_runs(pid: int) -> bool:
+    """Whether a process is running.  A killed process stays listed as a zombie until its parent
+    collects it, which the first process of a container may never do; a zombie does not run."""
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text()
+    except OSError:
+        return False
+    return stat.rpartition(")")[2].split()[0] != "Z"
+
+
 class CommandLine(unittest.TestCase):
     def setUp(self) -> None:
         scratch = tempfile.TemporaryDirectory()
@@ -178,10 +188,7 @@ class CommandLine(unittest.TestCase):
         return process
 
     def assert_gone(self, pids: list[int]) -> None:
-        def all_gone() -> bool:
-            return not any(Path(f"/proc/{pid}").exists() for pid in pids)
-
-        self.wait_for(all_gone, seconds=5)
+        self.wait_for(lambda: not any(still_runs(pid) for pid in pids), seconds=5)
 
     def test_an_interrupted_run_stops_its_tasks_and_a_rerun_computes_them(self) -> None:
         for stop in (signal.SIGINT, signal.SIGTERM):
