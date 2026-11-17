@@ -27,7 +27,7 @@ from .config import BatchConfig, ConfigError
 from .identity import RECORD_SCHEMA, implementation_fingerprint, recheck, task_identities
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
-from .runner import REPOSITORY, error_lines, parse_result, run_command
+from .runner import REPOSITORY, RunnerError, RunnerInvocation, error_lines
 from .store import ResultStore
 
 _PR_SET_PDEATHSIG = 1
@@ -67,6 +67,7 @@ class _Running:
     process: subprocess.Popen[bytes]
     tag: str
     log: Path
+    invocation: RunnerInvocation
     attempt_id: str
     started: float
     started_at: str
@@ -180,8 +181,11 @@ class Scheduler:
         finally:
             # an interrupted run leaves no record for the tasks in flight, so a rerun computes them
             for entry in running:
-                self._kill(entry)
-                self.guard.release(entry.tag)
+                try:
+                    self._kill(entry)
+                    self.guard.release(entry.tag)
+                finally:
+                    entry.invocation.cleanup()
             signal.signal(signal.SIGTERM, previous)
         return outcome
 
@@ -202,23 +206,29 @@ class Scheduler:
         tag = f"k3batch-{os.getpid()}-{self._started}"
         attempt_id = uuid4().hex
         log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
-        command = self.guard.wrap(run_command(self.runner, task), limits.memory_mb, tag)
-        with log.open("xb") as output:
-            process = subprocess.Popen(
-                command,
-                stdin=subprocess.DEVNULL,
-                stdout=output,
-                stderr=subprocess.STDOUT,
-                cwd=REPOSITORY,
-                start_new_session=True,
-                preexec_fn=_die_with_scheduler,
-            )
+        invocation = RunnerInvocation.prepare(self.runner, "run", task.payload, self.run_dir / "requests")
+        try:
+            command = self.guard.wrap(invocation.command, limits.memory_mb, tag)
+            with log.open("xb") as output:
+                process = subprocess.Popen(
+                    command,
+                    stdin=subprocess.DEVNULL,
+                    stdout=output,
+                    stderr=subprocess.STDOUT,
+                    cwd=REPOSITORY,
+                    start_new_session=True,
+                    preexec_fn=_die_with_scheduler,
+                )
+        except BaseException:
+            invocation.cleanup()
+            raise
         return _Running(
             task=task,
             limits=limits,
             process=process,
             tag=tag,
             log=log,
+            invocation=invocation,
             attempt_id=attempt_id,
             started=time.monotonic(),
             started_at=datetime.now(UTC).isoformat(timespec="seconds"),
@@ -242,7 +252,10 @@ class Scheduler:
             wall = time.monotonic() - entry.started
             entry.process.returncode = os.waitstatus_to_exitcode(status)
             running.remove(entry)
-            records.append(self._record(entry, entry.process.returncode, usage, wall))
+            try:
+                records.append(self._record(entry, entry.process.returncode, usage, wall))
+            finally:
+                entry.invocation.cleanup()
         return records
 
     @staticmethod
@@ -255,8 +268,14 @@ class Scheduler:
 
     def _record(self, entry: _Running, exit_code: int, usage: Any, wall: float) -> dict[str, Any]:
         output = entry.log.read_text(encoding="utf-8", errors="replace")
-        result = parse_result(output) if exit_code == 0 else None
+        result = None
         error = None
+        if entry.verdict is None and exit_code >= 0:
+            try:
+                result = entry.invocation.task_result(output, exit_code)
+            except RunnerError as problem:
+                diagnostics = error_lines(output)
+                error = f"{problem}\n{diagnostics}" if diagnostics else str(problem)
         if entry.verdict is not None:
             status = entry.verdict
             result = None
@@ -264,6 +283,8 @@ class Scheduler:
             status = Status(result["status"])
         elif exit_code == -signal.SIGKILL and self.guard.killed_for_memory(entry.tag):
             status = Status.MEMORY
+        elif error is not None:
+            status = Status.ERROR
         elif exit_code > 0:
             status = Status.ERROR
             error = error_lines(output) or f"exit status {exit_code}"
