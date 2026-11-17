@@ -109,6 +109,37 @@ TEST ///
 ///
 
 TEST ///
+    assert(try (k3Surface(2, Characteristic => 4); false) else true);
+    K = k3Surface 2;
+    X = K#"variety";
+    P = pointSheaf K;
+    H = catalogueEntry(K, "O(1H)");
+    p = catalogueEntry(K, "O_x");
+    assert(extDims(P, P) == {1, 2, 1});
+    assert(try (extViaHom(P, P); false) else true);
+    assert(extViaHom(OO_X^1, P) == {1, 0, 0});
+    assert(extViaHom(pointKernelBundle K, P) == {2, 0, 0});
+    -- The irrelevant ideal represents the structure sheaf and is not a free graded module.
+    S = K#"ring";
+    E = sheaf module ideal vars S;
+    assert(not isFreeModule module E);
+    assert(extViaHom(E, P) == {1, 0, 0});
+    assert(extTableRow(H, H) == {"O(1H)", "O(1H)", {1, 0, 1}, 2, "Hom sheaf"});
+    assert(extTableRow(2, H, H) == extTableRow(H, H));
+    assert(try (extTableRow(3, H, H); false) else true);
+    assert(extTableRow(p, H) == {"O_x", "O(1H)", {0, 0, 1}, 1, "Serre duality"});
+    assert(extTableRow(p, p) == {"O_x", "O_x", null, 0, "not computed"});
+    assert(try (extTableRow(2, {p#0, p#1, p#2, true}, p); false) else true);
+    assert(try (extTableRow(2, {H#0, H#1, {1, 1, 2}, H#3}, H); false) else true);
+
+    K' = k3Surface(2, Seed => 7);
+    H' = catalogueEntry(K', "O(1H)");
+    assert(try (extTableRow(H, H'); false) else true);
+    assert(try (extViaHom(H#1, H'#1); false) else true);
+    assert(try (extDims(H#1, H'#1); false) else true);
+///
+
+TEST ///
     -- one invariant at a time agrees with the list
     K = k3Surface 2;
     names = sheafInvariantNames K;
