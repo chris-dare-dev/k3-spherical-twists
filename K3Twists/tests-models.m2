@@ -75,6 +75,8 @@ TEST ///
     direct = first expandBatch description {hashTable {"d" => 2}};
     named = first expandBatch description {hashTable {"family" => "complete_intersection", "d" => 2}};
     assert(named === direct);
+    nullableSpec = hashTable {"d" => 2, "seed" => null, "characteristic" => null, "special_quadric" => null};
+    assert(first expandBatch description {nullableSpec} === direct);
     assert(try (expandBatch description {hashTable {"d" => 2, "marking" => {"H", "C"}}}; false) else true);
     invalid = merge(direct, hashTable {"surface" => hashTable {"d" => 2, "typo" => 1}}, (a, b) -> b);
     assert(try (runTask invalid; false) else true);
