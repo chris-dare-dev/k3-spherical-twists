@@ -132,7 +132,7 @@ The batches in `batches/`:
 - **One process per task.** Each task runs in its own Macaulay2 process. A task that fails, hangs or runs out of memory cannot affect another task or its record.
 - **Limits are enforced from outside.** The scheduler measures the wall time of each process and kills it at the time limit. The memory limit is a control-group limit set through `systemd-run --user --scope` where that is available (`--memory-guard cgroup`); elsewhere the scheduler reads the resident size of each process every 20 ms and kills it over the limit (`--memory-guard poll`).
 - **A memory budget.** A task starts only when a worker is free and its memory limit fits in what remains of the budget. A run is refused if the budget is more than the memory available on the machine at that moment, unless `--overcommit` is given.
-- **One record per task.** When a task ends, whatever the reason, one JSON object is appended to `results/<name>/results.jsonl` in a single write.
+- **One record per finished attempt.** The scheduler appends and syncs a complete JSON record in `results/<name>/results.jsonl` before counting an attempt as recorded. An interrupted write can leave an incomplete final line. Reports count unreadable lines, and the next writer starts its records on a new line.
 - **Exact resumption.** A rerun computes the tasks that have no record and nothing else. An interrupted run leaves no record for the tasks that were in flight, so a rerun computes them. `--retry timeout,memory` computes again the tasks whose latest record has one of those statuses, for example after raising a limit.
 - **No orphans.** Task processes are killed by the kernel if the scheduler itself is killed. Two runs cannot write to the same results.
 
@@ -150,7 +150,7 @@ A record carries the task, its outcome and where it came from:
  "wall_seconds": 2.6, "cpu_seconds": 3.9, "peak_rss_mb": 325.6,
  "limits": {"time_seconds": 300, "memory_mb": 1000}, "memory_guard": "cgroup",
  "exit_code": 0, "exit_signal": null, "error": null, "log": null,
- "started_at": "…", "run_id": "…",
+ "started_at": "…", "run_id": "…", "attempt_id": "…",
  "runner": {"m2_version": "1.25.11", "package": "K3Twists 0.2"},
  "code": {"commit": "…", "dirty": false}}
 ```
@@ -165,7 +165,7 @@ A record carries the task, its outcome and where it came from:
 | `error` | Macaulay2 reported an error; the message is in the record |
 | `crashed` | the process ended without a result for another reason |
 
-`peak_rss_mb` is the largest resident size of the task's process, as the kernel reports it when the process ends. The output of a task that did not end with a value is kept in `results/<name>/logs/`. Next to the records, `runs.jsonl` has one line per run with the configuration as it was resolved, the command line, the versions and the memory available at the start, and `manifest.json` lists the tasks of the latest run with their limits.
+`peak_rss_mb` is the largest resident size of the task's process, as the kernel reports it when the process ends. The output of an attempt that times out, exceeds its memory limit, errors or crashes is kept in `results/<name>/logs/`. Each attempt uses a distinct log filename so its record continues to point to the original output after a retry. Next to the records, `runs.jsonl` has one line per run with the configuration as it was resolved, the command line, the versions and the memory available at the start, and `manifest.json` lists the tasks of the latest run with their limits.
 
 `run` exits with status 0 when every task of the batch is `ok` or `unsupported`, 1 when a task is `mismatch`, `error` or `crashed`, 3 when nothing failed but tasks were stopped at a limit, and 2 when the batch cannot be run as asked.
 

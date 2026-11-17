@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from k3batch.config import ConfigError
 from k3batch.memory import CgroupGuard
+from k3batch.scheduler import Scheduler
+from k3batch.store import ResultStore
 
 from .helpers import SchedulerCase, fake_config
 
@@ -129,6 +132,34 @@ class Resumption(SchedulerCase):
         # both attempts are on record; the latest one counts
         store_lines = (self.run_dir / "results.jsonl").read_text().splitlines()
         self.assertEqual(len(store_lines), 4)
+
+    def test_interrupted_and_successful_retries_preserve_the_first_attempts_log(self) -> None:
+        failed = fake_config([{"name": "retry", "exit": 1}])
+        self.run_batch(failed)
+        history = ResultStore(self.run_dir / "results.jsonl")
+        first = history.latest()["fake/retry"]
+        log = self.run_dir / first["log"]
+        contents = log.read_bytes()
+        self.assertIn(b"asked to fail", contents)
+        self.assertIn(first["attempt_id"], log.name)
+
+        with (
+            patch.object(Scheduler, "_collect", side_effect=KeyboardInterrupt),
+            self.assertRaises(KeyboardInterrupt),
+        ):
+            self.run_batch(failed, retry={"error"})
+        self.assertEqual(log.read_bytes(), contents)
+        self.assertEqual(history.records(), [first])
+        interrupted_logs = set(log.parent.glob("*.log")) - {log}
+        self.assertEqual(len(interrupted_logs), 1)
+
+        self.assertEqual(self.run_batch(fake_config([{"name": "retry"}]), retry={"error"}), {"ok": 1})
+        earlier, latest = history.records()
+        self.assertEqual(earlier, first)
+        self.assertNotEqual(latest["attempt_id"], first["attempt_id"])
+        self.assertIsNone(latest["log"])
+        self.assertEqual(log.read_bytes(), contents)
+        self.assertEqual(set(log.parent.glob("*.log")), {log} | interrupted_logs)
 
 
 class Scheduling(SchedulerCase):

@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from .config import BatchConfig, ConfigError
 from .memory import MemoryGuard
@@ -45,6 +46,7 @@ class _Running:
     process: subprocess.Popen[bytes]
     tag: str
     log: Path
+    attempt_id: str
     started: float
     started_at: str
     verdict: Status | None = None  # set when the scheduler kills the process
@@ -136,9 +138,10 @@ class Scheduler:
     def _start(self, task: Task, limits: Limits) -> _Running:
         self._started += 1
         tag = f"k3batch-{os.getpid()}-{self._started}"
-        log = self.run_dir / "logs" / f"{_slug(task.id)}.log"
+        attempt_id = uuid4().hex
+        log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
         command = self.guard.wrap(run_command(self.runner, task), limits.memory_mb, tag)
-        with log.open("wb") as output:
+        with log.open("xb") as output:
             process = subprocess.Popen(
                 command,
                 stdin=subprocess.DEVNULL,
@@ -154,6 +157,7 @@ class Scheduler:
             process=process,
             tag=tag,
             log=log,
+            attempt_id=attempt_id,
             started=time.monotonic(),
             started_at=datetime.now(UTC).isoformat(timespec="seconds"),
         )
@@ -217,6 +221,7 @@ class Scheduler:
             entry.log.unlink(missing_ok=True)
         record = {
             "task_id": entry.task.id,
+            "attempt_id": entry.attempt_id,
             "task": entry.task.payload,
             "status": str(status),
             "value": result.get("value"),
