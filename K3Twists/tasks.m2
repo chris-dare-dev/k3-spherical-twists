@@ -8,179 +8,115 @@ timed = f -> (r := elapsedTiming f(); (r#0, r#1))
 
 -- Surfaces ---------------------------------------------------------------------------------------
 
-surfaceSpec = s -> new HashTable from {
-    "d" => s#"d",
-    "seed" => opt(s, "seed", 1),
-    "characteristic" => opt(s, "characteristic", 32003),
-    "special_quadric" => opt(s, "special_quadric", false)
-    }
+surfaceSpec = normalizeK3SurfaceSpec
 
 surfaceLabel = s -> concatenate(
     "d", toString s#"d", if s#"special_quadric" then "q" else "",
     "-p", toString s#"characteristic", "-s", toString s#"seed")
 
-surfaceFromSpec = s -> k3Surface(s#"d", Seed => s#"seed", Characteristic => s#"characteristic",
-    SpecialQuadric => s#"special_quadric")
+surfaceFromSpec = s -> realizeK3Surface k3Recipe s
 
--- Kind "ext_pair": Ext^i(E, F) for two sheaves of the catalogue ------------------------------------
+-- The built-in kinds use JSON field schemas. A schema is a list of (name, predicate) pairs.
+isString = x -> instance(x, String) and #x > 0
+isStringList = x -> instance(x, List) and all(x, isString)
+isBoolean = x -> instance(x, Boolean)
+isNonnegativeNumber = x -> (instance(x, ZZ) or instance(x, RR)) and x >= 0
+isNonnegativeInteger = x -> instance(x, ZZ) and x >= 0
+isAnything = x -> true
+nullable = test -> x -> x === null or test x
 
--- A hint for ordering tasks and choosing limits: the rank of the sheaf Hom(E, F), a sheaf of rank 0
--- counted as rank 1; 0 when nothing is computed.  c and e are rows of catalogueClasses.
-extPairCost = (c, e) -> (
-    if extMethod(c#2, c#1#0, e#2, e#1#0) == "not computed" then 0
-    else max(c#1#0, 1) * max(e#1#0, 1)
+checkFields = (h, label, required, optional) -> (
+    if not instance(h, HashTable) then error(label | " must be an object");
+    scan(required, (key, test) -> (
+        if not h#?key then error(label | " is missing " | key);
+        if not test h#key then error(label | " has invalid " | key)));
+    scan(optional, (key, test) -> (
+        if h#?key and not test h#key then error(label | " has invalid " | key)));
+    allowed := apply(required | optional, first);
+    scan(keys h, key -> if not member(key, allowed) then error(label | " has unknown field " | toString key));
     )
 
-expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
-        K := surfaceFromSpec s;
-        d := (degree K#"variety") // 2;
-        classes := catalogueClasses K;
-        chosen := key -> (
-            want := opt(set, key, opt(set, "sheaves", "all"));
-            if want === "all" then classes
-            else apply(want, name -> (
-                    found := select(classes, c -> c#0 == name);
-                    if #found == 0 then error("no sheaf named " | name | " on " | surfaceLabel s);
-                    first found))
-            );
-        flatten apply(chosen "sources", c -> apply(chosen "targets", e -> new HashTable from {
-                    "id" => concatenate("ext_pair/", surfaceLabel s, "/", c#0, "/", e#0),
-                    "kind" => "ext_pair",
-                    "comparison" => "fields",
-                    "set" => i,
-                    "group" => "ext_pair " | surfaceLabel s,
-                    "cost" => extPairCost(c, e),
-                    "predicted" => new HashTable from {"chi" => -mukaiPairing(d, c#1, e#1)},
-                    "surface" => s,
-                    "source" => c#0,
-                    "target" => e#0
-                    }))
-        ))
-
-runExtPair = task -> (
-    s := task#"surface";
-    (setup, entries) := timed(() -> (
-            K := surfaceFromSpec s;
-            {catalogueEntry(K, task#"source"), catalogueEntry(K, task#"target")}));
-    (compute, row) := timed(() -> extTableRow(entries#0, entries#1));
-    dims := row#2;
-    chi := if dims === null then null else dims#0 - dims#1 + dims#2;
-    new HashTable from {
-        "value" => if dims === null then null else new HashTable from {"dims" => dims, "chi" => chi},
-        "predicted" => new HashTable from {"chi" => row#3},
-        "agrees" => if dims === null then null else chi == row#3,
-        "method" => row#4,
-        "setup_seconds" => setup,
-        "compute_seconds" => compute
-        }
+checkSurfaceSpec = s -> (
+    if not instance(s, HashTable) then error "surface must be an object";
+    surfaceSpec s
     )
 
--- Kind "invariant": one entry of sheafInvariants ---------------------------------------------------
-
-expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
-        K := surfaceFromSpec s;
-        fast := sheafInvariantNames K;
-        every := sheafInvariantNames(K, Slow => true);
-        predicted := hashTable apply(invariantSpecs(K, true), spec -> spec#0 => spec#2);
-        want := opt(set, "names", "fast");
-        names := if want === "fast" then fast
-            else if want === "slow" then select(every, name -> not member(name, fast))
-            else if want === "all" then every
-            else (
-                scan(want, name -> if not member(name, every) then error("no invariant named " | name));
-                want);
-        apply(names, name -> new HashTable from {
-                "id" => concatenate("invariant/", surfaceLabel s, "/", name),
-                "kind" => "invariant",
-                "comparison" => "equals",
-                "set" => i,
-                "group" => "invariant " | surfaceLabel s,
-                "cost" => if member(name, fast) then 1 else 50,
-                "predicted" => predicted#name,
-                "surface" => s,
-                "name" => name
-                })
-        ))
-
-runInvariant = task -> (
-    (setup, K) := timed(() -> surfaceFromSpec task#"surface");
-    (compute, row) := timed(() -> sheafInvariant(K, task#"name"));
-    new HashTable from {
-        "value" => row#1,
-        "predicted" => row#2,
-        "agrees" => row#1 === row#2,
-        "method" => "direct",
-        "setup_seconds" => setup,
-        "compute_seconds" => compute
-        }
-    )
-
--- Kind "synthetic": no mathematics; holds memory, sleeps or fails, to exercise the limits of a run ---
-
-expandSynthetic = (i, set, surfaces) -> apply(set#"items", item -> new HashTable from {
-        "id" => "synthetic/" | item#"name",
-        "kind" => "synthetic",
-        "comparison" => "equals",
-        "set" => i,
-        "group" => "synthetic",
-        "cost" => opt(item, "cost", 0),
-        "sleep_seconds" => opt(item, "sleep_seconds", 0),
-        "allocate_mb" => opt(item, "allocate_mb", 0),
-        "fail" => opt(item, "fail", false),
-        "value" => opt(item, "value", null),
-        "predicted" => opt(item, "predicted", null)
-        })
-
-runSynthetic = task -> (
-    if task#"fail" then error "synthetic task asked to fail";
-    (compute, held) := timed(() -> (
-            -- a mutable list of 131072 pointers takes one megabyte
-            blocks := apply(task#"allocate_mb", j -> new MutableList from (131072 : j));
-            if task#"sleep_seconds" > 0 then sleep task#"sleep_seconds";
-            #blocks));
-    value := if task#"value" === null then held else task#"value";
-    new HashTable from {
-        "value" => value,
-        "predicted" => task#"predicted",
-        "agrees" => if task#"predicted" === null then null else value === task#"predicted",
-        "method" => "synthetic",
-        "setup_seconds" => 0.,
-        "compute_seconds" => compute
-        }
-    )
-
--- Dispatch ---------------------------------------------------------------------------------------
-
-taskKinds = new HashTable from {
-    "ext_pair" => (expandExtPairs, runExtPair),
-    "invariant" => (expandInvariants, runInvariant),
-    "synthetic" => (expandSynthetic, runSynthetic)
+taskKindField = {("kind", isString)}
+taskCommonFields = {
+    ("id", isString), ("group", isString), ("set", isNonnegativeInteger),
+    ("cost", isNonnegativeNumber), ("kind_version", isNonnegativeInteger),
+    ("requirements", isStringList), ("comparison", s -> member(s, {"equals", "fields"})),
+    ("predicted", isAnything)
     }
+checkTaskFields = (task, required, optional) ->
+    checkFields(task, task#"kind" | " task", taskKindField | required, taskCommonFields | optional)
 
-kindOf = h -> (
-    if not h#?"kind" or not taskKinds#?(h#"kind") then error(
-        "expected \"kind\" to be one of " | demark(", ", sort keys taskKinds));
-    h#"kind"
+taskKinds = new MutableHashTable
+
+registerTaskKind = method()
+registerTaskKind(String, HashTable) := (name, spec) -> (
+    if #name == 0 then error "task kind name must be nonempty";
+    if taskKinds#?name then error("task kind already registered: " | name);
+    checkFields(spec, name | " kind", {
+            ("version", x -> isNonnegativeInteger x and x > 0),
+            ("requirements", isStringList),
+            ("validate_set", x -> instance(x, Function)),
+            ("validate_task", x -> instance(x, Function)),
+            ("validate_result", x -> instance(x, Function)),
+            ("expand", x -> instance(x, Function)),
+            ("run", x -> instance(x, Function))
+            }, {});
+    taskKinds#name = spec;
+    )
+
+taskKindOf = h -> (
+    if not instance(h, HashTable) or not h#?"kind" or not isString h#"kind" or not taskKinds#?(h#"kind") then
+        error("expected kind to be one of " | demark(", ", sort keys taskKinds));
+    taskKinds#(h#"kind")
     )
 
 -- The tasks of a batch description {"surfaces" => {...}, "tasks" => {...}}, in the order given.
 expandBatch = method()
 expandBatch HashTable := List => spec -> (
-    surfaces := apply(opt(spec, "surfaces", {}), surfaceSpec);
+    checkFields(spec, "batch", {}, {
+            ("surfaces", nullable(x -> instance(x, List))), ("tasks", nullable(x -> instance(x, List)))
+            });
+    surfaces := apply(opt(spec, "surfaces", {}), checkSurfaceSpec);
     sets := opt(spec, "tasks", {});
-    tasks := flatten apply(#sets, i -> (taskKinds#(kindOf sets#i))#0 (i, sets#i, surfaces));
+    tasks := flatten apply(#sets, i -> (
+            kind := taskKindOf sets#i;
+            (kind#"validate_set")(sets#i);
+            apply((kind#"expand")(i, sets#i, surfaces), task -> (
+                    (kind#"validate_task") task;
+                    merge(task, hashTable {
+                            "kind_version" => kind#"version", "requirements" => kind#"requirements"
+                            }, (a, b) -> b)
+                    ))
+            ));
     ids := apply(tasks, t -> t#"id");
     if #unique ids != #ids then error "two tasks of the batch have the same id";
     tasks
     )
 
--- The outcome of one task: "status" is "ok" when a value was computed and agrees with the predicted
--- one or has none to agree with, "mismatch" when it differs, "unsupported" when there is no method.
+-- A result includes the observation, optional prediction, decision and diagnostic timing.
 runTask = method()
 runTask HashTable := HashTable => task -> (
-    out := (taskKinds#(kindOf task))#1 task;
+    kind := taskKindOf task;
+    (kind#"validate_task") task;
+    if task#?"kind_version" and task#"kind_version" =!= kind#"version" then error "unsupported task kind version";
+    if task#?"requirements" and task#"requirements" =!= kind#"requirements" then error "task requirements changed";
+    out := (kind#"run") task;
+    checkFields(out, "task result", {
+            ("value", isAnything), ("predicted", isAnything), ("agrees", nullable isBoolean),
+            ("method", isString), ("setup_seconds", isNonnegativeNumber), ("compute_seconds", isNonnegativeNumber)
+            }, {("outputs", x -> instance(x, List))});
+    scan(opt(out, "outputs", {}), reference -> checkFields(reference, "output reference", {
+                ("name", isString), ("media_type", isString), ("digest", isString)
+                }, {}));
+    if out#"value" === null and out#"agrees" =!= null then error "unsupported result must have null agrees";
+    (kind#"validate_result") out;
     status := if out#"value" === null then "unsupported"
         else if out#"agrees" === false then "mismatch"
         else "ok";
-    merge(out, new HashTable from {"status" => status}, (a, b) -> b)
+    merge(out, hashTable {"status" => status}, (a, b) -> b)
     )

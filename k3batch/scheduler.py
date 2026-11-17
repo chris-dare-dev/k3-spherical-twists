@@ -22,7 +22,7 @@ from .execution import JobResult, LocalBackend, LocalJob, read_output
 from .identity import RECORD_SCHEMA, implementation_fingerprint, recheck, task_identities
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
-from .runner import REPOSITORY, error_lines, parse_result, run_command
+from .runner import REPOSITORY, RunnerError, RunnerInvocation, error_lines
 from .store import ResultStore
 
 
@@ -51,6 +51,7 @@ class _Running:
     task: Task
     limits: Limits
     job: LocalJob
+    invocation: RunnerInvocation
     log: Path
     attempt_id: str
     started_at: str
@@ -171,7 +172,10 @@ class Scheduler:
         finally:
             # an interrupted run leaves no record for the tasks in flight, so a rerun computes them
             for entry in running:
-                self.backend.cancel(entry.job)
+                try:
+                    self.backend.cancel(entry.job)
+                finally:
+                    entry.invocation.cleanup()
             signal.signal(signal.SIGTERM, previous)
         return outcome
 
@@ -195,11 +199,17 @@ class Scheduler:
     def _start(self, task: Task, limits: Limits) -> _Running:
         attempt_id = uuid4().hex
         log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
-        job = self.backend.start(run_command(self.runner, task), limits, log, cwd=REPOSITORY)
+        invocation = RunnerInvocation.prepare(self.runner, "run", task.payload, self.run_dir / "requests")
+        try:
+            job = self.backend.start(invocation.command, limits, log, cwd=REPOSITORY)
+        except BaseException:
+            invocation.cleanup()
+            raise
         return _Running(
             task=task,
             limits=limits,
             job=job,
+            invocation=invocation,
             log=log,
             attempt_id=attempt_id,
             started_at=datetime.now(UTC).isoformat(timespec="seconds"),
@@ -215,18 +225,28 @@ class Scheduler:
                 outcome = self.backend.observe(entry.job)
             except RuntimeError:
                 running.remove(entry)
+                entry.invocation.cleanup()
                 raise
             if outcome is None:
                 continue
             running.remove(entry)
-            records.append(self._record(entry, outcome))
+            try:
+                records.append(self._record(entry, outcome))
+            finally:
+                entry.invocation.cleanup()
         return records
 
     def _record(self, entry: _Running, outcome: JobResult) -> dict[str, Any]:
         output = read_output(entry.log)
         exit_code = outcome.returncode
-        result = parse_result(output) if exit_code == 0 and outcome.verdict is None else None
+        result = None
         error = None
+        if exit_code >= 0 and outcome.verdict is None:
+            try:
+                result = entry.invocation.task_result(output, exit_code)
+            except RunnerError as problem:
+                diagnostics = error_lines(output)
+                error = f"{problem}\n{diagnostics}" if diagnostics else str(problem)
         if outcome.verdict in {"timeout", "memory"}:
             status = Status(outcome.verdict)
         elif outcome.verdict is not None:
@@ -238,6 +258,8 @@ class Scheduler:
             )
         elif result is not None and result.get("status") in RUNNER_STATUSES:
             status = Status(result["status"])
+        elif error is not None:
+            status = Status.ERROR
         elif exit_code > 0:
             status = Status.ERROR
             error = outcome.data.get("launch_error") or error_lines(output) or f"exit status {exit_code}"

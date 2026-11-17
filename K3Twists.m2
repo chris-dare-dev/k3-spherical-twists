@@ -12,11 +12,22 @@ export {
     -- surfaces
     "K3Surface",
     "k3Surface",
+    "K3FamilyRecipe",
+    "k3Recipe",
+    "realizeK3Surface",
     "Characteristic",
     "Seed",
     "SpecialQuadric",
     -- classes
+    "MarkedDivisorLattice",
+    "markedDivisorLattice",
+    "DivisorClass",
+    "divisorClass",
+    "divisorPairing",
+    "MukaiClass",
+    "mukaiClass",
     "mukaiPairing",
+    "tensorByDivisor",
     "twistVector",
     "dualVector",
     "chainNumber",
@@ -35,6 +46,7 @@ export {
     -- catalogue
     "catalogue",
     "catalogueClasses",
+    "catalogueMukaiClass",
     "catalogueEntry",
     "extTableRow",
     -- invariants
@@ -44,19 +56,28 @@ export {
     "Slow",
     -- tasks
     "expandBatch",
-    "runTask"
+    "runTask",
+    "registerTaskKind"
     }
 
-load "./K3Twists/classes.m2"
-load "./K3Twists/surfaces.m2"
+load "./K3Twists/numerical/lattices.m2"
+load "./K3Twists/numerical/classes.m2"
+load "./K3Twists/geometry/recipes.m2"
+load "./K3Twists/geometry/models.m2"
 load "./K3Twists/sheaves.m2"
+load "./K3Twists/studies/catalogueClasses.m2"
 load "./K3Twists/catalogue.m2"
 load "./K3Twists/invariants.m2"
 load "./K3Twists/tasks.m2"
+load "./K3Twists/tasks/ext-pair.m2"
+load "./K3Twists/tasks/invariant.m2"
+load "./K3Twists/tasks/synthetic.m2"
 
 beginDocumentation()
 
 load "./K3Twists/doc.m2"
+load "./K3Twists/doc-models.m2"
 load "./K3Twists/tests.m2"
+load "./K3Twists/tests-models.m2"
 
 end--

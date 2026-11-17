@@ -18,6 +18,9 @@ doc ///
             described as tasks: @TO expandBatch@ lists the tasks of a batch and @TO runTask@ computes one.
     Subnodes
         k3Surface
+        k3Recipe
+        markedDivisorLattice
+        mukaiClass
         catalogue
         sheafInvariants
         expandBatch
@@ -55,7 +58,7 @@ doc ///
             The surface is a quartic in $\mathbb{P}^3$, the intersection of a quadric and a cubic in
             $\mathbb{P}^4$, or the intersection of three quadrics in $\mathbb{P}^5$.  The forms are random
             among those vanishing at $x = (1:0:\dots:0)$; an error is raised if they do not define a
-            smooth surface.  The same degree, characteristic and seed always give the same surface.
+            smooth surface. Repeating a recipe with the same generator produces the same equations.
         Example
             K = k3Surface(3, Seed => 7, Characteristic => 10007)
             degree K#"variety"
@@ -66,6 +69,7 @@ doc ///
             @TT "\"variety\""@, @TT "\"point\""@ (the ideal of $x$), @TT "\"seed\""@,
             @TT "\"characteristic\""@ and @TT "\"specialQuadric\""@.
 
+            For the realized equations and marked lattice, see @TO realizeK3Surface@.
             With the special quadric the surface carries the rank 2 bundle of @TO mukaiBundle@.
 ///
 
@@ -73,6 +77,7 @@ doc ///
     Key
         mukaiPairing
         (mukaiPairing, ZZ, List, List)
+        (mukaiPairing, MukaiClass, MukaiClass)
     Headline
         the pairing of two classes on a K3 surface of degree 2d
     Usage
@@ -89,6 +94,7 @@ doc ///
         Text
             For sheaves $E$ and $F$ with classes $v$ and $w$ the Euler characteristic
             $\sum (-1)^i \dim Ext^i(E, F)$ is the negative of the pairing.
+            The two-argument overload uses a shared marked lattice. See @TO mukaiClass@.
         Example
             mukaiPairing(2, {1, 0, 1}, {1, 0, 1})
             mukaiPairing(2, {3, -1, 1}, {1, 1, 3})
@@ -103,6 +109,7 @@ doc ///
         (twistVector, ZZ, List, ZZ)
         dualVector
         (dualVector, List)
+        (dualVector, MukaiClass)
     Headline
         the class of a twist and of a dual
     Usage
@@ -117,6 +124,9 @@ doc ///
         :List
             the class of $E(tH)$, or of the dual of a locally free $E$
     Description
+        Text
+            The typed operations on a marked lattice are @TO tensorByDivisor@ and the overload
+            of @TT "dualVector"@ for @TO MukaiClass@.
         Example
             twistVector(2, {1, 0, 1}, 1)
             dualVector {3, -1, 1}
@@ -473,4 +483,40 @@ doc ///
             @TT "\"unsupported\""@ when there is no method.  It also has the @TT "\"value\""@, the
             @TT "\"predicted\""@ value, @TT "\"agrees\""@, the @TT "\"method\""@ and the seconds spent
             building the sheaves and computing.
+///
+
+doc ///
+    Key
+        registerTaskKind
+        (registerTaskKind, String, HashTable)
+    Headline
+        make a computation kind available to the batch functions
+    Usage
+        registerTaskKind(name, descriptor)
+    Inputs
+        name:String
+            an unused kind name
+        descriptor:HashTable
+            a version, requirement names, three validators, an expander and a computation function
+    Description
+        Text
+            Load a kind's module before calling @TO expandBatch@ or @TO runTask@.
+            The descriptor has a positive integer @TT "version"@ and a string list
+            @TT "requirements"@. The @TT "validate_set"@, @TT "validate_task"@, and
+            @TT "validate_result"@ functions check their inputs and raise an error for
+            invalid fields. The @TT "expand"@ function accepts the set index, task-set
+            parameters, and normalized surface specifications. It returns a list of
+            tasks without building those surfaces. The @TT "run"@ function accepts
+            one task and returns its observation and prediction.
+        Text
+            A task has @TT "id"@, @TT "kind"@, @TT "group"@, @TT "set"@ and @TT "cost"@
+            fields and any scientific inputs used by the kind. The registry adds the
+            kind version and requirements. A computation returns @TT "value"@,
+            @TT "predicted"@, @TT "agrees"@, @TT "method"@, @TT "setup_seconds"@ and
+            @TT "compute_seconds"@. It may also return a list @TT "outputs"@ of
+            references with a name, media type and digest. The registry derives the
+            status from the observation and the comparison.
+    SeeAlso
+        expandBatch
+        runTask
 ///

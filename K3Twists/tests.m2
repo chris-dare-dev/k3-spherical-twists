@@ -189,3 +189,29 @@ TEST ///
     assert((synthetic(null, null))#"status" == "ok");
     assert((synthetic(1, 2))#"status" == "mismatch");
 ///
+
+TEST ///
+    -- External kinds use the same registry as the runner without editing dispatcher code.
+    descriptor = hashTable {
+        "version" => 3,
+        "requirements" => {"test-fixture"},
+        "validate_set" => (s -> assert(s#"kind" == "example")),
+        "validate_task" => (t -> assert(instance(t#"number", ZZ))),
+        "validate_result" => (r -> assert(instance(r#"value", ZZ))),
+        "expand" => ((i, s, models) -> {hashTable {
+                    "kind" => "example", "id" => "example/1", "group" => "example",
+                    "set" => i, "cost" => 0, "number" => 11
+                    }}),
+        "run" => (t -> hashTable {
+                    "value" => t#"number" + 1, "predicted" => 12, "agrees" => true,
+                    "method" => "example", "setup_seconds" => 0, "compute_seconds" => 0
+                    })
+        };
+    registerTaskKind("example", descriptor);
+    tasks = expandBatch hashTable {"tasks" => {hashTable {"kind" => "example"}}};
+    t = first tasks;
+    assert(t#"kind_version" == 3 and t#"requirements" == {"test-fixture"});
+    assert((runTask t)#"value" == 12);
+    assert(try (registerTaskKind("example", descriptor); false) else true);
+    assert(try (runTask merge(t, hashTable {"kind_version" => 4}, (a,b) -> b); false) else true);
+///
