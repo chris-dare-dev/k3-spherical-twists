@@ -41,6 +41,12 @@ The numbers n − 1 and n² − n − 1 are the terms c_1, c_2 of the sequence c
 
 With `Slow => true` some of these are computed a second time as Ext groups, together with Extⁱ(F, F) for F = I_x(H), M_H, M_x (predicted (1, 2, 1), (1, 0, 1), (1, 2, 1)). Those take minutes on the quartic and are not practical for d = 3, 4.
 
+## The catalogue and the table of Ext groups
+
+`catalogue` lists about twenty sheaves on a surface with their classes (r, c, s), where c is the multiple of H and the pairing is ⟨v, w⟩ = 2d·cc′ − rs′ − r′s: the line bundles O(tH), the ideal sheaves I_x(tH), O_x, the bundles M_H, M_x and their duals, the bundle E_2 (the kernel of sl(V) ⊗ O → V ⊗ O(H), rank n² − n − 1), and M_2H (the kernel of H⁰(O(2H)) ⊗ O → O(2H)). For d = 3 the option `SpecialQuadric => true` takes the quadric x₀x₁ + x₂x₃ + x₄², and `mukaiBundle` is then a rank 2 bundle of class (2, 1, 2) with End = (1, 0, 1).
+
+`scripts/ext-table.m2` computes Extⁱ(E, F) for pairs of the catalogue as the cohomology of the sheaf Hom(E, F), using Serre duality when F is the locally free one, and compares the Euler characteristic with −⟨v(E), v(F)⟩. Pairs of two bundles of rank above 5 are slow; `scripts/overnight.sh` runs every surface, the slow pairs one process each under a time and memory limit, and writes to `results/`.
+
 ## Running it
 
 With Macaulay2 installed (version 1.25 was used):
@@ -57,7 +63,7 @@ make invariants D=3
 make all-degrees
 ```
 
-`make test` runs the package's tests (seven tests, about half a minute). `make invariants` prints the table for one surface and exits with status 1 if a computed value differs from the predicted one. `make invariants-slow D=2` adds the Ext groups.
+`make test` runs the package's tests (ten tests, a little over a minute). `make invariants` prints the table for one surface and exits with status 1 if a computed value differs from the predicted one. `make invariants-slow D=2` adds the Ext groups.
 
 Without a system install, build the container once and run inside it:
 
@@ -78,6 +84,8 @@ The surface is chosen by a seed and a characteristic (`K3SEED`, `K3CHAR` for the
 | `K3Twists.m2` | the package: surfaces, sheaves, invariants, tests |
 | `scripts/run-tests.m2` | runs the tests |
 | `scripts/sheaf-invariants.m2` | prints the comparison for one surface |
+| `scripts/ext-table.m2` | Ext groups between pairs of the catalogue |
+| `scripts/overnight.sh` | all surfaces, with limits; output in `results/` |
 | `Dockerfile`, `Makefile` | container and targets |
 
 ## What this does not show
