@@ -10,9 +10,18 @@ timed = f -> (r := elapsedTiming f(); (r#0, r#1))
 
 surfaceSpec = normalizeK3SurfaceSpec
 
-surfaceLabel = s -> concatenate(
-    "d", toString s#"d", if s#"special_quadric" then "q" else "",
-    "-p", toString s#"characteristic", "-s", toString s#"seed")
+surfaceLabel = s -> (
+    original := concatenate(
+        "d", toString s#"d", if s#"special_quadric" then "q" else "",
+        "-p", toString s#"characteristic", "-s", toString s#"seed");
+    if not s#?"family" then return original;
+    label := s#"family" | "-" | original;
+    if s#?"model" then (
+        model := s#"model";
+        label = label | "-m" | toString hash {model#"equation", model#"curve", model#"point"};
+        );
+    label
+    )
 
 surfaceFromSpec = s -> realizeK3Surface k3Recipe s
 

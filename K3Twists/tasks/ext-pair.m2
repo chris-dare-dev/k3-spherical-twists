@@ -8,6 +8,7 @@ extPairCost = (c, e) -> (
     )
 
 expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
+        label := surfaceLabel s;
         d := s#"d";
         classes := apply(catalogueSpecsFor(d, s#"special_quadric", null), row -> take(row, 3));
         chosen := key -> (
@@ -15,15 +16,15 @@ expandExtPairs = (i, set, surfaces) -> flatten apply(surfaces, s -> (
             if want === "all" then classes
             else apply(want, name -> (
                     found := select(classes, c -> c#0 == name);
-                    if #found == 0 then error("no sheaf named " | name | " on " | surfaceLabel s);
+                    if #found == 0 then error("no sheaf named " | name | " on " | label);
                     first found))
             );
         flatten apply(chosen "sources", c -> apply(chosen "targets", e -> new HashTable from {
-                    "id" => concatenate("ext_pair/", surfaceLabel s, "/", c#0, "/", e#0),
+                    "id" => concatenate("ext_pair/", label, "/", c#0, "/", e#0),
                     "kind" => "ext_pair",
                     "comparison" => "fields",
                     "set" => i,
-                    "group" => "ext_pair " | surfaceLabel s,
+                    "group" => "ext_pair " | label,
                     "cost" => extPairCost(c, e),
                     "predicted" => new HashTable from {"chi" => -mukaiPairing(d, c#1, e#1)},
                     "surface" => s,
