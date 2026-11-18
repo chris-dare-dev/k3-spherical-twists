@@ -61,7 +61,30 @@ export {
     -- tasks
     "expandBatch",
     "runTask",
-    "registerTaskKind"
+    "registerTaskKind",
+    -- spherical twist words
+    "K3ObjectReference",
+    "ShiftedK3Object",
+    "SymbolicTwistImage",
+    "SphericalTwistGenerator",
+    "SphericalTwistStep",
+    "SphericalTwistWord",
+    "objectReference",
+    "catalogueObject",
+    "lineBundleObject",
+    "structureObject",
+    "shiftObject",
+    "sphericalObject",
+    "checkedSphericalObject",
+    "assumeSphericalObject",
+    "twistStep",
+    "twistWord",
+    "composeTwistWords",
+    "inverseTwistWord",
+    "mukaiReflection",
+    "applyWordToClass",
+    "applyWord",
+    "VerifiedOnly"
     }
 
 load "./K3Twists/numerical/lattices.m2"
@@ -78,14 +101,19 @@ load "./K3Twists/tasks.m2"
 load "./K3Twists/tasks/ext-pair.m2"
 load "./K3Twists/tasks/invariant.m2"
 load "./K3Twists/tasks/synthetic.m2"
+load "./K3Twists/derived/objects.m2"
+load "./K3Twists/derived/spherical.m2"
+load "./K3Twists/derived/words.m2"
 
 beginDocumentation()
 
 load "./K3Twists/doc.m2"
 load "./K3Twists/doc-marked-quartics.m2"
 load "./K3Twists/doc-models.m2"
+load "./K3Twists/doc-words.m2"
 load "./K3Twists/tests.m2"
 load "./K3Twists/tests-marked-quartics.m2"
 load "./K3Twists/tests-models.m2"
+load "./K3Twists/tests-words.m2"
 
 end--

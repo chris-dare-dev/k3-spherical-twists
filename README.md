@@ -72,6 +72,25 @@ Use `quartic_with_conic` for the conic family. Both families have degree four an
 
 Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
 
+## Apply a word in spherical twists
+
+A word lists its signed steps in application order. A sign of 1 applies a twist and -1 applies its inverse.
+
+```macaulay2
+K = k3Surface 2;
+P = catalogueObject(K, "O_x");
+S = sphericalObject structureObject K;
+T = sphericalObject lineBundleObject(K, K#"polarization");
+W = twistWord {twistStep(S, 1), twistStep(T, -1)};
+E = applyWord(W, P, VerifiedOnly => true)
+v = mukaiClass E;
+{v#"rank", (v#"divisor")#"coordinates", v#"eulerComponent"}
+```
+
+This gives the symbolic image of the point sheaf and its Mukai coordinates `{2, {3}, 9}`. Symbolic images share prefixes on the same realized model and retain each generator's evidence. The structure and line bundle generators use the K3 line bundle theorem. `checkedSphericalObject` checks a catalogue sheaf through self-Ext, while `assumeSphericalObject` records an explicit hypothesis and is excluded by `VerifiedOnly`.
+
+Use `applyWordToClass` to evaluate a long word using only integer lattice arithmetic. `shiftObject` records a cohomological shift, so even shifts can give distinct objects with equal Mukai classes. Realizing the symbolic image as a complex is a separate operation.
+
 ## Requirements
 
 Macaulay2 (version 1.25 was used) and Python 3.11 or later; the scheduler uses the standard library only. Linux is assumed: the scheduler reads `/proc` and, where `systemd-run --user` is available, uses control groups.
