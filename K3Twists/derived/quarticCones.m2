@@ -30,14 +30,18 @@ quarticEvaluationTarget = (E, K) -> (
 realizeTwistImage = method()
 realizeTwistImage K3ObjectReference := TwistRealization => E -> (
     if not instance(E, SymbolicTwistImage) then return unavailableTwist(E, "expected a symbolic twist image");
-    if E#"length" != 1 then return unavailableTwist(E, "a longer word requires derived evaluation");
-    signedStep := E#"step";
-    if signedStep#"direction" != 1 then return unavailableTwist(E, "inverse twists require coevaluation");
-    if not isSphericalStructure signedStep then return unavailableTwist(E, "requires a certified structure sheaf generator");
     K := E#"surface";
     X := K#"variety";
     if not X.cache#?(symbol k3Model) or degree X != 4 then
         return unavailableTwist(E, "requires a certified smooth quartic K3");
+    measured := elapsedTiming ({realizeQuarticDerived E});
+    derived := first measured#1;
+    if derived =!= null then return new TwistRealization from merge(derived,
+        hashTable {"realizationSeconds" => measured#0}, (a,b) -> b);
+    if E#"length" != 1 then return unavailableTwist(E, "a longer word requires derived evaluation");
+    signedStep := E#"step";
+    if signedStep#"direction" != 1 then return unavailableTwist(E, "inverse twists require coevaluation");
+    if not isSphericalStructure signedStep then return unavailableTwist(E, "requires a certified structure sheaf generator");
     targetName := quarticEvaluationTarget(E#"start", K);
     if targetName === null then return unavailableTwist(E, "requires O_x or the hyperplane line bundle");
     R := K#"ring";
@@ -49,21 +53,13 @@ realizeTwistImage K3ObjectReference := TwistRealization => E -> (
     -- Constants evaluate at the marked point. The coordinates form a basis of H^0(O(H)).
     evaluation := if isPoint then map(module F, R^1, {{1_R}})
         else map(R^{1}, R^4, vars R);
-    sourceComplex := complex source evaluation;
-    targetComplex := complex target evaluation;
-    chainMap := map(targetComplex, sourceComplex, i -> evaluation);
-    C := cone chainMap;
+    (chainMap, C) := degreeZeroCone(evaluation, 0);
     if sheaf HH_0 C != 0 then error "the evaluation must be surjective after sheafification";
     representative := shiftObject(catalogueObject(K, if isPoint then "I_x" else "M_H"), 1);
-    if mukaiClass representative =!= mukaiClass E then error "evaluation and reflection give different classes";
-    new TwistRealization from {
-        "status" => "realized", "symbolic" => E, "reason" => null,
-        "complex" => C, "evaluation" => evaluation, "chainMap" => chainMap,
-        "strategy" => "quartic-degree-zero-evaluation", "direction" => 1,
-        "homologicalToCohomological" => "i -> -i", "representative" => representative,
-        "hypotheses" => {"smooth quartic K3", "certified O generator", "RHom concentrated in degree zero",
-            "surjective evaluation of sheaves"}
-        }
+    realizedDerived(E, representative, C, "quartic-degree-zero-evaluation",
+        {"smooth quartic K3", "certified O generator", "RHom concentrated in degree zero",
+            "surjective evaluation of sheaves"},
+        hashTable {"evaluation" => evaluation, "chainMap" => chainMap, "direction" => 1})
     )
 
 realizedHomology = method()
@@ -74,5 +70,5 @@ realizedHomology(TwistRealization, ZZ) := CoherentSheaf => (R, i) -> (
 
 mukaiClass TwistRealization := MukaiClass => R -> mukaiClass R#"symbolic"
 net TwistRealization := R -> net (
-    if R#"status" === "realized" then "realized twist (quartic degree-zero evaluation)"
+    if R#"status" === "realized" then "realized twist (" | R#"strategy" | ")"
     else "twist realization unsupported: " | R#"reason")
