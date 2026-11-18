@@ -81,6 +81,7 @@ def task_identities(task: Task, implementation: str, graph: dict[str, Any] | Non
     if graph is not None:
         operation["graph"] = graph
     comparison = operation.get("comparison")
+    prediction = operation.pop("prediction", None) if comparison is not None else None
     if comparison is not None:
         if not isinstance(comparison, str) or comparison not in COMPARISONS:
             raise RunnerError(f"task {task.id} declares an unknown comparison: {comparison!r}")
@@ -104,6 +105,7 @@ def task_identities(task: Task, implementation: str, graph: dict[str, Any] | Non
             "computation_id": computation_id,
             "comparison": comparison,
             "predicted": task.payload.get("predicted"),
+            **({"prediction": prediction} if prediction is not None else {}),
         }
     )
     return computation_id, check_id

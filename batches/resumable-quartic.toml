@@ -1,0 +1,62 @@
+name = "resumable-quartic"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1800
+
+[limits]
+time_seconds = 100
+memory_mb = 800
+
+[[surfaces]]
+family = "quartic_with_conic"
+seed = 1
+characteristic = 32003
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "model"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "realize"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "cohomology"
+[tasks.prediction]
+name = "hyperplane twist cohomology"
+version = "1"
+hypotheses = ["smooth quartic", "surjective hyperplane evaluation", "M_H[1]"]
+dimensions = [[-1, 0], [0, 0], [1, 4]]
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "ext"
+[tasks.prediction]
+name = "hyperplane twist Ext to O"
+version = "1"
+hypotheses = ["smooth quartic", "dual hyperplane evaluation sequence", "M_H[1]"]
+dimensions = [[1, 4], [2, 0], [3, 0]]
+
+[graph]
+version = 1
+
+[[graph.nodes]]
+id = "quartic_prefix/model"
+outputs = { model = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/realize"
+outputs = { cone = "graded-complex" }
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/cohomology"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+
+[[graph.nodes]]
+id = "quartic_prefix/ext"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
