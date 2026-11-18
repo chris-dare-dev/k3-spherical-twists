@@ -58,6 +58,17 @@ export {
     "sheafInvariantNames",
     "sheafInvariant",
     "Slow",
+    -- measured and predicted invariants
+    "DegreeObservation",
+    "ObservationPrediction",
+    "ObservationCheck",
+    "cohomologyObservation",
+    "extObservation",
+    "observedDimension",
+    "degreeStatus",
+    "observationPrediction",
+    "checkObservation",
+    "Full",
     -- tasks
     "expandBatch",
     "runTask",
@@ -96,7 +107,7 @@ load "./K3Twists/geometry/marked-quartics.m2"
 load "./K3Twists/sheaves.m2"
 load "./K3Twists/studies/catalogueClasses.m2"
 load "./K3Twists/catalogue.m2"
-load "./K3Twists/invariants.m2"
+load "./K3Twists/studies/shortWordInvariants.m2"
 load "./K3Twists/tasks.m2"
 load "./K3Twists/tasks/ext-pair.m2"
 load "./K3Twists/tasks/invariant.m2"
@@ -104,6 +115,9 @@ load "./K3Twists/tasks/synthetic.m2"
 load "./K3Twists/derived/objects.m2"
 load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"
+
+load "./K3Twists/observations/degrees.m2"
+load "./K3Twists/observations/predictions.m2"
 
 beginDocumentation()
 
@@ -115,5 +129,8 @@ load "./K3Twists/tests.m2"
 load "./K3Twists/tests-marked-quartics.m2"
 load "./K3Twists/tests-models.m2"
 load "./K3Twists/tests-words.m2"
+
+load "./K3Twists/doc-observations.m2"
+load "./K3Twists/tests-observations.m2"
 
 end--
