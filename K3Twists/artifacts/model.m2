@@ -7,11 +7,11 @@ artifactFields = (data, fields) -> (
     data
     )
 
-artifactEnvelope = (kind, payload) -> hashTable {"version" => 1, "kind" => kind, "payload" => payload}
+artifactEnvelope = (v, kind, payload) -> hashTable {"version" => v, "kind" => kind, "payload" => payload}
 
-artifactPayload = (data, kind, fields) -> (
+artifactPayload = (data, kind, fields, versions) -> (
     artifactFields(data, {"version", "kind", "payload"});
-    if data#"version" =!= 1 or data#"kind" =!= kind then error "unexpected artifact kind or version";
+    if data#"kind" =!= kind or not member(data#"version", versions) then error "unexpected artifact kind or version";
     artifactFields(data#"payload", fields)
     )
 
@@ -55,7 +55,7 @@ k3ModelArtifact K3Surface := HashTable => K -> (
         ));
     params := hashTable (select(pairs K#"recipe"#"parameters", (k, v) -> k =!= "model") |
         {"family" => K#"recipe"#"family"});
-    artifactEnvelope("k3-model", hashTable {
+    artifactEnvelope(1, "k3-model", hashTable {
         "parameters" => params, "coordinates" => artifactCoordinates numgens R,
         "grading" => degrees R, "equations" => apply(K#"equations", data), "markings" => marks
         })
@@ -64,7 +64,7 @@ k3ModelArtifact K3Surface := HashTable => K -> (
 loadK3ModelArtifact = method()
 loadK3ModelArtifact(HashTable, String) := K3Surface => (data, digest) -> (
     artifactDigest digest;
-    info := artifactPayload(data, "k3-model", {"parameters", "coordinates", "grading", "equations", "markings"});
+    info := artifactPayload(data, "k3-model", {"parameters", "coordinates", "grading", "equations", "markings"}, {1});
     params := artifactFields(info#"parameters", {"family", "d", "seed", "characteristic", "special_quadric"});
     recipe := k3Recipe params;
     n := params#"d" + 2;

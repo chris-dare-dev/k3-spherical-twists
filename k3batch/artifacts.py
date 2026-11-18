@@ -15,12 +15,12 @@ from typing import Any
 
 from .wire import _unique_object
 
-VERSION = 1
 MODEL = "k3-model"
+COMPLEX = "graded-complex"
 PAYLOAD_FIELDS = {
     MODEL: {"parameters", "coordinates", "grading", "equations", "markings"},
     "graded-presentation": {"model_digest", "source", "target", "matrix"},
-    "graded-complex": {"model_digest", "base", "terms", "differentials"},
+    COMPLEX: {"model_digest", "base", "terms", "differentials"},
 }
 
 
@@ -34,18 +34,19 @@ def _digest(value: object) -> str:
     return value
 
 
-def _describe(data: Any) -> tuple[str, str | None]:
+def _describe(data: Any) -> tuple[int, str, str | None]:
     if not isinstance(data, dict) or set(data) != {"version", "kind", "payload"}:
         raise ArtifactError("invalid artifact envelope")
-    if type(data["version"]) is not int or data["version"] != VERSION:
-        raise ArtifactError("unknown artifact version")
     kind = data["kind"]
     if not isinstance(kind, str) or kind not in PAYLOAD_FIELDS:
         raise ArtifactError("unknown artifact kind")
+    version = data["version"]
+    if type(version) is not int or version not in ((1, 2) if kind == COMPLEX else (1,)):
+        raise ArtifactError("unknown artifact version")
     payload = data["payload"]
     if not isinstance(payload, dict) or set(payload) != PAYLOAD_FIELDS[kind]:
         raise ArtifactError(f"invalid {kind} payload fields")
-    return kind, None if kind == MODEL else _digest(payload["model_digest"])
+    return version, kind, None if kind == MODEL else _digest(payload["model_digest"])
 
 
 def read_artifact_json(body: bytes) -> dict[str, Any]:
@@ -97,7 +98,7 @@ class ArtifactStore:
     def publish(self, data: dict[str, Any], producer: str) -> str:
         if not isinstance(producer, str) or not producer.strip():
             raise ArtifactError("producer must identify a nonempty run or attempt")
-        kind, model = _describe(data)
+        version, kind, model = _describe(data)
         body = _canonical(data)
         digest = sha256(body).hexdigest()
         with self._connect() as connection:
@@ -106,7 +107,7 @@ class ArtifactStore:
             self._publish_file(digest, body)
             connection.execute(
                 "INSERT INTO artifact VALUES (?, ?, ?, ?, ?) ON CONFLICT(digest) DO NOTHING",
-                (digest, len(body), VERSION, kind, model),
+                (digest, len(body), version, kind, model),
             )
             connection.execute(
                 "INSERT INTO producer VALUES (?, ?) ON CONFLICT(digest, attempt) DO NOTHING",
@@ -151,8 +152,8 @@ class ArtifactStore:
             raise ArtifactError(f"registered artifact {digest} has no file") from None
         if len(body) != row[0] or sha256(body).hexdigest() != digest:
             raise ArtifactError(f"artifact {digest} failed digest verification")
-        kind, model = _describe(read_artifact_json(body))
-        if row[1:] != (VERSION, kind, model):
+        version, kind, model = _describe(read_artifact_json(body))
+        if row[1:] != (version, kind, model):
             raise ArtifactError(f"artifact {digest} disagrees with its registry metadata")
         return body, kind, model
 
