@@ -260,6 +260,46 @@ python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinn
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
+## Mathematical artifacts
+
+Macaulay2 functions encode a K3 model, a graded module presentation, or a bounded
+complex of finite free modules as versioned data. The data preserves the equations,
+markings, basis degrees, and differentials. Complex degrees are homological. The
+Macaulay2 loader reconstructs the objects, checks their grading and parent model,
+and checks that consecutive differentials compose to zero.
+
+To save a model from Macaulay2, load `JSON` and write
+`"model.json" << toJSON k3ModelArtifact K << close`. Publish the JSON to get the
+digest, then fetch its verified bytes for another process.
+
+```bash
+model=$(python3 -m k3batch publish-artifact results/artifacts model.json --producer attempt-1)
+python3 -m k3batch read-artifact results/artifacts "$model" > verified-model.json
+```
+
+Use `loadK3ModelArtifact(fromJSON get "verified-model.json", digest)` in the new
+process with the returned digest. To save an object already computed on `K`, use
+`bindK3ModelArtifact(K, fromJSON get "verified-model.json", digest)` to identify its
+existing model. Use `gradedPresentationArtifact` or `gradedComplexArtifact` to encode
+a dependent object and publish it with the same command. The store verifies the
+registered model before publishing or reading dependents. The M2 functions
+`loadGradedPresentation` and `loadGradedComplex` take that loaded model and the
+verified dependent data.
+
+The store records SHA-256, schema version, kind, byte size, parent model and producer
+IDs. Publication flushes the staged file, links it to its digest path, then registers
+it in SQLite. A stage left by a crash is ignored and can be removed after writers stop.
+A file linked before registration is unavailable to readers until identical bytes are
+published again. Two attempts publishing identical bytes share one object and keep
+both producer IDs. A digest mismatch is an error on read and on repeated publication.
+
+On Ubuntu with Macaulay2 1.25.11, the degree-eight complete intersection
+(`d = 4`, seed 1) used 1,685 bytes for the model and 12,559 bytes for the rank-five
+hyperplane kernel bundle's 18-by-38 presentation. Encoding the model and presentation
+took about 0.007 s and 0.08 s, respectively. A fresh process took 0.39 s to validate
+and reload the model and 4.03 s to reload the presentation and form the sheaf.
+These timings exclude M2 startup, publication, and initial bundle construction.
+
 ## Design
 
 Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.
