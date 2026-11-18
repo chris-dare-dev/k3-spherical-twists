@@ -1,6 +1,6 @@
 -- Mukai vectors on a marked K3 lattice and the rank-one study's list interface.
 
-MukaiClass = new Type of HashTable
+MukaiClass = new Type of VarietyNumericalClass
 MukaiClass.synonym = "Mukai class"
 
 mukaiClass = method()
@@ -12,6 +12,33 @@ mukaiPairing = method()
 mukaiPairing(ZZ, List, List) := ZZ => (d, v, w) -> 2 * d * v#1 * w#1 - v#0 * w#2 - v#2 * w#0
 mukaiPairing(MukaiClass, MukaiClass) := ZZ => (v, w) -> (
     divisorPairing(v#"divisor", w#"divisor") - v#"rank" * w#"eulerComponent" - v#"eulerComponent" * w#"rank"
+    )
+
+classCoordinates = v -> (v#"rank", (v#"divisor")#"coordinates", v#"eulerComponent")
+
+-- The generator is validated once. Reflection uses integer arithmetic in all marked coordinates.
+reflectMukaiClass = (v, s) -> (
+    coefficient := mukaiPairing(v, s);
+    (r, c, e) := classCoordinates v;
+    (rs, cs, es) := classCoordinates s;
+    L := (v#"divisor")#"lattice";
+    mukaiClass(r + coefficient * rs, divisorClass(L, apply(c, cs, (a,b) -> a + coefficient * b)),
+        e + coefficient * es)
+    )
+
+mukaiReflection = method()
+mukaiReflection(MukaiClass, MukaiClass) := MukaiClass => (v, s) -> (
+    if mukaiPairing(s, s) != -2 then error "a K3 spherical class must have Mukai square -2";
+    reflectMukaiClass(v, s)
+    )
+
+numericalTwistStep(MukaiClass, MukaiClass, ZZ) := MukaiClass => (v,s,direction) -> reflectMukaiClass(v,s)
+
+eulerPairing(MukaiClass, MukaiClass) := ZZ => (v,w) -> -mukaiPairing(v,w)
+
+negateNumerical MukaiClass := MukaiClass => v -> (
+    c := v#"divisor";
+    mukaiClass(-v#"rank", divisorClass(c#"lattice", apply(c#"coordinates", a -> -a)), -v#"eulerComponent")
     )
 
 -- Tensor by the line bundle of D, keeping the marked parent in all coordinates.

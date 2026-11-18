@@ -86,7 +86,7 @@ doc ///
             a certified smooth K3 surface. @TT "checkedSphericalObject"@ computes the
             self-Ext dimensions of a catalogue sheaf and uses K3 Serre duality.
             @TT "assumeSphericalObject"@ records an explicit hypothesis supplied by
-            the caller. Every constructor checks that the Mukai square is minus two.
+            the caller. The K3 constructors check that the Mukai square is minus two.
         Example
             K = k3Surface 2;
             OX = structureObject K;
@@ -121,7 +121,7 @@ doc ///
         [applyWord, VerifiedOnly]
         [applyWordToClass, VerifiedOnly]
     Headline
-        apply signed spherical twists to objects or their Mukai classes
+        apply signed spherical twists to objects or their numerical classes
     Usage
         a = twistStep(S, direction)
         W = twistWord steps
@@ -154,7 +154,7 @@ doc ///
         Text
             @TT "applyWord"@ returns a symbolic object reference, sharing previously
             constructed prefixes on the model. An image records its starting object,
-            preceding prefix, last signed step, Mukai class and evidence. Its type
+            preceding prefix, last signed step, numerical class and evidence. Its type
             describes a formal image. Computing a complex or its cohomology requires
             a realization strategy. Adjacent inverse steps with the same verified
             object reference cancel. Steps with provisional hypotheses retain their
@@ -162,8 +162,9 @@ doc ///
             inherited evidence.
         Text
             @TT "applyWordToClass"@ computes only the numerical action and builds no
-            object prefixes. A twist and its inverse both act by the reflection
-            $v+\langle v,s\rangle s$. These operations use the full marked lattice.
+            object prefixes. On a K3, both directions use the reflection
+            $v+\langle v,s\rangle s$ on the full marked lattice. The quintic uses
+            the alternating Euler form and the direction of each signed step.
             @TT "twistVector"@ is the original tensor-by-a-line-bundle operation.
         Example
             K = k3Surface 2;
