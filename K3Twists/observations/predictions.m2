@@ -59,4 +59,8 @@ net DegreeObservation := obs -> net (
     else concatenate(obs#"quantity", " in cohomological degrees ", toString obs#"dimensions",
         if obs#"complete" then " (complete)" else " (partial)"))
 net ObservationPrediction := p -> net (p#"name" | " v" | p#"version" | " (" | p#"scope" | ")")
-net ObservationCheck := c -> net c#"prediction" | ": " | net c#"status"
+net ObservationCheck := c -> stack {
+    net c#"prediction" | " " | net c#"status",
+    "expected " | toString c#"expected",
+    "measured " | toString c#"measured"
+    }

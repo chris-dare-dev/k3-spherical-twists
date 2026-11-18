@@ -28,6 +28,7 @@ TEST ///
     revisedPrediction = observationPrediction("shifted table", "2", {}, ("cohomology", hashTable {-1 => 1, 1 => 1}), Full => true);
     assert((checkObservation(obs, eulerPrediction))#"status" === "match");
     assert((checkObservation(obs, wrong))#"status" === "mismatch");
+    assert(match("mismatch", toString net checkObservation(obs, wrong)));
     checked = checkObservation(obs, revisedPrediction);
     assert(checked#"status" === "match" and checked#"observation" === obs and checked#"prediction" === revisedPrediction);
     partial = cohomologyObservation(shifted, Degrees => {-1});
