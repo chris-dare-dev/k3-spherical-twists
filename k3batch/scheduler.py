@@ -100,7 +100,15 @@ class Scheduler:
         self.run_dir = run_dir
         self.runner = runner
         self.guard = guard
-        self.backend = backend or LocalBackend(guard, config.memory_budget_mb, config.workers)
+        self.backend = backend or LocalBackend(
+            guard,
+            config.memory_budget_mb,
+            config.run_cores,
+            workers=config.workers,
+            run_time_seconds=config.run_time_seconds,
+            scratch_root=config.scratch_root,
+            scratch_budget_mb=config.scratch_budget_mb,
+        )
         self._own_backend = backend is None
         self.stamp = stamp or {}
         self.retry = frozenset(retry)
@@ -148,6 +156,10 @@ class Scheduler:
                 if policy:
                     caps = policy.caps(self.config.memory_budget_mb, self.backend.cpu_cores)
                     context = resource_context(task, computation_id, self.guard.name, self.backend.cpu_cores)
+                    if self.config.weighted_cpu and limits.cpu_cores is not None:
+                        caps = Limits(
+                            caps.time_seconds, caps.memory_mb, min(caps.cpu_cores or 1, limits.cpu_cores)
+                        )
                     limits, resource_estimate = estimate(limits, caps, policy, context, history)
                     resource_estimate["fingerprint"] = fingerprint(context)
                 previous = history[0] if history else None
@@ -160,6 +172,8 @@ class Scheduler:
                         f"task {task.id} has a memory limit of {limits.memory_mb} MB, "
                         f"above the budget of {self.config.memory_budget_mb} MB"
                     )
+                if not reused and limits.cpu_cores is not None and limits.cpu_cores > self.backend.cpu_cores:
+                    raise ConfigError(f"task {task.id} exceeds the run CPU budget")
                 record_id = previous["record_id"] if reused and previous is not None else uuid4().hex
                 records[task.id] = record_id
                 plan[task.id] = PlannedTask(
@@ -239,9 +253,12 @@ class Scheduler:
         previous = signal.signal(signal.SIGTERM, _raise_interrupt)
         try:
             while pending or running:
+                self.backend.check_deadline()
                 blocked = self._admit(pending, running, settled)
                 finished = blocked + self._collect(running)
                 for record in finished:
+                    if record.get("deadline_scope") == "run":
+                        continue
                     if self._resource_retry(record, pending):
                         continue
                     self.store.append(record)
@@ -252,6 +269,7 @@ class Scheduler:
                         self.progress(record, outcome.total(), total)
                 if not finished and running:
                     time.sleep(self.tick)
+                self.backend.check_deadline()
                 if pending and not running and not finished:
                     raise RuntimeError("pending tasks have no ready prerequisite")
         finally:
@@ -336,6 +354,7 @@ class Scheduler:
             )
             if fits is None:
                 break
+            self.backend.check_deadline()
             task, limits = pending.pop(fits)
             try:
                 inputs = self._resolve_inputs(task, settled)
@@ -421,7 +440,8 @@ class Scheduler:
         if not previous:
             self._claim(task, attempt_id, started_at, log, inputs)
         payload = task.payload | ({"inputs": inputs} if inputs else {})
-        invocation = RunnerInvocation.prepare(self.runner, "run", payload, self.run_dir / "requests")
+        request_root = self.backend.workspace or self.run_dir
+        invocation = RunnerInvocation.prepare(self.runner, "run", payload, request_root / "requests")
         try:
             job = self.backend.start(invocation.command, limits, log, cwd=REPOSITORY)
         except BaseException:
@@ -516,6 +536,8 @@ class Scheduler:
             error,
         )
         resources = self._active_plan[entry.task.id].resources
+        if outcome.data.get("deadline_scope") == "run":
+            record["deadline_scope"] = "run"
         if resources is not None:
             record["resource_estimate"] = resources
             record["resource_context"] = resources["fingerprint_context"]

@@ -453,6 +453,32 @@ final trial. The result records each trial's request, effective controls and
 decision. An interrupted logical attempt is eligible for a fresh run. Use
 `--resource-retries N` to override the maximum number of automatic retries.
 
+### Run-wide execution limits
+
+Set `--run-time-limit SECONDS` or `scheduler.run_time_seconds` for one wall
+deadline shared by planning and every job. Job watchdogs receive the remaining
+time as an absolute deadline and enforce it independently of the coordinator.
+If the deadline expires, the CLI returns exit status 3. A SQLite run is marked
+interrupted, and a subsequent run can reuse the attempts committed before the
+deadline.
+
+`--cpu-budget CORES` or `scheduler.cpu_budget_cores` sets the run's CPU budget.
+Use `cpu_cores` in the defaults, a cost tier or a task set's limits to reserve
+a weighted share. With explicit CPU settings, an unspecified job reserves one
+core. Both worker slots and CPU reservations govern admission. The cgroup
+backend enforces the run and job quotas. Sampled mode uses the same admission
+budget and continues to report sampled enforcement.
+
+For a hard capacity on the transient workspace, set `scheduler.scratch_root`
+to a directory on a size-limited tmpfs mount and set `scheduler.scratch_budget_mb`
+to the largest acceptable mount capacity. The equivalent flags are
+`--scratch-root PATH` and `--scratch-budget MB`. The backend verifies the mount
+type and capacity before using it for planner I/O, runner request and response
+files, and job scratch space. Runs sharing one mount compete for its aggregate
+capacity. Use a dedicated mount for isolated scratch capacity. Durable result
+databases, artifact stores and retained logs use their configured output paths.
+The file size limit still applies to each job log.
+
 ## Design
 
 Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.

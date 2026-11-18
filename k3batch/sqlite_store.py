@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .execution import RunDeadlineExpired
 from .identity import RECORD_SCHEMA
 from .store import ResultStore, lock_writer
 
@@ -260,7 +261,7 @@ class SQLiteStore:
             if missing is not None:
                 raise RuntimeError("cannot complete a run with missing outcomes")
             state = "completed"
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, RunDeadlineExpired):
             state = "interrupted"
             raise
         finally:

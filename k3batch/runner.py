@@ -71,10 +71,11 @@ def expand(
     description: dict[str, Any],
     *,
     timeout: float = 600,
+    scratch_root: Path | None = None,
     execute: Callable[[list[str], float], subprocess.CompletedProcess[str]] | None = None,
 ) -> tuple[list[Task], dict[str, Any]]:
     """Asks the runner for the tasks of a batch description and for its versions."""
-    with tempfile.TemporaryDirectory(prefix="k3batch-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="k3batch-", dir=scratch_root) as scratch:
         invocation = RunnerInvocation.prepare(runner, "expand", description, Path(scratch))
         try:
             return _expand(invocation, timeout, execute)
