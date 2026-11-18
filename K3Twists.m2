@@ -14,6 +14,10 @@ export {
     "k3Surface",
     "K3FamilyRecipe",
     "k3Recipe",
+    "k3Families",
+    "markedQuarticSpec",
+    "markedCurveClass",
+    "markedCurveSheaf",
     "realizeK3Surface",
     "Characteristic",
     "Seed",
@@ -62,8 +66,10 @@ export {
 
 load "./K3Twists/numerical/lattices.m2"
 load "./K3Twists/numerical/classes.m2"
+load "./K3Twists/geometry/quartic-data.m2"
 load "./K3Twists/geometry/recipes.m2"
 load "./K3Twists/geometry/models.m2"
+load "./K3Twists/geometry/marked-quartics.m2"
 load "./K3Twists/sheaves.m2"
 load "./K3Twists/studies/catalogueClasses.m2"
 load "./K3Twists/catalogue.m2"
@@ -76,8 +82,10 @@ load "./K3Twists/tasks/synthetic.m2"
 beginDocumentation()
 
 load "./K3Twists/doc.m2"
+load "./K3Twists/doc-marked-quartics.m2"
 load "./K3Twists/doc-models.m2"
 load "./K3Twists/tests.m2"
+load "./K3Twists/tests-marked-quartics.m2"
 load "./K3Twists/tests-models.m2"
 
 end--

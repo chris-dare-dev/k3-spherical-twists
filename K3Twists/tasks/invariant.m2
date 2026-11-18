@@ -1,9 +1,11 @@
 -- Kind "invariant": one entry of sheafInvariants ---------------------------------------------------
 
 expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
+        label := surfaceLabel s;
         n := s#"d" + 2;
-        fast := apply(invariantSpecsFor(n, false, null), first);
-        specs := invariantSpecsFor(n, true, null);
+        marked := s#?"family";
+        fast := apply(invariantSpecsFor(n, false, marked, null), first);
+        specs := invariantSpecsFor(n, true, marked, null);
         every := apply(specs, first);
         predicted := hashTable apply(specs, spec -> spec#0 => spec#2);
         want := opt(set, "names", "fast");
@@ -14,11 +16,11 @@ expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
                 scan(want, name -> if not member(name, every) then error("no invariant named " | name));
                 want);
         apply(names, name -> new HashTable from {
-                "id" => concatenate("invariant/", surfaceLabel s, "/", name),
+                "id" => concatenate("invariant/", label, "/", name),
                 "kind" => "invariant",
                 "comparison" => "equals",
                 "set" => i,
-                "group" => "invariant " | surfaceLabel s,
+                "group" => "invariant " | label,
                 "cost" => if member(name, fast) then 1 else 50,
                 "predicted" => predicted#name,
                 "surface" => s,

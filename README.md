@@ -51,6 +51,27 @@ With `Slow => true` some of these are computed a second time as Ext groups, toge
 
 `extTableRow` computes Extⁱ(E, F) for two sheaves of the catalogue as the cohomology of the sheaf Hom(E, F), using Serre duality when F is the locally free one, and compares the Euler characteristic with −⟨v(E), v(F)⟩. The time grows quickly with the ranks: on the quartic a pair of rank 3 bundles takes about 15 seconds, and a pair of rank 11 bundles does not finish in a quarter of an hour.
 
+### Marked quartics
+
+```macaulay2
+needsPackage "K3Twists";
+k3Families()
+original = k3Surface 2;
+lineQuartic = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+lineQuartic#"lattice"#"gram"
+C = markedCurveSheaf lineQuartic;
+cohomologyDims C
+extDims(C, C)
+saved = markedQuarticSpec lineQuartic;
+restored = realizeK3Surface k3Recipe saved;
+```
+
+Use `quartic_with_conic` for the conic family. Both families have degree four and use the same seed and characteristic defaults as `k3Surface`. The marked lattice has basis `H,C`, with `H² = 4`, `H·C = deg C`, and `C² = -2`. The `curve` and `point` ideals are in `K#"markedIdeals"`. The point is selected on the curve for the catalogue's point sheaves. Generation uses Macaulay2’s K3Surfaces package and its Cremona dependency. [K3Surfaces documentation](https://macaulay2.com/doc/Macaulay2/share/doc/Macaulay2/K3Surfaces/html/___K3.html)
+
+`markedQuarticSpec` records the equation, curve generators and point generators as sparse integer data, so rebuilding a saved model uses those exact equations and markings. The batch runner accepts the same recipe fields, including the optional `model` table. Distinct explicit markings are part of the inputs that identify a computation.
+
+Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
+
 ## Requirements
 
 Macaulay2 (version 1.25 was used) and Python 3.11 or later; the scheduler uses the standard library only. Linux is assumed: the scheduler reads `/proc` and, where `systemd-run --user` is available, uses control groups.
@@ -126,6 +147,7 @@ The batches in `batches/`:
 | File | Content |
 |---|---|
 | `quartic-sample.toml` | 25 pairs among five sheaves on the quartic; half a minute |
+| `marked-quartics.toml` | Cohomology and self-Ext of a marked line and conic |
 | `invariants.toml` | the fast invariants for d = 2, 3, 4; seconds |
 | `invariants-slow.toml` | the slow invariants on the quartic; minutes |
 | `ext-table.toml` | every pair of the catalogue on four surfaces, 2128 tasks; many hours, and the largest pairs will reach their limits |

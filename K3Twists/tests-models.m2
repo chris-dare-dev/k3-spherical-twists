@@ -64,7 +64,7 @@ TEST ///
 ///
 
 TEST ///
-    assert(try (k3Recipe hashTable {"d" => 2, "family" => "quartic_with_line"}; false) else true);
+    assert(try (k3Recipe hashTable {"d" => 2, "family" => "unknown_family"}; false) else true);
     assert(try (k3Recipe hashTable {"d" => 2, "special_quadric" => true}; false) else true);
     assert(try (k3Recipe hashTable {"d" => 3, "special_quadric" => 1}; false) else true);
     assert(try (k3Recipe hashTable {"d" => 2, "seed" => "1"}; false) else true);
