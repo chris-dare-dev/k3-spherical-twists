@@ -4,6 +4,7 @@ newPackage(
     Headline => "sheaves on explicit K3 surfaces that arise from spherical twists along O and O(H)",
     Authors => {{Name => "Christopher Dare"}},
     PackageExports => {"Varieties"},
+    PackageImports => {"Complexes"},
     AuxiliaryFiles => true,
     DebuggingMode => false
     )
@@ -58,6 +59,10 @@ export {
     "sheafInvariantNames",
     "sheafInvariant",
     "Slow",
+    -- explicit twist realizations
+    "TwistRealization",
+    "realizeTwistImage",
+    "realizedHomology",
     -- tasks
     "expandBatch",
     "runTask",
@@ -105,6 +110,8 @@ load "./K3Twists/derived/objects.m2"
 load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"
 
+load "./K3Twists/derived/quarticCones.m2"
+
 beginDocumentation()
 
 load "./K3Twists/doc.m2"
@@ -115,5 +122,8 @@ load "./K3Twists/tests.m2"
 load "./K3Twists/tests-marked-quartics.m2"
 load "./K3Twists/tests-models.m2"
 load "./K3Twists/tests-words.m2"
+
+load "./K3Twists/doc-cones.m2"
+load "./K3Twists/tests-cones.m2"
 
 end--
