@@ -63,7 +63,7 @@ class ResumableQuartic(unittest.TestCase):
             cone = durable["detail"]["artifact_outputs"]["cone"]["digest"]
             store = ArtifactStore(root / "study.sqlite.artifacts")
             self.assertEqual(
-                json.loads(store.read(model))["payload"]["parameters"]["family"], "quartic_with_conic"
+                json.loads(store.read(model))["payload"]["parameters"]["family"], "quartic_with_line"
             )
             self.assertEqual(json.loads(store.read(cone))["payload"]["model_digest"], model)
             for name, table, support in (
