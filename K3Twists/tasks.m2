@@ -55,7 +55,7 @@ taskCommonFields = {
     ("id", isString), ("group", isString), ("set", isNonnegativeInteger),
     ("cost", isNonnegativeNumber), ("kind_version", isNonnegativeInteger),
     ("requirements", isStringList), ("comparison", s -> member(s, {"equals", "fields"})),
-    ("predicted", isAnything)
+    ("predicted", isAnything), ("inputs", x -> instance(x, HashTable))
     }
 checkTaskFields = (task, required, optional) ->
     checkFields(task, task#"kind" | " task", taskKindField | required, taskCommonFields | optional)
@@ -118,7 +118,7 @@ runTask HashTable := HashTable => task -> (
     checkFields(out, "task result", {
             ("value", isAnything), ("predicted", isAnything), ("agrees", nullable isBoolean),
             ("method", isString), ("setup_seconds", isNonnegativeNumber), ("compute_seconds", isNonnegativeNumber)
-            }, {("outputs", x -> instance(x, List))});
+            }, {("outputs", x -> instance(x, List)), ("artifacts", x -> instance(x, HashTable))});
     scan(opt(out, "outputs", {}), reference -> checkFields(reference, "output reference", {
                 ("name", isString), ("media_type", isString), ("digest", isString)
                 }, {}));

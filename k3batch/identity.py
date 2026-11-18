@@ -74,10 +74,12 @@ def implementation_fingerprint(
     )
 
 
-def task_identities(task: Task, implementation: str) -> tuple[str, str]:
+def task_identities(task: Task, implementation: str, graph: dict[str, Any] | None = None) -> tuple[str, str]:
     """Fingerprint the operation and the independently comparable prediction, if declared."""
     operation = {key: value for key, value in task.payload.items() if key not in TASK_LABELS}
     operation["kind"] = task.kind
+    if graph is not None:
+        operation["graph"] = graph
     comparison = operation.get("comparison")
     if comparison is not None:
         if not isinstance(comparison, str) or comparison not in COMPARISONS:

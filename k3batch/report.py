@@ -178,7 +178,7 @@ def render(
     )
     section(
         "Errors and crashes",
-        {Status.ERROR, Status.CRASHED},
+        {Status.ERROR, Status.CRASHED, Status.BLOCKED},
         ["task", "status", "message", "log"],
         lambda r: [_name(r), r["status"], (r["error"] or "").replace("\n", "; "), _log_path(r)],
     )

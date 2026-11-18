@@ -35,6 +35,7 @@ class BatchConfig:
     set_limits: tuple[dict[str, Any], ...]
     # what the runner expands: {"surfaces": [...], "tasks": [...]}
     description: dict[str, Any]
+    graph: dict[str, Any] | None = None
 
     def limits_for(self, task: Task) -> Limits:
         """Limits of a task: its set's own, else those of the highest tier it reaches, else the defaults."""
@@ -95,6 +96,7 @@ class BatchConfig:
             },
             "set_limits": list(self.set_limits),
             "description": self.description,
+            "graph": self.graph,
         }
 
 
@@ -135,7 +137,7 @@ def _require(table: dict[str, Any], key: str, where: str) -> Any:
 
 def parse_config(data: dict[str, Any], *, default_name: str = "batch") -> BatchConfig:
     """Builds the configuration from the content of a batch file."""
-    known = {"name", "scheduler", "limits", "surfaces", "tasks"}
+    known = {"name", "scheduler", "limits", "surfaces", "tasks", "graph"}
     unknown = set(data) - known
     if unknown:
         raise ConfigError(f"unknown key {sorted(unknown)[0]!r}; expected {', '.join(sorted(known))}")
@@ -181,6 +183,7 @@ def parse_config(data: dict[str, Any], *, default_name: str = "batch") -> BatchC
         tiers=tuple(tiers),
         set_limits=tuple(set_limits),
         description={"surfaces": data.get("surfaces", []), "tasks": described_sets},
+        graph=_table(data, "graph", "") if "graph" in data else None,
     )
     if not isinstance(config.workers, int) or not isinstance(config.memory_budget_mb, int):
         raise ConfigError("[scheduler] workers and memory_budget_mb must be whole numbers")

@@ -15,6 +15,7 @@ class Status(StrEnum):
     UNSUPPORTED = "unsupported"  # the runner has no method for this task
     TIMEOUT = "timeout"  # stopped at the time limit
     MEMORY = "memory"  # stopped at the memory limit
+    BLOCKED = "blocked"  # a prerequisite could not produce the required artifact
     ERROR = "error"  # the runner reported an error
     CRASHED = "crashed"  # the process ended without a result for another reason
 
