@@ -420,22 +420,23 @@ its consumers. Runs with no graph edges follow the usual scheduling and reuse ru
 
 At the Macaulay2 prompt, load the package and evaluate the expressions in
 `examples/resumable-quartic.m2`. From the repository root the same session runs
-with `M2 --script examples/resumable-quartic.m2`. The conic marking gives
-the ordered basis `H, C` with Gram matrix `{{4,2},{2,-2}}`. The script shows
+with `M2 --script examples/resumable-quartic.m2`. The line marking gives
+the ordered basis `H, C` with Gram matrix `{{4,1},{1,-2}}`. The script shows
 the catalogue, the class `(-3,(1,0),-1)` of the forward twist of `O(H)` about
 `O`, its realization as `M_H[1]`, and the capability response for the
 inverse twist about `O` on `O(H)`.
 
-The batch uses the same marked quartic, input line bundle and signed word.
-Run through the cone checkpoint, then resume against the same ledger.
+The batch uses the same marked quartic over `ZZ/32003` with seed 1,
+input line bundle and signed word. Run through the cone checkpoint with
+enforced cgroup v2 limits, then resume against the same ledger.
 
 ```bash
 scratch=$(mktemp -d)
 python3 -m k3batch run batches/resumable-quartic.toml \
     --store "$scratch/study.sqlite" --out "$scratch/run" \
-    --checkpoint-after quartic_prefix/realize
+    --memory-guard cgroup --checkpoint-after quartic_prefix/realize
 python3 -m k3batch run batches/resumable-quartic.toml \
-    --store "$scratch/study.sqlite" --out "$scratch/run"
+    --store "$scratch/study.sqlite" --out "$scratch/run" --memory-guard cgroup
 python3 -m k3batch report "$scratch/run" \
     --store "$scratch/study.sqlite" --run RUN_ID --full
 ```
@@ -448,6 +449,9 @@ and dimensions, hypotheses and prediction versions, artifact digests, source
 attempt IDs, and memory-control mode. The cohomology table is `(0,0,4)` in
 degrees −1 through 1, and Ext from the realized object to `O` is `(4,0,0)`
 in degrees 1 through 3.
+
+Use `batches/marked-quartics.toml` for cohomology and self-Ext of the marked
+line and conic as curves on their respective quartics.
 
 ### Resource history and bounded retries
 

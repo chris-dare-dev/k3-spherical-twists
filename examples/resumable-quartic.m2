@@ -1,8 +1,9 @@
 -- Paste these expressions into M2, or run with M2 --script examples/resumable-quartic.m2.
 needsPackage "K3Twists";
 K = realizeK3Surface k3Recipe hashTable {
-    "family" => "quartic_with_conic", "seed" => 1, "characteristic" => 32003
+    "family" => "quartic_with_line", "seed" => 1, "characteristic" => 32003
     };
+assert(K#"lattice"#"gram" == matrix {{4, 1}, {1, -2}});
 << "marked lattice " << K#"lattice"#"basis" << endl << K#"lattice"#"gram" << endl;
 << "named objects " << apply(catalogue K, first) << endl;
 E = lineBundleObject(K, K#"polarization");
