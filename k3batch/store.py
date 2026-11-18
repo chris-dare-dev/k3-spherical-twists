@@ -15,6 +15,19 @@ class StoreLocked(RuntimeError):
     """Another scheduler is writing to the same results."""
 
 
+def lock_writer(path: Path) -> int:
+    fd = os.open(path.with_name(path.name + ".lock"), os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        raise StoreLocked(f"another run is writing to {path}") from None
+    except BaseException:
+        os.close(fd)
+        raise
+    return fd
+
+
 class ResultStore:
     """An append-only file of records, written by one scheduler at a time.
 
@@ -75,12 +88,8 @@ class ResultStore:
         if self._lock_fd is not None:
             raise RuntimeError("the store is already open for writing")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._lock_fd = os.open(self.path.with_name(self.path.name + ".lock"), os.O_RDWR | os.O_CREAT, 0o644)
+        self._lock_fd = lock_writer(self.path)
         try:
-            try:
-                fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise StoreLocked(f"another run is writing to {self.path}") from None
             self._fd = os.open(self.path, os.O_RDWR | os.O_APPEND | os.O_CREAT, 0o644)
             size = os.fstat(self._fd).st_size
             if size and os.pread(self._fd, 1, size - 1) != b"\n":

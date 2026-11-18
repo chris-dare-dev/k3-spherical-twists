@@ -1,0 +1,21 @@
+# Cohomology and self-Ext of the marked curve on a quartic.
+
+name = "marked-quartics"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 2000
+
+[limits]
+time_seconds = 120
+memory_mb = 1000
+
+[[surfaces]]
+family = "quartic_with_line"
+
+[[surfaces]]
+family = "quartic_with_conic"
+
+[[tasks]]
+kind = "invariant"
+names = ["h^i(O_C)", "Ext^i(O_C, O_C)"]

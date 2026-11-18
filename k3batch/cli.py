@@ -7,9 +7,11 @@ import json
 import os
 import shlex
 import socket
+import sqlite3
 import sys
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ from .memory import available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
 from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError, code_version, expand
 from .scheduler import PlannedTask, Scheduler
+from .sqlite_store import SQLiteStore
 from .store import ResultStore, StoreLocked
 
 EXIT_OK = 0
@@ -39,7 +42,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"k3batch {__version__}")
     commands = parser.add_subparsers(dest="command", required=True)
 
+    def database_argument(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--store", type=Path, metavar="DATABASE", help="use a SQLite results database")
+
     def batch_arguments(command: argparse.ArgumentParser) -> None:
+        database_argument(command)
         command.add_argument("batch", type=Path, help="the batch file (TOML)")
         command.add_argument("--out", type=Path, help="run directory (default: results/<name of the batch>)")
         command.add_argument("--workers", type=int, help="task processes at a time")
@@ -76,12 +83,23 @@ def _parser() -> argparse.ArgumentParser:
 
     rep = commands.add_parser("report", help="print tables from the records of a run directory")
     rep.add_argument("run_dir", type=Path)
+    database_argument(rep)
     report_selection = rep.add_mutually_exclusive_group()
     report_selection.add_argument("--run", metavar="ID", help="select a run by ID (default: latest)")
     report_selection.add_argument("--legacy", action="store_true", help="report unversioned results")
     rep.add_argument(
         "--full", action="store_true", help="list every computed value against its predicted value"
     )
+    importer = commands.add_parser("import-jsonl", help="import a JSONL result directory into SQLite")
+    importer.add_argument("run_dir", type=Path)
+    importer.add_argument("--store", type=Path, required=True, metavar="DATABASE")
+    export = commands.add_parser("export-jsonl", help="write SQLite result records to stdout as JSONL")
+    export.add_argument("--store", type=Path, required=True, metavar="DATABASE")
+    export.add_argument("--run", metavar="ID", help="export the records and checks pinned by a run")
+    export.add_argument("--surface", metavar="JSON", help="match a complete task surface object")
+    export.add_argument("--method", help="match the recorded computation method")
+    export.add_argument("--observation", metavar="ID", help="match a result record ID")
+    export.add_argument("--commit", help="match the recorded code commit")
     return parser
 
 
@@ -124,7 +142,7 @@ def _command_plan(arguments: argparse.Namespace) -> int:
     with LocalBackend(guard, config.memory_budget_mb, config.workers) as backend:
         tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
     scheduler = Scheduler(
-        config=config, tasks=tasks, store=ResultStore(run_dir / "results.jsonl"),
+        config=config, tasks=tasks, store=_result_store(run_dir, arguments.store),
         run_dir=run_dir, runner=runner, guard=guard, retry=retry,
         stamp={"runner": runner_versions},
     )  # fmt: skip
@@ -150,7 +168,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
     started_at = datetime.now(UTC)
     run_id = uuid4().hex
     code = code_version()
-    store = ResultStore(run_dir / "results.jsonl")
+    store = _result_store(run_dir, arguments.store)
     with store, backend:
         tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
         scheduler = Scheduler(
@@ -166,40 +184,38 @@ def _command_run(arguments: argparse.Namespace) -> int:
             "batch": config.name,
             "tasks": [entry.manifest_entry() for entry in plan],
         }
-        _write_json(run_dir / "runs" / f"{run_id}.json", manifest)
-        _write_json(run_dir / "manifest.json", manifest)
-        _append_json(
-            run_dir / "runs.jsonl",
-            {
-                "run_id": run_id,
-                "started_at": started_at.isoformat(timespec="seconds"),
-                "command": sys.argv,
-                "batch_file": str(arguments.batch),
-                "config": config.as_dict(),
-                "retry": sorted(retry),
-                "runner_command": list(runner),
-                "runner": runner_versions,
-                "code": code,
-                "memory_guard": guard.name,
-                "resource_controls": backend.controls(),
-                "memory_available_mb": free,
-                "host": socket.gethostname(),
-                "cpus": os.cpu_count(),
-                "tasks": len(tasks),
-                "pending": len(pending),
-            },
-        )
+        metadata = {
+            "run_id": run_id,
+            "started_at": started_at.isoformat(timespec="seconds"),
+            "command": sys.argv,
+            "batch_file": str(arguments.batch),
+            "config": config.as_dict(),
+            "retry": sorted(retry),
+            "runner_command": list(runner),
+            "runner": runner_versions,
+            "code": code,
+            "memory_guard": guard.name,
+            "resource_controls": backend.controls(),
+            "memory_available_mb": free,
+            "host": socket.gethostname(),
+            "cpus": os.cpu_count(),
+            "tasks": len(tasks),
+            "pending": len(pending),
+        }
         print("\n".join(_plan_lines(config, plan, pending)), file=sys.stderr)
-        print(f"run {run_id}, memory guard: {guard.name}, results in {run_dir}", file=sys.stderr)
+        destination = store.path if isinstance(store, SQLiteStore) else run_dir
+        print(f"run {run_id}, memory guard: {guard.name}, results in {destination}", file=sys.stderr)
         try:
-            outcome = scheduler.run(plan)
+            with _record_run(store, run_dir, manifest, metadata):
+                outcome = scheduler.run(plan)
+                selected = report.selected_results(store, manifest)
+                if len(selected) != len(plan):
+                    raise RuntimeError(
+                        f"missing results for {len(plan) - len(selected)} tasks in run {run_id}"
+                    )
         except KeyboardInterrupt:
-            print("interrupted: tasks in flight were stopped and have no record", file=sys.stderr)
+            print("interrupted: tasks in flight were stopped", file=sys.stderr)
             return EXIT_INTERRUPTED
-
-        selected = report.selected_results(store, manifest)
-        if len(selected) != len(plan):
-            raise RuntimeError(f"missing results for {len(plan) - len(selected)} tasks in run {run_id}")
 
     summary = ", ".join(f"{count} {status}" for status, count in sorted(outcome.items())) or "nothing to do"
     print(f"this run: {summary}", file=sys.stderr)
@@ -209,6 +225,26 @@ def _command_run(arguments: argparse.Namespace) -> int:
     if any(count for status, count in statuses.items() if status not in COMPLETED_STATUSES):
         return EXIT_LIMITS
     return EXIT_OK
+
+
+def _result_store(run_dir: Path, database: Path | None) -> ResultStore | SQLiteStore:
+    if database is None:
+        return ResultStore(run_dir / "results.jsonl")
+    return SQLiteStore(database)
+
+
+@contextmanager
+def _record_run(
+    store: ResultStore | SQLiteStore, run_dir: Path, manifest: dict[str, Any], metadata: dict[str, Any]
+) -> Iterator[None]:
+    if isinstance(store, SQLiteStore):
+        with store.run(run_dir, manifest, metadata):
+            yield
+    else:
+        _write_json(run_dir / "runs" / f"{manifest['run_id']}.json", manifest)
+        _write_json(run_dir / "manifest.json", manifest)
+        _append_json(run_dir / "runs.jsonl", metadata)
+        yield
 
 
 def _print_progress(record: dict[str, Any], done: int, total: int) -> None:
@@ -237,19 +273,66 @@ def _append_json(path: Path, content: dict[str, Any]) -> None:
 
 
 def _command_report(arguments: argparse.Namespace) -> int:
-    if not (arguments.run_dir / "results.jsonl").exists():
-        raise ConfigError(f"no results.jsonl in {arguments.run_dir}")
+    store = _result_store(arguments.run_dir, arguments.store)
+    if not store.path.exists():
+        raise ConfigError(f"no results at {store.path}")
     sys.stdout.write(
-        report.render(arguments.run_dir, full=arguments.full, run_id=arguments.run, legacy=arguments.legacy)
+        report.render(
+            arguments.run_dir, full=arguments.full, run_id=arguments.run, legacy=arguments.legacy, store=store
+        )
     )
+    return EXIT_OK
+
+
+def _command_import(arguments: argparse.Namespace) -> int:
+    if not (arguments.run_dir / "results.jsonl").is_file():
+        raise ConfigError(f"no results.jsonl in {arguments.run_dir}")
+    directory = arguments.run_dir.resolve()
+    database = arguments.store.resolve()
+    source_files = [directory / name for name in ("results.jsonl", "runs.jsonl", "manifest.json")]
+    source_files.extend((directory / "runs").glob("*.json"))
+    if any(source.resolve() == database for source in source_files):
+        raise ConfigError("the SQLite database must have a different path from the source results")
+    with SQLiteStore(database) as store:
+        count = store.import_jsonl(arguments.run_dir)
+    print(f"imported {count} result records")
+    return EXIT_OK
+
+
+def _command_export(arguments: argparse.Namespace) -> int:
+    surface = json.loads(arguments.surface) if arguments.surface is not None else None
+    if arguments.surface is not None and not isinstance(surface, dict):
+        raise ConfigError("--surface requires a JSON object")
+    for row in SQLiteStore(arguments.store).query(
+        run_id=arguments.run,
+        surface=surface,
+        method=arguments.method,
+        observation=arguments.observation,
+        commit=arguments.commit,
+    ):
+        print(json.dumps(row, ensure_ascii=False, allow_nan=False))
     return EXIT_OK
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
-    commands = {"plan": _command_plan, "run": _command_run, "report": _command_report}
+    commands = {
+        "plan": _command_plan,
+        "run": _command_run,
+        "report": _command_report,
+        "import-jsonl": _command_import,
+        "export-jsonl": _command_export,
+    }
     try:
         return commands[arguments.command](arguments)
-    except (ConfigError, RunnerError, StoreLocked, RuntimeError, OSError) as problem:
+    except (
+        ConfigError,
+        RunnerError,
+        StoreLocked,
+        RuntimeError,
+        OSError,
+        sqlite3.Error,
+        ValueError,
+    ) as problem:
         print(f"k3batch: {problem}", file=sys.stderr)
         return EXIT_USAGE

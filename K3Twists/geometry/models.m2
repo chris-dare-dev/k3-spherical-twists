@@ -5,10 +5,9 @@ K3Surface = new Type of HashTable
 K3Surface.synonym = "K3 surface"
 protect symbol k3Model
 
--- With SpecialQuadric => true and d = 3 the quadric is x_0 x_1 + x_2 x_3 + x_4^2, which has an explicit
--- matrix factorisation. The surface carries the rank 2 bundle of mukaiBundle.
-realizeK3Surface = method()
-realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
+-- With SpecialQuadric => true and d = 3 the quadric has a matrix factorisation
+-- for the rank two bundle of mukaiBundle.
+completeIntersectionEquations = recipe -> (
     params := recipe#"parameters";
     d := params#"d";
     degs := recipe#"degrees";
@@ -20,14 +19,32 @@ realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
     atPoint := apply(gens R, v -> if v == R_0 then v => 1_kk else v => 0_kk);
     eqs := apply(degs, e -> (g := random(e, R); g - sub(g, atPoint) * R_0^e));
     if params#"special_quadric" then eqs = {R_0 * R_1 + R_2 * R_3 + R_4^2, eqs#1};
+    (eqs, ideal drop(gens R, 1), null)
+    )
+
+realizeK3Surface = method()
+realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
+    params := recipe#"parameters";
+    d := params#"d";
+    degs := recipe#"degrees";
+    kk := recipe#"field";
+    marked := markedQuarticDegrees#?(recipe#"family");
+    (eqs, point, curve) := if marked then markedQuarticEquations recipe else completeIntersectionEquations recipe;
     I := ideal eqs;
-    if codim I != #degs then error "the random forms are not a complete intersection; change the seed";
-    if dim(I + minors(#degs, jacobian I)) != 0 then error "the surface is singular; change the seed";
+    R := ring I;
+    if codim I != #degs then error "the equations are not a complete intersection";
+    if dim(I + minors(#degs, jacobian I)) != 0 then error "the surface is singular";
+    if marked then validateMarkedQuartic(I, point, curve, markedQuarticDegrees#(recipe#"family"));
     S := R / I;
     X := Proj S;
-    point := ideal drop(gens S, 1);
-    L := markedDivisorLattice(kk, {"H"}, matrix {{degree X}});
-    H := divisorClass(L, {1});
+    point = sub(point, S);
+    markings := hashTable {"point" => point};
+    if marked then markings = merge(markings, hashTable {"curve" => sub(curve, S)}, (a, b) -> b);
+    h2 := degree X;
+    c := if marked then markedQuarticDegrees#(recipe#"family") else null;
+    L := if marked then markedDivisorLattice(kk, {"H", "C"}, matrix {{h2, c}, {c, -2}})
+        else markedDivisorLattice(kk, {"H"}, matrix {{h2}});
+    H := divisorClass(L, if marked then {1, 0} else {1});
     X.cache#(symbol k3Model) = H;
     new K3Surface from {
         "recipe" => recipe,
@@ -37,7 +54,7 @@ realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
         "grading" => degrees R,
         "polarization" => H,
         "lattice" => L,
-        "markedIdeals" => hashTable {"point" => point},
+        "markedIdeals" => markings,
         "d" => d,
         "n" => d + 2,
         "degrees" => degs,
@@ -58,7 +75,9 @@ k3Surface ZZ := K3Surface => opts -> d -> realizeK3Surface k3Recipe hashTable {
 
 net K3Surface := K -> net concatenate(
     "K3 surface of degree ", toString(2 * K#"d"), " in P^", toString(K#"d" + 1),
-    ", complete intersection of degrees ", toString K#"degrees",
+    if K#"recipe"#"family" === "complete_intersection" then
+        ", complete intersection of degrees " | toString K#"degrees"
+    else ", marked quartic with a " | (if K#"recipe"#"family" === "quartic_with_line" then "line" else "conic"),
     " over ZZ/", toString K#"characteristic", " (seed ", toString K#"seed", ")",
     if K#"specialQuadric" then ", special quadric" else "")
 

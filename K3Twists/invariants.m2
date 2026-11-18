@@ -3,7 +3,7 @@
 -- A list of {name, function computing the value, predicted value}.  The fast list uses sheaf
 -- cohomology only.  The slow list computes some of the same numbers as Ext groups, together with the
 -- Ext groups of three sheaves with themselves; these are practical for d = 2 only.
-invariantSpecsFor = (n, slow, K) -> (
+invariantSpecsFor = (n, slow, marked, K) -> (
     OX := () -> (X := K#"variety"; OO_X^1);
     O1 := () -> (OX())(1);
     Ix := () -> pointIdealSheaf K;
@@ -28,6 +28,7 @@ invariantSpecsFor = (n, slow, K) -> (
         {"rank Q", () -> rank Q(), n - 1},
         {"h^i(Q)", () -> cohomologyDims Q(), {n^2 - 1, 1, 0}}
         };
+    if marked then out = append(out, {"h^i(O_C)", () -> cohomologyDims markedCurveSheaf K, {1, 0, 0}});
     if slow then out = out | {
         {"Ext^i(O, O(H))", () -> extDims(OX(), O1()), {n, 0, 0}},
         {"Ext^i(O(H), O)", () -> extDims(O1(), OX()), {0, 0, n}},
@@ -37,10 +38,14 @@ invariantSpecsFor = (n, slow, K) -> (
         {"Ext^i(M_H, M_H)", () -> extDims(MH(), MH()), {1, 0, 1}},
         {"Ext^i(M_x, M_x)", () -> extDims(Mx(), Mx()), {1, 2, 1}}
         };
+    if marked and slow then out = append(out, {"Ext^i(O_C, O_C)", () -> (
+                OC := markedCurveSheaf K;
+                extDims(OC, OC)
+                ), {1, 0, 1}});
     out
     )
 
-invariantSpecs = (K, slow) -> invariantSpecsFor(K#"n", slow, K)
+invariantSpecs = (K, slow) -> invariantSpecsFor(K#"n", slow, K#"markedIdeals"#?"curve", K)
 
 -- the names of the invariants, in the order of sheafInvariants
 sheafInvariantNames = method(Options => {Slow => false})

@@ -23,6 +23,7 @@ from .identity import RECORD_SCHEMA, implementation_fingerprint, recheck, task_i
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
 from .runner import REPOSITORY, RunnerError, RunnerInvocation, error_lines
+from .sqlite_store import SQLiteStore
 from .store import ResultStore
 
 
@@ -66,7 +67,7 @@ class Scheduler:
         *,
         config: BatchConfig,
         tasks: Sequence[Task],
-        store: ResultStore,
+        store: ResultStore | SQLiteStore,
         run_dir: Path,
         runner: tuple[str, ...],
         guard: MemoryGuard,
@@ -93,18 +94,21 @@ class Scheduler:
     def plan(self) -> list[PlannedTask]:
         """Select existing attempts and reserve identifiers for work this run will start."""
         implementation = implementation_fingerprint(self.runner, self.stamp.get("runner", {}))
-        latest = {
-            record["computation_id"]: record
-            for record in self.store.records()
-            if record.get("schema_version") == RECORD_SCHEMA
-            and isinstance(record.get("computation_id"), str)
-            and isinstance(record.get("check_id"), str)
-            and isinstance(record.get("record_id"), str)
-        }
+        identified = [(task, *task_identities(task, implementation)) for task in self.tasks]
+        if isinstance(self.store, SQLiteStore):
+            latest = self.store.latest_by_computation([identity for _, identity, _ in identified])
+        else:
+            latest = {
+                record["computation_id"]: record
+                for record in self.store.records()
+                if record.get("schema_version") == RECORD_SCHEMA
+                and isinstance(record.get("computation_id"), str)
+                and isinstance(record.get("check_id"), str)
+                and isinstance(record.get("record_id"), str)
+            }
         plan = []
-        for task in self.tasks:
+        for task, computation_id, check_id in identified:
             limits = self.config.limits_for(task)
-            computation_id, check_id = task_identities(task, implementation)
             previous = latest.get(computation_id)
             check = recheck(task, previous, check_id) if previous is not None else {}
             reused = previous is not None and self._can_reuse(previous, limits, check)
@@ -199,6 +203,15 @@ class Scheduler:
     def _start(self, task: Task, limits: Limits) -> _Running:
         attempt_id = uuid4().hex
         log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
+        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+        if isinstance(self.store, SQLiteStore):
+            self.store.start_attempt(
+                self.stamp["run_id"],
+                self._active_plan[task.id].manifest_entry(),
+                attempt_id,
+                started_at,
+                str(log.relative_to(self.run_dir)),
+            )
         invocation = RunnerInvocation.prepare(self.runner, "run", task.payload, self.run_dir / "requests")
         try:
             job = self.backend.start(invocation.command, limits, log, cwd=REPOSITORY)
@@ -212,7 +225,7 @@ class Scheduler:
             invocation=invocation,
             log=log,
             attempt_id=attempt_id,
-            started_at=datetime.now(UTC).isoformat(timespec="seconds"),
+            started_at=started_at,
         )
 
     # ending ----------------------------------------------------------------------------------------

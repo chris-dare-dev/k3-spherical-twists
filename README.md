@@ -51,6 +51,27 @@ With `Slow => true` some of these are computed a second time as Ext groups, toge
 
 `extTableRow` computes Extⁱ(E, F) for two sheaves of the catalogue as the cohomology of the sheaf Hom(E, F), using Serre duality when F is the locally free one, and compares the Euler characteristic with −⟨v(E), v(F)⟩. The time grows quickly with the ranks: on the quartic a pair of rank 3 bundles takes about 15 seconds, and a pair of rank 11 bundles does not finish in a quarter of an hour.
 
+### Marked quartics
+
+```macaulay2
+needsPackage "K3Twists";
+k3Families()
+original = k3Surface 2;
+lineQuartic = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+lineQuartic#"lattice"#"gram"
+C = markedCurveSheaf lineQuartic;
+cohomologyDims C
+extDims(C, C)
+saved = markedQuarticSpec lineQuartic;
+restored = realizeK3Surface k3Recipe saved;
+```
+
+Use `quartic_with_conic` for the conic family. Both families have degree four and use the same seed and characteristic defaults as `k3Surface`. The marked lattice has basis `H,C`, with `H² = 4`, `H·C = deg C`, and `C² = -2`. The `curve` and `point` ideals are in `K#"markedIdeals"`. The point is selected on the curve for the catalogue's point sheaves. Generation uses Macaulay2’s K3Surfaces package and its Cremona dependency. [K3Surfaces documentation](https://macaulay2.com/doc/Macaulay2/share/doc/Macaulay2/K3Surfaces/html/___K3.html)
+
+`markedQuarticSpec` records the equation, curve generators and point generators as sparse integer data, so rebuilding a saved model uses those exact equations and markings. The batch runner accepts the same recipe fields, including the optional `model` table. Distinct explicit markings are part of the inputs that identify a computation.
+
+Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
+
 ## Apply a word in spherical twists
 
 A word lists its signed steps in application order. A sign of 1 applies a twist and -1 applies its inverse.
@@ -145,6 +166,7 @@ The batches in `batches/`:
 | File | Content |
 |---|---|
 | `quartic-sample.toml` | 25 pairs among five sheaves on the quartic; half a minute |
+| `marked-quartics.toml` | Cohomology and self-Ext of a marked line and conic |
 | `invariants.toml` | the fast invariants for d = 2, 3, 4; seconds |
 | `invariants-slow.toml` | the slow invariants on the quartic; minutes |
 | `ext-table.toml` | every pair of the catalogue on four surfaces, 2128 tasks; many hours, and the largest pairs will reach their limits |
@@ -156,7 +178,7 @@ The batches in `batches/`:
 - **Limits are enforced from outside.** A watchdog owns each job tree, including planning jobs, and checks its wall deadline independently of scheduler logging and record writes. The planner has a 600-second limit and uses the run's memory budget. A task starts when a worker slot and enough memory budget are available.
 - **Run and job memory budgets.** With `--memory-guard cgroup`, a transient cgroup v2 slice caps total runner memory and CPU across the run. Each job has its own memory cap and runtime limit under the run slice. Both slices disable swap. The run CPU quota defaults to the number of worker slots, and a single job may use available cores under that quota.
 - **Coordinator headroom.** The initial memory check accounts for the run budget plus 64 MiB for the coordinator and 16 MiB per worker watchdog. These allowances are estimates outside the runner slice. Concurrent runs have separate limits and share the host's available memory. `--overcommit` opts out of the initial memory preflight.
-- **One record per finished attempt.** The scheduler appends and syncs a complete JSON record in `results/<name>/results.jsonl` before counting an attempt as recorded. An interrupted write can leave an incomplete final line. Reports count unreadable lines, and the next writer starts its records on a new line.
+- **One record per finished attempt.** With the default JSONL store the scheduler appends and syncs each result before counting it as recorded. Reports count unreadable lines. The next writer starts on a new line after any interrupted write. With the SQLite store the result and the attempt’s terminal state commit in one transaction.
 - **Exact resumption.** A rerun can reuse the latest record with the same computation fingerprint. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
 - **Job cleanup.** The watchdog cancels and reaps its job on coordinator death or interruption. The cgroup backend also has systemd scope deadlines. Two runs cannot write to the same results.
 
@@ -200,7 +222,7 @@ A record carries the task, its outcome and where it came from:
 
 ### Reports
 
-The scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
+With JSONL storage, the scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
 
 `report` defaults to the latest run. Use `python3 -m k3batch report results/quartic-sample --run <id>` to select an earlier run using its printed ID or its ID in `runs.jsonl`. Reports from before run manifests were introduced remain readable. Use `--legacy` to read unversioned historical records from a directory that also has versioned runs. Unversioned records are ineligible for automatic reuse.
 
@@ -215,6 +237,28 @@ A runner may declare `comparison = "equals"` for full-value comparison or `compa
 |---|---|---|---|
 | ext_pair d2-p32003-s1 | 25 | 24 | 1 |
 ```
+
+### SQLite results
+
+Use `--store` with a local SQLite path to keep several batch runs in one database. Their output directories still hold logs and runner files. The database records run membership, attempts and their outcomes, prediction revisions, and artifact descriptors supplied by the runner. Exact matches can be reused across output directories. Reports resolve logs relative to the directory of the original attempt.
+
+```bash
+python3 -m k3batch plan batches/quartic-sample.toml --store results/study.sqlite
+python3 -m k3batch run batches/quartic-sample.toml --store results/study.sqlite
+python3 -m k3batch report results/quartic-sample --store results/study.sqlite --run RUN_ID --full
+```
+
+A database admits one writing coordinator at a time. Readers can inspect committed results while a run is active. If the coordinator dies, the next writer marks its running attempts and run as interrupted. Completed records remain available. The database uses WAL mode on local storage.
+
+Import from a completed JSONL run directory to retain the original records, available manifests, and run metadata. A repeated import skips records that are already present. Unversioned records stay available for historical reports. The source files are left in place.
+
+```bash
+python3 -m k3batch import-jsonl results/earlier-experiment --store results/study.sqlite
+python3 -m k3batch report results/earlier-experiment --store results/study.sqlite --legacy
+python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinned-results.jsonl
+```
+
+Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
 ## Design
 
