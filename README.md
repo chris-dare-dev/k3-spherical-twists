@@ -137,7 +137,7 @@ The batches in `batches/`:
 - **Limits are enforced from outside.** A watchdog owns each job tree, including planning jobs, and checks its wall deadline independently of scheduler logging and record writes. The planner has a 600-second limit and uses the run's memory budget. A task starts when a worker slot and enough memory budget are available.
 - **Run and job memory budgets.** With `--memory-guard cgroup`, a transient cgroup v2 slice caps total runner memory and CPU across the run. Each job has its own memory cap and runtime limit under the run slice. Both slices disable swap. The run CPU quota defaults to the number of worker slots, and a single job may use available cores under that quota.
 - **Coordinator headroom.** The initial memory check accounts for the run budget plus 64 MiB for the coordinator and 16 MiB per worker watchdog. These allowances are estimates outside the runner slice. Concurrent runs have separate limits and share the host's available memory. `--overcommit` opts out of the initial memory preflight.
-- **One record per finished attempt.** The scheduler appends and syncs a complete JSON record in `results/<name>/results.jsonl` before counting an attempt as recorded. An interrupted write can leave an incomplete final line. Reports count unreadable lines, and the next writer starts its records on a new line.
+- **One record per finished attempt.** With the default JSONL store the scheduler appends and syncs each result before counting it as recorded. Reports count unreadable lines. The next writer starts on a new line after any interrupted write. With the SQLite store the result and the attempt’s terminal state commit in one transaction.
 - **Exact resumption.** A rerun can reuse the latest record with the same computation fingerprint. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
 - **Job cleanup.** The watchdog cancels and reaps its job on coordinator death or interruption. The cgroup backend also has systemd scope deadlines. Two runs cannot write to the same results.
 
@@ -181,7 +181,7 @@ A record carries the task, its outcome and where it came from:
 
 ### Reports
 
-The scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
+With JSONL storage, the scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
 
 `report` defaults to the latest run. Use `python3 -m k3batch report results/quartic-sample --run <id>` to select an earlier run using its printed ID or its ID in `runs.jsonl`. Reports from before run manifests were introduced remain readable. Use `--legacy` to read unversioned historical records from a directory that also has versioned runs. Unversioned records are ineligible for automatic reuse.
 
@@ -196,6 +196,28 @@ A runner may declare `comparison = "equals"` for full-value comparison or `compa
 |---|---|---|---|
 | ext_pair d2-p32003-s1 | 25 | 24 | 1 |
 ```
+
+### SQLite results
+
+Use `--store` with a local SQLite path to keep several batch runs in one database. Their output directories still hold logs and runner files. The database records run membership, attempts and their outcomes, prediction revisions, and artifact descriptors supplied by the runner. Exact matches can be reused across output directories. Reports resolve logs relative to the directory of the original attempt.
+
+```bash
+python3 -m k3batch plan batches/quartic-sample.toml --store results/study.sqlite
+python3 -m k3batch run batches/quartic-sample.toml --store results/study.sqlite
+python3 -m k3batch report results/quartic-sample --store results/study.sqlite --run RUN_ID --full
+```
+
+A database admits one writing coordinator at a time. Readers can inspect committed results while a run is active. If the coordinator dies, the next writer marks its running attempts and run as interrupted. Completed records remain available. The database uses WAL mode on local storage.
+
+Import from a completed JSONL run directory to retain the original records, available manifests, and run metadata. A repeated import skips records that are already present. Unversioned records stay available for historical reports. The source files are left in place.
+
+```bash
+python3 -m k3batch import-jsonl results/earlier-experiment --store results/study.sqlite
+python3 -m k3batch report results/earlier-experiment --store results/study.sqlite --legacy
+python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinned-results.jsonl
+```
+
+Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
 ## Design
 

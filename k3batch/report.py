@@ -10,6 +10,7 @@ from typing import Any
 
 from .identity import RECORD_SCHEMA
 from .model import Status
+from .sqlite_store import SQLiteStore
 from .store import ResultStore
 
 NOT_RUN = "not run"
@@ -57,18 +58,23 @@ def load_manifest(run_dir: Path, run_id: str | None = None) -> dict[str, Any]:
     return manifest
 
 
-def selected_results(store: ResultStore, manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def selected_results(store: ResultStore | SQLiteStore, manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Resolve the attempts pinned by a manifest, with label lookup for legacy reports."""
     if "schema_version" not in manifest:
+        if isinstance(store, SQLiteStore):
+            raise RuntimeError("a versioned manifest is required for a pinned run")
         return store.latest()
     if manifest["schema_version"] != RECORD_SCHEMA:
         raise RuntimeError(f"unsupported manifest schema version: {manifest['schema_version']}")
 
-    attempts = {
-        record["record_id"]: record
-        for record in store.records()
-        if record.get("schema_version") == RECORD_SCHEMA and isinstance(record.get("record_id"), str)
-    }
+    if isinstance(store, SQLiteStore):
+        attempts = store.by_record_id([task["record_id"] for task in manifest["tasks"]])
+    else:
+        attempts = {
+            record["record_id"]: record
+            for record in store.records()
+            if record.get("schema_version") == RECORD_SCHEMA and isinstance(record.get("record_id"), str)
+        }
     selected = {}
     for task in manifest["tasks"]:
         attempt = attempts.get(task["record_id"])
@@ -86,15 +92,33 @@ def selected_results(store: ResultStore, manifest: dict[str, Any]) -> dict[str, 
     return selected
 
 
-def render(run_dir: Path, *, full: bool = False, run_id: str | None = None, legacy: bool = False) -> str:
+def render(
+    run_dir: Path,
+    *,
+    full: bool = False,
+    run_id: str | None = None,
+    legacy: bool = False,
+    store: ResultStore | SQLiteStore | None = None,
+) -> str:
     """The report for a selected run, as Markdown."""
-    store = ResultStore(run_dir / "results.jsonl")
-    manifest = load_manifest(run_dir, run_id)
-    if legacy:
+    store = store or ResultStore(run_dir / "results.jsonl")
+    if isinstance(store, SQLiteStore):
+        manifest = store.manifest(run_dir, run_id, legacy=legacy)
+        if "schema_version" in manifest:
+            selected = selected_results(store, manifest)
+        else:
+            selected = {
+                record["task_id"]: record
+                for record in store.query(run_dir=run_dir)
+                if not legacy or "schema_version" not in record
+            }
+    elif legacy:
+        manifest = load_manifest(run_dir)
         if "schema_version" in manifest:
             manifest = {}
         selected = {record["task_id"]: record for record in store.records() if "schema_version" not in record}
     else:
+        manifest = load_manifest(run_dir, run_id)
         selected = selected_results(store, manifest)
     groups: dict[str, Counter[str]] = defaultdict(Counter)
     known = set()
@@ -112,6 +136,8 @@ def render(run_dir: Path, *, full: bool = False, run_id: str | None = None, lega
         lines.append("- selection: unversioned historical records")
     if "run_id" in manifest:
         lines.append(f"- run: `{manifest['run_id']}`")
+    if "run_state" in manifest:
+        lines.append(f"- run state: {manifest['run_state']}")
     lines += _provenance(records, store.unreadable_lines)
 
     lines += ["## Summary", ""]
@@ -154,7 +180,7 @@ def render(run_dir: Path, *, full: bool = False, run_id: str | None = None, lega
         "Errors and crashes",
         {Status.ERROR, Status.CRASHED},
         ["task", "status", "message", "log"],
-        lambda r: [_name(r), r["status"], (r["error"] or "").replace("\n", "; "), r["log"]],
+        lambda r: [_name(r), r["status"], (r["error"] or "").replace("\n", "; "), _log_path(r)],
     )
     section(
         "No method",
@@ -189,6 +215,14 @@ def render(run_dir: Path, *, full: bool = False, run_id: str | None = None, lega
                 [[_name(r), r["task"].get("cost"), r["wall_seconds"], r["peak_rss_mb"]] for r in slowest],
             )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _log_path(record: dict[str, Any]) -> str | None:
+    log: str | None = record.get("log")
+    directory = record.get("log_directory")
+    if log and isinstance(directory, str):
+        return str(Path(directory) / log)
+    return log
 
 
 def _provenance(records: list[dict[str, Any]], unreadable: int) -> list[str]:

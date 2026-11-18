@@ -15,6 +15,7 @@ from pathlib import Path
 
 from k3batch.cli import EXIT_FAILED, EXIT_INTERRUPTED, EXIT_LIMITS, EXIT_OK, EXIT_USAGE
 from k3batch.runner import REPOSITORY, code_version
+from k3batch.sqlite_store import SQLiteStore
 
 from .helpers import FAKE_RUNNER, Journal
 
@@ -237,6 +238,44 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(before["task"], after["task"])
         self.assertEqual((before["value"], after["value"]), (1, 3))
         self.assertNotEqual(before["computation_id"], after["computation_id"])
+
+    def test_sqlite_cli_pins_reused_observations_and_keeps_jsonl_export_standalone(self) -> None:
+        database = self.scratch / "results.sqlite"
+        batch = self.batch(items('{ name = "a", value = 1, predicted = 2, comparison = "equals" }'))
+        plan = self.k3batch("plan", batch, "--store", database, "--memory-guard", "poll")
+        self.assertEqual(plan.returncode, EXIT_OK, plan.stderr)
+        self.assertFalse(database.exists())
+        first = self.k3batch("run", batch, "--store", database, "--memory-guard", "poll")
+        self.assertEqual(first.returncode, EXIT_FAILED, first.stderr)
+        original_dir = self.run_dir
+        old_run = SQLiteStore(database).manifest(original_dir)["run_id"]
+
+        self.run_dir = self.scratch / "second"
+        batch = self.batch(items('{ name = "a", value = 1, predicted = 1, comparison = "equals" }'))
+        reused = self.k3batch("run", batch, "--store", database, "--memory-guard", "poll")
+        self.assertEqual(reused.returncode, EXIT_OK, reused.stderr)
+        self.assertIn("this run: nothing to do", reused.stderr)
+        self.assertEqual(self.journal.started(), ["fake/a"])
+        current = self.k3batch("report", self.run_dir, "--store", database, "--full")
+        self.assertEqual(current.returncode, EXIT_OK, current.stderr)
+        self.assertIn("| `fake/a` | 1 | 1 | yes |", current.stdout)
+        old = self.k3batch("report", original_dir, "--store", database, "--run", old_run, "--full")
+        self.assertEqual(old.returncode, EXIT_OK, old.stderr)
+        self.assertIn("| `fake/a` | 1 | 2 |", old.stdout)
+
+        exported = subprocess.run(
+            [sys.executable, "-m", "k3batch", "export-jsonl", "--store", str(database), "--method", "fake"],
+            cwd=REPOSITORY,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(exported.returncode, EXIT_OK, exported.stderr)
+        row = json.loads(exported.stdout)
+        self.assertEqual(row["run_id"], old_run)
+        self.assertEqual(row["predicted"], 2)
+        self.assertEqual(Path(row["log_directory"]), original_dir.resolve())
+        self.assertFalse((original_dir / "results.jsonl").exists())
 
     def test_what_cannot_run_is_refused_before_any_task_starts(self) -> None:
         batch = self.batch(AGREEING)
