@@ -260,6 +260,44 @@ python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinn
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
+### Certified quartic cones
+
+In addition to evaluation of the marked point sheaf and the hyperplane bundle
+by `O`, the realization backend supports the inverse twist of `O` about
+`L = O(H)` on a smooth quartic. The four coordinate sections are a basis of
+`Hom(O,L)`. The higher groups vanish by the cohomology of the hyperplane
+bundle, so this basis and its dual give a finite derived coevaluation model.
+The column of coordinates represents `O → L^4`. Its cokernel is the
+independently constructed `quotientBundle K`, and its shifted cone is
+`Q[-1]`. Applying the forward twist to this representative uses the quotient
+map `L^4 → Q`. Twisting the exact sequence by `-H` and applying Serre duality
+shows that this quotient map uses all of `Hom(L,Q)` and the higher groups
+vanish. The two maps compose to zero and identify the kernel with `O`,
+which verifies the forward and inverse cancellation.
+[Seidel and Thomas, Definition 2.7 and Proposition 2.10](https://arxiv.org/abs/math/0001043)
+
+For a certified line bundle `S = O` or `O(H)`, `RHom(S,S)` is
+`RΓ(O)` with one-dimensional cohomology in degrees 0 and 2. Splitting
+a complex of vector spaces over the coefficient field gives summands
+`k` and `k[-2]`. Choose the identity as the degree-zero lift and a class
+with nonzero Serre trace in degree two. The derived evaluation on
+`S ⊕ S[-2]` has identity as its first component. A triangular change of
+basis eliminates the other component, leaving `S[-1]` after the identity
+cone contracts. Dually, coevaluation takes values in `S ⊕ S[2]` and its
+shifted cone leaves `S[1]`. The resulting one-term complexes and the
+comparison apply to shifts of the same generator and to repeated signed
+steps on it. General higher-degree evaluations and other mixed words
+still require explicit derived Hom models.
+
+Macaulay2 indexes the complexes homologically. Homological degree `j`
+corresponds to cohomological degree `-j`, and moving the two-term
+differential by an odd shift changes its sign. Use `realizedHomology`
+with the cohomological degree to inspect the associated sheaf.
+
+In one Ubuntu run with Macaulay2 1.25.11, `T_O(T_O(O))` realized `O[-2]`
+in 0.053 s after the quartic was available. The complete process took
+5.06 s and peaked at 164.8 MiB RSS, including startup and surface construction.
+
 ## Mathematical artifacts
 
 Macaulay2 functions encode a K3 model, a graded module presentation, or a bounded

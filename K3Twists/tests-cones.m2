@@ -23,6 +23,6 @@ TEST ///
     inverseResult = realizeTwistImage applyWord(inverseTwistWord W, L);
     assert(inverseResult#"status" === "unsupported" and inverseResult#"reason" === "inverse twists require coevaluation");
     assert(instance(mukaiClass inverseResult, MukaiClass));
-    other = realizeTwistImage applyWord(W, structureObject K);
+    other = realizeTwistImage applyWord(W, catalogueObject(K, "O(2H)"));
     assert(other#"status" === "unsupported");
 ///
