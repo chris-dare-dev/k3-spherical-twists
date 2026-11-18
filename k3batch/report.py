@@ -246,6 +246,26 @@ def render(
         if evidence:
             lines += ["## Mathematical evidence", ""]
             lines += _table(["task", "evidence", "prediction"], evidence)
+    resources = []
+    for record in records:
+        estimate = record.get("resource_estimate")
+        if estimate:
+            for trial in record.get("resource_attempts", []):
+                effective = trial["resource_controls"].get("effective_job")
+                resources.append(
+                    [
+                        _name(record),
+                        trial["trial_id"],
+                        trial["status"],
+                        estimate["basis"],
+                        trial["limits"],
+                        effective or trial["resource_controls"]["mode"],
+                        trial["decision"],
+                    ]
+                )
+    if resources:
+        lines += ["## Resource estimates and retries", ""]
+        lines += _table(["task", "trial", "status", "basis", "requested", "effective", "decision"], resources)
     return "\n".join(lines).rstrip() + "\n"
 
 

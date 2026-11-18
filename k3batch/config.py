@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import math
 import tomllib
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
 from .model import Limits, Task
+from .resources import ResourcePolicy
 
 
 class ConfigError(ValueError):
@@ -36,6 +37,7 @@ class BatchConfig:
     # what the runner expands: {"surfaces": [...], "tasks": [...]}
     description: dict[str, Any]
     graph: dict[str, Any] | None = None
+    resources: ResourcePolicy | None = None
 
     def limits_for(self, task: Task) -> Limits:
         """Limits of a task: its set's own, else those of the highest tier it reaches, else the defaults."""
@@ -97,6 +99,7 @@ class BatchConfig:
             "set_limits": list(self.set_limits),
             "description": self.description,
             "graph": self.graph,
+            **({"resources": asdict(self.resources)} if self.resources else {}),
         }
 
 
@@ -137,7 +140,7 @@ def _require(table: dict[str, Any], key: str, where: str) -> Any:
 
 def parse_config(data: dict[str, Any], *, default_name: str = "batch") -> BatchConfig:
     """Builds the configuration from the content of a batch file."""
-    known = {"name", "scheduler", "limits", "surfaces", "tasks", "graph"}
+    known = {"name", "scheduler", "limits", "surfaces", "tasks", "graph", "resources"}
     unknown = set(data) - known
     if unknown:
         raise ConfigError(f"unknown key {sorted(unknown)[0]!r}; expected {', '.join(sorted(known))}")
@@ -172,6 +175,10 @@ def parse_config(data: dict[str, Any], *, default_name: str = "batch") -> BatchC
         described_sets.append(task_set)
 
     _check_limits("limits", limits)
+    try:
+        resources = ResourcePolicy.parse(_table(data, "resources", "")) if "resources" in data else None
+    except ValueError as problem:
+        raise ConfigError(str(problem)) from problem
     config = BatchConfig(
         name=str(data.get("name", default_name)),
         workers=_require(scheduler, "workers", "[scheduler]"),
@@ -184,6 +191,7 @@ def parse_config(data: dict[str, Any], *, default_name: str = "batch") -> BatchC
         set_limits=tuple(set_limits),
         description={"surfaces": data.get("surfaces", []), "tasks": described_sets},
         graph=_table(data, "graph", "") if "graph" in data else None,
+        resources=resources,
     )
     if not isinstance(config.workers, int) or not isinstance(config.memory_budget_mb, int):
         raise ConfigError("[scheduler] workers and memory_budget_mb must be whole numbers")

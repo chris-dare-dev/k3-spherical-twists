@@ -114,13 +114,18 @@ class LocalBackend:
         outcome = job_directory / "result.json"
         started = time.monotonic()
         deadline = started + limits.time_seconds
+        job_cores = limits.cpu_cores or self.cpu_cores
+        if not 1 <= job_cores <= self.cpu_cores:
+            temporary.cleanup()
+            raise RuntimeError("job CPU request exceeds the configured run budget")
         spec = {
             "parent": os.getpid(),
             "started": started,
             "deadline": deadline,
             "memory_bytes": limits.memory_mb * MIB,
             "run_memory_bytes": self.memory_mb * MIB,
-            "cpu_cores": self.cpu_cores,
+            "cpu_cores": job_cores,
+            "run_cpu_cores": self.cpu_cores,
             "run_slice": self.slice_name,
             "file_bytes": FILE_BYTES,
             "scratch_bytes": SCRATCH_BYTES,
@@ -132,7 +137,7 @@ class LocalBackend:
             if isinstance(self.guard, CgroupGuard):
                 if self.slice_name is None:
                     raise RuntimeError("no cgroup run boundary is active")
-                job_slice = self.guard.open_slice(tag, limits.memory_mb, self.cpu_cores)
+                job_slice = self.guard.open_slice(tag, limits.memory_mb, job_cores)
                 group = self.guard.group_path(job_slice)
                 if group.parent.name != self.slice_name:
                     raise RuntimeError("the job slice is outside the configured run boundary")

@@ -422,6 +422,37 @@ attempt IDs, and memory-control mode. The cohomology table is `(0,0,4)` in
 degrees −1 through 1, and Ext from the realized object to `O` is `(4,0,0)`
 in degrees 1 through 3.
 
+### Resource history and bounded retries
+
+Add a `[resources]` table to opt in to history-based admission. The usual
+batch limits and tiers supply the initial request. For example:
+
+```toml
+[resources]
+minimum_samples = 3
+retry_attempts = 2
+memory_ceiling_mb = 1000
+time_ceiling_seconds = 300
+cpu_ceiling = 2
+```
+
+The estimator uses up to twelve recent results for the same computation,
+including its implementation and dependency records. It groups by runner method,
+backend and measurement type. A cgroup memory peak and a sampled process-tree
+peak are separate signals. Successful jobs contribute observed memory, wall time
+and CPU time. A memory or time limit supplies a censored lower bound once enough
+comparable successes are available. Estimates include headroom and fit within
+the configured ceilings and the run's budgets. `plan` shows the initial request
+and its basis. Use `--retry ok` to collect new measurements for an already cached
+successful computation.
+
+A confirmed memory limit or an external deadline can trigger a larger reservation,
+up to the corresponding ceiling. A retry comes back through normal CPU and
+memory admission. The logical result and any graph dependants settle after the
+final trial. The result records each trial's request, effective controls and
+decision. An interrupted logical attempt is eligible for a fresh run. Use
+`--resource-retries N` to override the maximum number of automatic retries.
+
 ## Design
 
 Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.
