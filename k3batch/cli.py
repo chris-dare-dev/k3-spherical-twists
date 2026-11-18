@@ -21,9 +21,9 @@ from uuid import uuid4
 from . import __version__, report
 from .artifacts import ArtifactStore, read_artifact_json
 from .config import BatchConfig, ConfigError, load_config
-from .execution import LocalBackend
+from .execution import LocalBackend, RunDeadlineExpired
 from .identity import RECORD_SCHEMA
-from .memory import available_mb, choose_guard
+from .memory import MemoryGuard, available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
 from .resources import ResourcePolicy
 from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError, code_version, expand
@@ -58,6 +58,14 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument("--workers", type=int, help="task processes at a time")
         command.add_argument(
             "--memory-budget", type=int, metavar="MB", help="sum of the memory limits allowed at a time"
+        )
+        command.add_argument(
+            "--run-time-limit", type=float, metavar="S", help="wall limit for planning and tasks"
+        )
+        command.add_argument("--cpu-budget", type=int, metavar="CORES", help="run-wide CPU budget")
+        command.add_argument("--scratch-root", type=Path, help="directory on a size-limited tmpfs")
+        command.add_argument(
+            "--scratch-budget", type=int, metavar="MB", help="maximum size of the scratch mount"
         )
         command.add_argument("--time-limit", type=float, metavar="S", help="default time limit of a task")
         command.add_argument("--memory-limit", type=int, metavar="MB", help="default memory limit of a task")
@@ -125,6 +133,10 @@ def _prepare(arguments: argparse.Namespace) -> tuple[BatchConfig, tuple[str, ...
         memory_budget_mb=arguments.memory_budget,
         time_seconds=arguments.time_limit,
         memory_mb=arguments.memory_limit,
+        cpu_budget_cores=arguments.cpu_budget,
+        run_time_seconds=arguments.run_time_limit,
+        scratch_root=arguments.scratch_root,
+        scratch_budget_mb=arguments.scratch_budget,
     )
     if arguments.resource_retries is not None:
         settings = asdict(config.resources or ResourcePolicy()) | {
@@ -163,7 +175,9 @@ def _command_plan(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
     guard = choose_guard(arguments.memory_guard)
     with LocalBackend(guard, config.memory_budget_mb, config.workers) as backend:
-        tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
+        tasks, runner_versions = expand(
+            runner, config.description, execute=backend.execute, scratch_root=backend.workspace
+        )
     scheduler = Scheduler(
         config=config, tasks=tasks, store=_result_store(run_dir, arguments.store),
         run_dir=run_dir, runner=runner, guard=guard, retry=retry,
@@ -176,16 +190,26 @@ def _command_plan(arguments: argparse.Namespace) -> int:
     for task, limits in pending:
         request = f"{task.cost:8g}  {limits.time_seconds:8g} s  {limits.memory_mb:7d} MB"
         estimate = estimates[task.id]
-        note = f"  {limits.cpu_cores} cores  {estimate['basis']}" if estimate else ""
+        note = f"  {limits.cpu_cores} cores" if limits.cpu_cores is not None else ""
+        if estimate:
+            note += f"  {estimate['basis']}"
         print(f"{request}  {task.id}{note}")
     return EXIT_OK
+
+
+def _local_backend(config: BatchConfig, guard: MemoryGuard) -> LocalBackend:
+    return LocalBackend(
+        guard, config.memory_budget_mb, config.run_cores, workers=config.workers,
+        run_time_seconds=config.run_time_seconds, scratch_root=config.scratch_root,
+        scratch_budget_mb=config.scratch_budget_mb,
+    )  # fmt: skip
 
 
 def _command_run(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
     free = available_mb()
     guard = choose_guard(arguments.memory_guard)
-    backend = LocalBackend(guard, config.memory_budget_mb, config.workers)
+    backend = _local_backend(config, guard)
     requested = config.memory_budget_mb + backend.coordinator_headroom_mb
     if free is not None and requested > free and not arguments.overcommit:
         raise ConfigError(
@@ -197,7 +221,9 @@ def _command_run(arguments: argparse.Namespace) -> int:
     code = code_version()
     store = _result_store(run_dir, arguments.store)
     with store, backend:
-        tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
+        tasks, runner_versions = expand(
+            runner, config.description, execute=backend.execute, scratch_root=backend.workspace
+        )
         checkpoint = arguments.checkpoint_after
         if checkpoint and not any(task.id == checkpoint for task in tasks):
             raise ConfigError(f"unknown checkpoint task {checkpoint!r}")
@@ -211,6 +237,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
 
         scheduler = Scheduler(
             config=config, tasks=tasks, store=store, run_dir=run_dir, runner=runner, guard=guard,
+            backend=backend,
             stamp={"run_id": run_id, "runner": runner_versions, "code": code},
             retry=retry, progress=progress,
         )  # fmt: skip
@@ -376,6 +403,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     try:
         return commands[arguments.command](arguments)
+    except RunDeadlineExpired as problem:
+        print(f"k3batch: {problem}", file=sys.stderr)
+        return EXIT_LIMITS
     except (
         ConfigError,
         RunnerError,

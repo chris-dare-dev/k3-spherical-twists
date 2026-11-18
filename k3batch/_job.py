@@ -211,6 +211,8 @@ def main() -> int:
     path = Path(spec["outcome"])
     try:
         result = watch(spec, sys.argv[2:])
+        if result.get("verdict") == "timeout":
+            result["deadline_scope"] = spec.get("deadline_scope", "job")
     except (OSError, RuntimeError, ValueError) as error:
         result = {"returncode": 125, "launch_error": str(error)}
     if os.getppid() != spec["parent"]:
@@ -224,6 +226,8 @@ def main() -> int:
                     timeout=1,
                     check=False,
                 )
+        if spec.get("workspace"):
+            shutil.rmtree(spec["workspace"], ignore_errors=True)
         shutil.rmtree(path.parent, ignore_errors=True)
         return 0
     path.write_text(json.dumps(result), encoding="utf-8")

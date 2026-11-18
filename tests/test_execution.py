@@ -11,9 +11,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from k3batch.execution import JobResult, LocalBackend, LocalJob
+from k3batch.execution import JobResult, LocalBackend, LocalJob, RunDeadlineExpired
 from k3batch.memory import CgroupGuard, MemoryGuard, PollingGuard, choose_guard
 from k3batch.model import Limits
+from k3batch.scratch import tmpfs_capacity
 
 from .test_cli import still_runs
 
@@ -143,12 +144,72 @@ with LocalBackend(choose_guard(sys.argv[1]), 128, 2) as backend:
 class CgroupExecution(LocalExecution):
     guard_class = CgroupGuard
 
+    def test_job_and_run_cpu_quotas_can_differ(self) -> None:
+        command = [sys.executable, "-c", "print('ok')"]
+        job = self.backend.start(command, Limits(4, 96, 1), self.log)
+        self.addCleanup(self.backend.cancel, job)
+        job.process.wait(timeout=6)
+        result = self.backend.observe(job)
+        assert result is not None
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.data["effective"]["cpu_cores"], 1)
+        self.assertEqual(result.data["effective_run"]["cpu_cores"], 2)
+
     def test_cgroup_oom_has_local_and_process_kill_evidence(self) -> None:
         _, result = self.run_job("import time; buffer = bytearray(180 * 1024**2); time.sleep(5)")
         self.assertEqual(result.verdict, "memory")
         self.assertGreater(result.data["cgroup_memory_events"]["oom"], 0)
         self.assertGreater(result.data["cgroup_memory_events"]["oom_kill"], 0)
         self.assertLessEqual(result.data["cgroup_memory_peak_bytes"], 96 * 1024**2)
+
+
+@unittest.skipUnless(sys.platform == "linux", "Linux backend")
+class SharedRunBoundaries(unittest.TestCase):
+    def test_planner_inherits_the_shared_deadline(self) -> None:
+        command = [sys.executable, "-c", "import time; time.sleep(10)"]
+        with LocalBackend(PollingGuard(), 96, 2, run_time_seconds=0.6) as backend:
+            with self.assertRaisesRegex(RunDeadlineExpired, "during planning"):
+                backend.execute(command, 10)
+            with self.assertRaises(RunDeadlineExpired):
+                backend.execute(command, 10)
+
+    def test_watchdog_stops_job_at_run_deadline_without_coordinator(self) -> None:
+        directory = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        command = [sys.executable, "-c", "import os,time; print(os.getpid(),flush=True);time.sleep(10)"]
+        log = directory / "job.log"
+        with LocalBackend(PollingGuard(), 96, 2, run_time_seconds=0.8) as backend:
+            job = backend.start(command, Limits(10, 96), log)
+            self.addCleanup(backend.cancel, job)
+            job.process.wait(timeout=4)
+            result = backend.observe(job)
+            assert result is not None
+            self.assertEqual(result.verdict, "timeout")
+            self.assertEqual(result.data["deadline_scope"], "run")
+            self.assertFalse(still_runs(int(log.read_text())))
+
+    @unittest.skipUnless(Path("/dev/shm").is_dir(), "needs a tmpfs mount")
+    def test_workspace_uses_verified_mount_capacity(self) -> None:
+        root = Path("/dev/shm")
+        capacity = tmpfs_capacity(root)
+        mib = 1024**2
+        with LocalBackend(
+            PollingGuard(), 96, 2, scratch_root=root, scratch_budget_mb=(capacity + mib - 1) // mib
+        ) as backend:
+            workspace = backend.workspace
+            assert workspace is not None
+            self.assertEqual(backend.controls()["scratch_capacity_bytes"], capacity)
+            result = backend.execute(
+                [sys.executable, "-c", "import tempfile;print(tempfile.gettempdir())"], 3
+            )
+            self.assertEqual(result.returncode, 0)
+            self.assertTrue(Path(result.stdout.strip()).is_relative_to(workspace))
+        self.assertFalse(workspace.exists())
+        if capacity > mib:
+            with (
+                self.assertRaisesRegex(ValueError, "larger than the requested hard capacity"),
+                LocalBackend(PollingGuard(), 96, 2, scratch_root=root, scratch_budget_mb=1),
+            ):
+                self.fail("accepted a mount larger than its configured capacity")
 
 
 class GuardSelection(unittest.TestCase):

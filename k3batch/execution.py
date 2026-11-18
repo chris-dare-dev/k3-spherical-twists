@@ -18,6 +18,7 @@ from uuid import uuid4
 from ._job import MIB
 from .memory import CgroupGuard, MemoryGuard
 from .model import Limits
+from .scratch import tmpfs_capacity
 
 # Keep coordinator buffering and on-disk files bounded even for an overly verbose runner.
 FILE_BYTES = 16 * MIB
@@ -25,6 +26,10 @@ SCRATCH_BYTES = 128 * MIB
 COORDINATOR_HEADROOM_MB = 64
 WATCHDOG_HEADROOM_MB = 16
 WATCHDOG = Path(__file__).with_name("_job.py")
+
+
+class RunDeadlineExpired(RuntimeError):
+    """The shared planner and execution deadline was reached."""
 
 
 @dataclass
@@ -35,6 +40,14 @@ class LocalJob:
     scope: str
     slice_name: str | None
     started: float
+    scratch_temporary: tempfile.TemporaryDirectory[str] | None = None
+
+    def cleanup(self) -> None:
+        try:
+            self.temporary.cleanup()
+        finally:
+            if self.scratch_temporary is not None:
+                self.scratch_temporary.cleanup()
 
 
 @dataclass
@@ -57,27 +70,75 @@ def read_output(path: Path) -> str:
 class LocalBackend:
     """Own the per-run cgroup boundary and independent job watchdogs."""
 
-    def __init__(self, guard: MemoryGuard, memory_mb: int, cpu_cores: int) -> None:
+    def __init__(
+        self,
+        guard: MemoryGuard,
+        memory_mb: int,
+        cpu_cores: int,
+        *,
+        workers: int | None = None,
+        run_time_seconds: float | None = None,
+        scratch_root: Path | None = None,
+        scratch_budget_mb: int | None = None,
+    ) -> None:
         self.guard = guard
         self.memory_mb = memory_mb
         self.cpu_cores = cpu_cores
+        self.workers = workers if workers is not None else cpu_cores
+        self.run_time_seconds = run_time_seconds
+        self.deadline: float | None = None
+        self.scratch_root = scratch_root
+        self.scratch_budget_mb = scratch_budget_mb
+        self.scratch_capacity: int | None = None
+        self._workspace: tempfile.TemporaryDirectory[str] | None = None
         self.run_tag = f"k3batch-{uuid4().hex}"
         self.slice_name: str | None = None
 
     def __enter__(self) -> LocalBackend:
-        if isinstance(self.guard, CgroupGuard):
-            self.slice_name = self.guard.open_slice(self.run_tag, self.memory_mb, self.cpu_cores)
+        if self.run_time_seconds is not None:
+            if not math.isfinite(self.run_time_seconds) or self.run_time_seconds <= 0:
+                raise ValueError("run deadline must be finite and positive")
+            self.deadline = time.monotonic() + self.run_time_seconds
+        if (self.scratch_root is None) != (self.scratch_budget_mb is None):
+            raise ValueError("scratch root and capacity must be configured together")
+        try:
+            if self.scratch_root is not None and self.scratch_budget_mb is not None:
+                root = self.scratch_root.resolve(strict=True)
+                self.scratch_capacity = tmpfs_capacity(root)
+                if self.scratch_capacity > self.scratch_budget_mb * MIB:
+                    raise ValueError("scratch tmpfs is larger than the requested hard capacity")
+                self._workspace = tempfile.TemporaryDirectory(prefix="k3batch-run-", dir=root)
+            if isinstance(self.guard, CgroupGuard):
+                self.slice_name = self.guard.open_slice(self.run_tag, self.memory_mb, self.cpu_cores)
+            self.check_deadline()
+        except BaseException:
+            self.__exit__()
+            raise
         return self
 
     def __exit__(self, *error: object) -> None:
-        if self.slice_name is not None and isinstance(self.guard, CgroupGuard):
-            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
-                self.guard.stop(self.slice_name)
-            self.slice_name = None
+        try:
+            if self.slice_name is not None and isinstance(self.guard, CgroupGuard):
+                with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                    self.guard.stop(self.slice_name)
+                self.slice_name = None
+        finally:
+            if self._workspace is not None:
+                self._workspace.cleanup()
+                self._workspace = None
+            self.deadline = None
+
+    @property
+    def workspace(self) -> Path | None:
+        return Path(self._workspace.name) if self._workspace is not None else None
+
+    def check_deadline(self) -> None:
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            raise RunDeadlineExpired("run wall deadline reached")
 
     @property
     def coordinator_headroom_mb(self) -> int:
-        return COORDINATOR_HEADROOM_MB + self.cpu_cores * WATCHDOG_HEADROOM_MB
+        return COORDINATOR_HEADROOM_MB + self.workers * WATCHDOG_HEADROOM_MB
 
     def controls(self) -> dict[str, Any]:
         return {
@@ -88,6 +149,8 @@ class LocalBackend:
             "file_limit_bytes": FILE_BYTES,
             "sampled_scratch_limit_bytes": SCRATCH_BYTES,
             "swap_bytes": 0 if self.slice_name else None,
+            "run_time_seconds": self.run_time_seconds,
+            "scratch_capacity_bytes": self.scratch_capacity,
         }
 
     def start(
@@ -101,6 +164,7 @@ class LocalBackend:
         scratch_root: Path | None = None,
     ) -> LocalJob:
         """Launch a watchdog and give only its command custody of job resources."""
+        self.check_deadline()
         if sys.platform != "linux":
             raise RuntimeError("the local execution backend requires Linux")
         if not math.isfinite(limits.time_seconds) or limits.time_seconds <= 0:
@@ -110,18 +174,28 @@ class LocalBackend:
         job_slice = None
         temporary = tempfile.TemporaryDirectory(prefix="k3batch-job-", dir=scratch_root)
         job_directory = Path(temporary.name)
-        scratch = job_directory / "scratch"
         outcome = job_directory / "result.json"
         started = time.monotonic()
-        deadline = started + limits.time_seconds
+        job_deadline = started + limits.time_seconds
+        deadline = min(job_deadline, self.deadline) if self.deadline is not None else job_deadline
         job_cores = limits.cpu_cores or self.cpu_cores
         if not 1 <= job_cores <= self.cpu_cores:
             temporary.cleanup()
             raise RuntimeError("job CPU request exceeds the configured run budget")
+        scratch_temporary = None
+        try:
+            if self.workspace is not None:
+                scratch_temporary = tempfile.TemporaryDirectory(prefix="attempt-", dir=self.workspace)
+        except BaseException:
+            temporary.cleanup()
+            raise
+        scratch = Path(scratch_temporary.name) if scratch_temporary is not None else job_directory / "scratch"
         spec = {
             "parent": os.getpid(),
             "started": started,
             "deadline": deadline,
+            "deadline_scope": "run" if deadline < job_deadline else "job",
+            "workspace": str(self.workspace) if self.workspace is not None else None,
             "memory_bytes": limits.memory_mb * MIB,
             "run_memory_bytes": self.memory_mb * MIB,
             "cpu_cores": job_cores,
@@ -133,7 +207,7 @@ class LocalBackend:
             "outcome": str(outcome),
         }
         try:
-            scratch.mkdir()
+            scratch.mkdir(exist_ok=scratch_temporary is not None)
             if isinstance(self.guard, CgroupGuard):
                 if self.slice_name is None:
                     raise RuntimeError("no cgroup run boundary is active")
@@ -154,8 +228,10 @@ class LocalBackend:
         except BaseException:
             self._release(scope, job_slice)
             temporary.cleanup()
+            if scratch_temporary is not None:
+                scratch_temporary.cleanup()
             raise
-        return LocalJob(process, temporary, outcome, scope, job_slice, started)
+        return LocalJob(process, temporary, outcome, scope, job_slice, started, scratch_temporary)
 
     def _release(self, scope: str, job_slice: str | None) -> None:
         if job_slice is not None and isinstance(self.guard, CgroupGuard):
@@ -183,7 +259,7 @@ class LocalBackend:
             return JobResult(status or 125, wall, {})
         finally:
             self._release(job.scope, job.slice_name)
-            job.temporary.cleanup()
+            job.cleanup()
 
     def cancel(self, job: LocalJob) -> None:
         """Ask a watchdog to stop its tree, then reap its supervisor."""
@@ -199,11 +275,11 @@ class LocalBackend:
             job.process.wait()
         finally:
             self._release(job.scope, job.slice_name)
-            job.temporary.cleanup()
+            job.cleanup()
 
     def execute(self, command: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
         """Execute an expansion with separate, bounded output and error streams."""
-        with tempfile.TemporaryDirectory(prefix="k3batch-plan-") as folder:
+        with tempfile.TemporaryDirectory(prefix="k3batch-plan-", dir=self.workspace) as folder:
             stdout, stderr = (Path(folder) / name for name in ("stdout", "stderr"))
             job = self.start(command, Limits(timeout, self.memory_mb), stdout, stderr=stderr)
             try:
@@ -213,6 +289,8 @@ class LocalBackend:
                 self.cancel(job)
                 raise
             if result.verdict == "timeout":
+                if result.data.get("deadline_scope") == "run":
+                    raise RunDeadlineExpired("run wall deadline reached during planning")
                 raise subprocess.TimeoutExpired(command, timeout)
             errors = read_output(stderr)
             if result.verdict:

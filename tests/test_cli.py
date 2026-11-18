@@ -78,6 +78,33 @@ class CommandLine(unittest.TestCase):
         path = self.run_dir / "results.jsonl"
         return [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
 
+    def test_run_wall_deadline_preserves_committed_work_for_resume(self) -> None:
+        batch = self.batch(items('{ name = "quick" }', '{ name = "slow", sleep = 2.5 }'))
+        database = self.scratch / "ledger.sqlite"
+        options = ("--store", database, "--workers", 1, "--memory-guard", "poll")
+        first = self.k3batch("run", batch, *options, "--run-time-limit", 1.5)
+        self.assertEqual(first.returncode, EXIT_LIMITS, first.stderr)
+        self.assertIn("run wall deadline", first.stderr)
+        store = SQLiteStore(database)
+        manifest = store.manifest(self.run_dir)
+        self.assertEqual(manifest["run_state"], "interrupted")
+        self.assertEqual([r["task_id"] for r in store.query(run_id=manifest["run_id"])], ["fake/quick"])
+        self.assertTrue(all(not still_runs(pid) for pid in self.journal.pids()))
+        second = self.k3batch("run", batch, *options)
+        self.assertEqual(second.returncode, EXIT_OK, second.stderr)
+        self.assertIn("1 to compute, 1 already recorded", second.stderr)
+
+    def test_weighted_cpu_admission_respects_the_run_budget(self) -> None:
+        batch = self.batch(
+            items('{ name = "big", sleep = 0.6 }', limits="limits = { cpu_cores = 2 }"),
+            items('{ name = "small" }'),
+        )
+        done = self.k3batch("run", batch, "--cpu-budget", 2, "--memory-guard", "poll")
+        self.assertEqual(done.returncode, EXIT_OK, done.stderr)
+        spans = self.journal.intervals()
+        self.assertGreaterEqual(spans["fake/small"][0], spans["fake/big"][1])
+        self.assertEqual([row["limits"]["cpu_cores"] for row in self.records()], [2, 1])
+
     def test_run_then_rerun_then_report(self) -> None:
         batch = self.batch(AGREEING)
         plan = self.k3batch("plan", batch)
