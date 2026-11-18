@@ -68,6 +68,7 @@ realizedHomology(TwistRealization, ZZ) := CoherentSheaf => (R, i) -> (
     sheaf HH_(-i) (R#"complex")
     )
 
+numericalClass TwistRealization := VarietyNumericalClass => R -> numericalClass R#"symbolic"
 mukaiClass TwistRealization := MukaiClass => R -> mukaiClass R#"symbolic"
 net TwistRealization := R -> net (
     if R#"status" === "realized" then "realized twist (" | R#"strategy" | ")"

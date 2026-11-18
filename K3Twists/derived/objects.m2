@@ -1,6 +1,6 @@
 -- References to objects and shifts in one realized marked K3 model.
 
-K3ObjectReference = new Type of HashTable
+K3ObjectReference = new Type of VarietyObjectReference
 K3ObjectReference.synonym = "K3 object reference"
 ShiftedK3Object = new Type of K3ObjectReference
 ShiftedK3Object.synonym = "shifted K3 object"
@@ -10,13 +10,16 @@ protect symbol twistReference
 protect symbol shiftedReference
 
 requireObjectModel = (K, K') -> (
-    if (K#"lattice")#(symbol latticeIdentity) =!= (K'#"lattice")#(symbol latticeIdentity)
-        or K#"variety" =!= K'#"variety" then error "objects and twists must belong to the same realized K3 model"
+    sameParent := if instance(K, K3Surface) and instance(K', K3Surface) then
+        (K#"lattice")#(symbol latticeIdentity) === (K'#"lattice")#(symbol latticeIdentity)
+    else if instance(K, QuinticThreefold) and instance(K', QuinticThreefold) then
+        K#(symbol quinticModelIdentity) === K'#(symbol quinticModelIdentity)
+    else false;
+    if not sameParent or K#"variety" =!= K'#"variety"
+        then error "objects and twists must belong to the same realized model"
     )
 
 requireSurfaceClass = (K, v) -> requireSameLattice(K#"polarization", v#"divisor")
-
-classCoordinates = v -> (v#"rank", (v#"divisor")#"coordinates", v#"eulerComponent")
 
 newObjectReference = (K, definition, v) -> (
     requireSurfaceClass(K, v);
@@ -53,25 +56,24 @@ structureObject K3Surface := K3ObjectReference => K ->
 
 mukaiClass K3ObjectReference := MukaiClass => E -> E#"mukaiClass"
 
-shiftObject = method()
-shiftObject(K3ObjectReference, ZZ) := K3ObjectReference => (E, n) -> (
+numericalClass K3ObjectReference := MukaiClass => E -> mukaiClass E
+
+-- Used by each model's shift constructor. Keep shift cancellation geometric.
+shiftReference = (F, E, n) -> (
     if n == 0 then return E;
     K := E#"surface";
     cached(K, (symbol shiftedReference, E#(symbol objectIdentity), n), () -> (
-            v := E#"mukaiClass";
-            (r, c, s) := classCoordinates v;
-            sign := if n % 2 == 0 then 1 else -1;
-            shiftedClass := mukaiClass(sign * r, divisorClass(K#"lattice", apply(c, i -> sign * i)), sign * s);
-            new ShiftedK3Object from {
-                "surface" => K,
-                "object" => E,
-                "shift" => n,
-                "mukaiClass" => shiftedClass,
-                "evidence" => E#"evidence",
-                symbol objectIdentity => new MutableHashTable
-                }
-            ))
+        v := numericalClass E;
+        if n % 2 != 0 then v = negateNumerical v;
+        new F from ({
+            "surface" => K, "object" => E, "shift" => n, "evidence" => E#"evidence",
+            symbol objectIdentity => new MutableHashTable
+            } | numericalReferenceFields v)
+        ))
     )
+
+shiftObject = method()
+shiftObject(K3ObjectReference, ZZ) := K3ObjectReference => (E,n) -> shiftReference(ShiftedK3Object, E, n)
 shiftObject(ShiftedK3Object, ZZ) := K3ObjectReference => (E,n) -> shiftObject(E#"object", E#"shift" + n)
 
 net K3ObjectReference := E -> (

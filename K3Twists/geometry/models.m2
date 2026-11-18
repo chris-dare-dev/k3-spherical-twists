@@ -1,7 +1,7 @@
 -- A K3 surface of degree 2d in P^(d+1), d = 2, 3 or 4, as a complete intersection through the
 -- point x = (1:0:...:0): a quartic, a quadric and a cubic, three quadrics.
 
-K3Surface = new Type of HashTable
+K3Surface = new Type of VarietyModel
 K3Surface.synonym = "K3 surface"
 protect symbol k3Model
 
@@ -51,6 +51,16 @@ assembleK3Surface = (recipe, eqs, point, curve) -> (
     X.cache#(symbol k3Model) = H;
     new K3Surface from {
         "recipe" => recipe,
+        "geometryEvidence" => hashTable {
+            "family" => recipe#"family", "smooth" => true, "canonicalBundle" => "trivial by adjunction",
+            "characteristic" => params#"characteristic", "serreShift" => 2},
+        "capabilities" => hashTable {
+            "numerical" => "Mukai classes on the marked lattice",
+            "cohomology" => "degree-indexed projective sheaf cohomology",
+            "ext" => "degree-indexed Ext on a certified K3",
+            "spherical" => "line bundles, checked catalogue objects and assumptions",
+            "realization" => if h2 == 4 then "certified quartic strategies" else "symbolic"},
+        "distinguishedObjects" => {"O", "O_x", "I_x", "O(1H)"},
         "field" => kk,
         "equations" => eqs,
         "coordinates" => gens R,

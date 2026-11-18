@@ -22,7 +22,7 @@ hyperplaneQuotientReference = K -> (
     )
 
 realizedDerived = (E, representative, C, strategy, evidence, fields) -> (
-    if mukaiClass E =!= mukaiClass representative then error "derived realization and reflection disagree";
+    if numericalClass E =!= numericalClass representative then error "derived realization and reflection disagree";
     if not isWellDefined C then error "invalid realized complex";
     new TwistRealization from merge(hashTable {
         "status" => "realized", "symbolic" => E, "reason" => null, "complex" => C,

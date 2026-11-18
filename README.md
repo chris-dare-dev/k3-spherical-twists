@@ -260,6 +260,33 @@ python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinn
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
+### Marked quintic threefold
+
+The same object and signed-word API can run on a smooth Fermat quintic over
+`ZZ/101`, marked at `(1:-1:0:0:0)`. The constructor checks the Jacobian and
+point ideal. Adjunction gives the trivial canonical bundle and Serre shift 3.
+Use `varietyEvidence`, `varietyCapabilities`, and `distinguishedObjects` on
+either model to inspect the available operations.
+
+```m2
+Y = quinticThreefold()
+Oref = structureObject Y
+P = catalogueObject(Y, "O_x")
+cohomologyObservation Oref
+extObservation(P, Oref)
+W = twistWord {twistStep(sphericalObject Oref, 1)}
+A = realizeTwistImage applyWord(W, P, VerifiedOnly => true)
+numericalClass A
+realizedHomology(A, -1)
+```
+
+The structure sheaf has dimensions `(1,0,0,1)`. On the numerical subgroup
+spanned by the structure and point sheaves, the two Euler pairings are 1 and
+−1 respectively. The forward word subtracts `[O]` from `[O_x]`, and its native
+evaluation cone realizes `I_x[1]`. The inverse uses the opposite numerical
+transvection. Explicit realization on this model is scoped to the single
+certified forward structure twist of the marked point.
+
 ### Certified quartic cones
 
 In addition to evaluation of the marked point sheaf and the hyperplane bundle
