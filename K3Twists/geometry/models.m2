@@ -22,19 +22,22 @@ completeIntersectionEquations = recipe -> (
     (eqs, ideal drop(gens R, 1), null)
     )
 
-realizeK3Surface = method()
-realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
+assembleK3Surface = (recipe, eqs, point, curve) -> (
     params := recipe#"parameters";
     d := params#"d";
     degs := recipe#"degrees";
     kk := recipe#"field";
     marked := markedQuarticDegrees#?(recipe#"family");
-    (eqs, point, curve) := if marked then markedQuarticEquations recipe else completeIntersectionEquations recipe;
     I := ideal eqs;
     R := ring I;
     if codim I != #degs then error "the equations are not a complete intersection";
     if dim(I + minors(#degs, jacobian I)) != 0 then error "the surface is singular";
     if marked then validateMarkedQuartic(I, point, curve, markedQuarticDegrees#(recipe#"family"));
+    if not marked and (ring point =!= R or codim point != numgens R - 1
+        or degree(R/point) != 1 or not isSubset(I, point)) then
+        error "the marked point must be a rational point on the surface";
+    if params#"special_quadric" and eqs#0 =!= R_0 * R_1 + R_2 * R_3 + R_4^2 then
+        error "the saved special quadric has different equations";
     S := R / I;
     X := Proj S;
     point = sub(point, S);
@@ -66,6 +69,13 @@ realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
         "characteristic" => params#"characteristic",
         cache => new CacheTable
         }
+    )
+
+realizeK3Surface = method()
+realizeK3Surface K3FamilyRecipe := K3Surface => recipe -> (
+    (eqs, point, curve) := if markedQuarticDegrees#?(recipe#"family") then markedQuarticEquations recipe
+        else completeIntersectionEquations recipe;
+    assembleK3Surface(recipe, eqs, point, curve)
     )
 
 k3Surface = method(Options => {Characteristic => 32003, Seed => 1, SpecialQuadric => false})

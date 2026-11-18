@@ -4,6 +4,7 @@ newPackage(
     Headline => "sheaves on explicit K3 surfaces that arise from spherical twists along O and O(H)",
     Authors => {{Name => "Christopher Dare"}},
     PackageExports => {"Varieties"},
+    PackageImports => {"Complexes"},
     AuxiliaryFiles => true,
     DebuggingMode => false
     )
@@ -22,6 +23,14 @@ export {
     "Characteristic",
     "Seed",
     "SpecialQuadric",
+    -- portable artifact data
+    "k3ModelArtifact",
+    "loadK3ModelArtifact",
+    "bindK3ModelArtifact",
+    "gradedPresentationArtifact",
+    "loadGradedPresentation",
+    "gradedComplexArtifact",
+    "loadGradedComplex",
     -- classes
     "MarkedDivisorLattice",
     "markedDivisorLattice",
@@ -93,6 +102,8 @@ load "./K3Twists/geometry/quartic-data.m2"
 load "./K3Twists/geometry/recipes.m2"
 load "./K3Twists/geometry/models.m2"
 load "./K3Twists/geometry/marked-quartics.m2"
+load "./K3Twists/artifacts/model.m2"
+load "./K3Twists/artifacts/graded.m2"
 load "./K3Twists/sheaves.m2"
 load "./K3Twists/studies/catalogueClasses.m2"
 load "./K3Twists/catalogue.m2"
@@ -109,6 +120,7 @@ beginDocumentation()
 
 load "./K3Twists/doc.m2"
 load "./K3Twists/doc-marked-quartics.m2"
+load "./K3Twists/doc-artifacts.m2"
 load "./K3Twists/doc-models.m2"
 load "./K3Twists/doc-words.m2"
 load "./K3Twists/tests.m2"

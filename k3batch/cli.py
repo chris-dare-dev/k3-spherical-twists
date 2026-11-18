@@ -18,6 +18,7 @@ from typing import Any
 from uuid import uuid4
 
 from . import __version__, report
+from .artifacts import ArtifactStore, read_artifact_json
 from .config import BatchConfig, ConfigError, load_config
 from .execution import LocalBackend
 from .identity import RECORD_SCHEMA
@@ -100,6 +101,13 @@ def _parser() -> argparse.ArgumentParser:
     export.add_argument("--method", help="match the recorded computation method")
     export.add_argument("--observation", metavar="ID", help="match a result record ID")
     export.add_argument("--commit", help="match the recorded code commit")
+    publish = commands.add_parser("publish-artifact", help="register an immutable mathematical artifact")
+    publish.add_argument("directory", type=Path)
+    publish.add_argument("file", type=Path)
+    publish.add_argument("--producer", required=True, help="run or attempt ID")
+    artifact = commands.add_parser("read-artifact", help="verify and write a registered artifact as JSON")
+    artifact.add_argument("directory", type=Path)
+    artifact.add_argument("digest")
     return parser
 
 
@@ -314,6 +322,17 @@ def _command_export(arguments: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _command_publish_artifact(arguments: argparse.Namespace) -> int:
+    store = ArtifactStore(arguments.directory)
+    print(store.publish(read_artifact_json(arguments.file.read_bytes()), producer=arguments.producer))
+    return EXIT_OK
+
+
+def _command_read_artifact(arguments: argparse.Namespace) -> int:
+    sys.stdout.buffer.write(ArtifactStore(arguments.directory).read(arguments.digest))
+    return EXIT_OK
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
     commands = {
@@ -322,6 +341,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "report": _command_report,
         "import-jsonl": _command_import,
         "export-jsonl": _command_export,
+        "publish-artifact": _command_publish_artifact,
+        "read-artifact": _command_read_artifact,
     }
     try:
         return commands[arguments.command](arguments)
