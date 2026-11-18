@@ -118,6 +118,8 @@ def _prepare(arguments: argparse.Namespace) -> tuple[BatchConfig, tuple[str, ...
         time_seconds=arguments.time_limit,
         memory_mb=arguments.memory_limit,
     )
+    if config.graph is not None and arguments.store is None:
+        raise ConfigError("a dependency graph requires --store DATABASE")
     runner = tuple(shlex.split(arguments.runner)) if arguments.runner else DEFAULT_RUNNER
     run_dir = arguments.out or REPOSITORY / "results" / config.name
     retry = frozenset(name for name in arguments.retry.split(",") if name)
@@ -228,7 +230,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
     summary = ", ".join(f"{count} {status}" for status, count in sorted(outcome.items())) or "nothing to do"
     print(f"this run: {summary}", file=sys.stderr)
     statuses = Counter(record["status"] for record in selected.values())
-    if statuses[Status.MISMATCH] or statuses[Status.ERROR] or statuses[Status.CRASHED]:
+    if any(statuses[status] for status in (Status.MISMATCH, Status.ERROR, Status.CRASHED, Status.BLOCKED)):
         return EXIT_FAILED
     if any(count for status, count in statuses.items() if status not in COMPLETED_STATUSES):
         return EXIT_LIMITS

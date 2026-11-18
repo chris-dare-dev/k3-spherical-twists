@@ -276,7 +276,14 @@ class SQLiteStore:
                 )
 
     def start_attempt(
-        self, run_id: str, member: dict[str, Any], attempt_id: str, started_at: str, log: str
+        self,
+        run_id: str,
+        member: dict[str, Any],
+        attempt_id: str,
+        started_at: str,
+        log: str | None,
+        *,
+        prerequisites: Sequence[str] = (),
     ) -> None:
         with self._write() as db:
             active = db.execute(
@@ -288,6 +295,12 @@ class SQLiteStore:
                 raise RuntimeError("attempt must belong to a task in an active run")
             if _decode(active["member"]) != member:
                 raise RuntimeError("attempt does not match the pinned task definition")
+            for record_id in prerequisites:
+                result = db.execute(
+                    "SELECT result FROM attempts WHERE record_id = ? AND state = 'finished'", (record_id,)
+                ).fetchone()
+                if result is None or _decode(result["result"]).get("status") != "ok":
+                    raise RuntimeError("prerequisite must have a successful committed attempt")
             db.execute(
                 "INSERT INTO attempts (attempt_id, record_id, computation_id, check_id, run_id, task_id,"
                 " state, started_at, log, directory, log_directory)"

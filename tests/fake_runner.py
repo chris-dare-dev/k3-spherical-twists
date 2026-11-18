@@ -67,6 +67,10 @@ def run(task: dict, journal: str | None) -> None:
     else:
         status = "mismatch" if agrees is False else "ok"
     result = {"status": status, "value": value, "predicted": predicted, "agrees": agrees, "method": "fake"}
+    if "produce" in task:
+        result["artifacts"] = task["produce"]
+    if "inputs" in task:
+        result["value"] = {name: source["digest"] for name, source in task["inputs"].items()}
     print("@result " + json.dumps(result))
 
 

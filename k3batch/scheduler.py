@@ -17,8 +17,10 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from .artifacts import ArtifactError, ArtifactStore, read_artifact_json
 from .config import BatchConfig, ConfigError
 from .execution import JobResult, LocalBackend, LocalJob, read_output
+from .graph import Graph
 from .identity import RECORD_SCHEMA, implementation_fingerprint, recheck, task_identities
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
@@ -36,15 +38,20 @@ class PlannedTask:
     record_id: str
     reused: bool
     check: dict[str, Any]
+    graph: dict[str, Any] | None = None
 
     def manifest_entry(self) -> dict[str, Any]:
-        return self.task.payload | {
-            "limits": self.limits.as_dict(),
-            "computation_id": self.computation_id,
-            "check_id": self.check_id,
-            "record_id": self.record_id,
-            "check": self.check,
-        }
+        return (
+            self.task.payload
+            | ({"graph": self.graph} if self.graph is not None else {})
+            | {
+                "limits": self.limits.as_dict(),
+                "computation_id": self.computation_id,
+                "check_id": self.check_id,
+                "record_id": self.record_id,
+                "check": self.check,
+            }
+        )
 
 
 @dataclass
@@ -56,6 +63,7 @@ class _Running:
     log: Path
     attempt_id: str
     started_at: str
+    inputs: dict[str, Any]
 
 
 Progress = Callable[[dict[str, Any], int, int], None]
@@ -80,6 +88,14 @@ class Scheduler:
         self.config = config
         self.tasks = list(tasks)
         self.store = store
+        self.graph = Graph.build(self.tasks, config.graph)
+        if self.graph.nodes and not isinstance(store, SQLiteStore):
+            raise ConfigError("a dependency graph requires a SQLite result store")
+        self.artifacts = (
+            ArtifactStore(store.path.with_suffix(store.path.suffix + ".artifacts"))
+            if isinstance(store, SQLiteStore) and self.graph.nodes
+            else None
+        )
         self.run_dir = run_dir
         self.runner = runner
         self.guard = guard
@@ -94,11 +110,10 @@ class Scheduler:
     def plan(self) -> list[PlannedTask]:
         """Select existing attempts and reserve identifiers for work this run will start."""
         implementation = implementation_fingerprint(self.runner, self.stamp.get("runner", {}))
-        identified = [(task, *task_identities(task, implementation)) for task in self.tasks]
-        if isinstance(self.store, SQLiteStore):
-            latest = self.store.latest_by_computation([identity for _, identity, _ in identified])
-        else:
-            latest = {
+        tasks = {task.id: task for task in self.tasks}
+        jsonl_latest = {}
+        if isinstance(self.store, ResultStore):
+            jsonl_latest = {
                 record["computation_id"]: record
                 for record in self.store.records()
                 if record.get("schema_version") == RECORD_SCHEMA
@@ -106,29 +121,69 @@ class Scheduler:
                 and isinstance(record.get("check_id"), str)
                 and isinstance(record.get("record_id"), str)
             }
-        plan = []
-        for task, computation_id, check_id in identified:
-            limits = self.config.limits_for(task)
-            previous = latest.get(computation_id)
-            check = recheck(task, previous, check_id) if previous is not None else {}
-            reused = previous is not None and self._can_reuse(previous, limits, check)
-            if not reused and limits.memory_mb > self.config.memory_budget_mb:
-                raise ConfigError(
-                    f"task {task.id} has a memory limit of {limits.memory_mb} MB, "
-                    f"above the budget of {self.config.memory_budget_mb} MB"
-                )
-            plan.append(
-                PlannedTask(
+        plan: dict[str, PlannedTask] = {}
+        records: dict[str, str] = {}
+        for level in self.graph.levels:
+            identified = []
+            for task_id in level:
+                node = self.graph.nodes.get(task_id)
+                contract = node.identity(records) if node else None
+                task = tasks[task_id]
+                identified.append((task, contract, *task_identities(task, implementation, contract)))
+            latest = (
+                self.store.latest_by_computation([identity for _, _, identity, _ in identified])
+                if isinstance(self.store, SQLiteStore)
+                else jsonl_latest
+            )
+            for task, contract, computation_id, check_id in identified:
+                limits = self.config.limits_for(task)
+                previous = latest.get(computation_id)
+                check = recheck(task, previous, check_id) if previous is not None else {}
+                reused = previous is not None and self._can_reuse(previous, limits, check)
+                if reused and previous is not None and previous["status"] == Status.OK:
+                    reused = self._valid_outputs(task.id, previous)
+                if not reused and limits.memory_mb > self.config.memory_budget_mb:
+                    raise ConfigError(
+                        f"task {task.id} has a memory limit of {limits.memory_mb} MB, "
+                        f"above the budget of {self.config.memory_budget_mb} MB"
+                    )
+                record_id = previous["record_id"] if reused and previous is not None else uuid4().hex
+                records[task.id] = record_id
+                plan[task.id] = PlannedTask(
                     task,
                     limits,
                     computation_id,
                     check_id,
-                    previous["record_id"] if reused and previous is not None else uuid4().hex,
+                    record_id,
                     reused,
                     check if reused else {},
+                    contract,
                 )
-            )
-        return plan
+        return [plan[task.id] for task in self.tasks]
+
+    def _valid_outputs(self, task_id: str, record: dict[str, Any]) -> bool:
+        node = self.graph.nodes.get(task_id)
+        if node is None or not node.outputs:
+            return True
+        try:
+            for name, kind in node.outputs.items():
+                self._read_output(record, name, kind)
+        except (ArtifactError, OSError):
+            return False
+        return True
+
+    def _read_output(self, record: dict[str, Any], name: str, kind: str) -> dict[str, Any]:
+        assert self.artifacts is not None
+        reference = record.get("detail", {}).get("artifact_outputs", {}).get(name)
+        if not isinstance(reference, dict) or reference.get("kind") != kind:
+            raise ArtifactError(f"missing {kind} artifact {name}")
+        digest = reference.get("digest")
+        if not isinstance(digest, str):
+            raise ArtifactError(f"missing digest for artifact {name}")
+        data = read_artifact_json(self.artifacts.read(digest))
+        if data["kind"] != kind:
+            raise ArtifactError(f"artifact {name} has kind {data['kind']}, expected {kind}")
+        return {"digest": digest, "data": data}
 
     def _can_reuse(self, record: dict[str, Any], limits: Limits, check: dict[str, Any]) -> bool:
         status = check.get("status", record["status"])
@@ -158,21 +213,30 @@ class Scheduler:
         pending = self.pending(members)
         total = len(pending)
         outcome: Counter[str] = Counter()
+        wanted = [entry for entry in members if entry.reused]
+        settled: dict[str, dict[str, Any]] = {}
+        if self.graph.nodes and isinstance(self.store, SQLiteStore):
+            records = self.store.by_record_id([entry.record_id for entry in wanted])
+            settled = {entry.task.id: records[entry.record_id] for entry in wanted}
         running: list[_Running] = []
         (self.run_dir / "logs").mkdir(parents=True, exist_ok=True)
         # a terminated scheduler stops its task processes the same way an interrupted one does
         previous = signal.signal(signal.SIGTERM, _raise_interrupt)
         try:
             while pending or running:
-                self._admit(pending, running)
-                finished = self._collect(running)
+                blocked = self._admit(pending, running, settled)
+                finished = blocked + self._collect(running)
                 for record in finished:
                     self.store.append(record)
+                    if record["task_id"] in self.graph.nodes:
+                        settled[record["task_id"]] = record
                     outcome[record["status"]] += 1
                     if self.progress is not None:
                         self.progress(record, outcome.total(), total)
                 if not finished and running:
                     time.sleep(self.tick)
+                if pending and not running and not finished:
+                    raise RuntimeError("pending tasks have no ready prerequisite")
         finally:
             # an interrupted run leaves no record for the tasks in flight, so a rerun computes them
             for entry in running:
@@ -185,48 +249,113 @@ class Scheduler:
 
     # starting --------------------------------------------------------------------------------------
 
-    def _admit(self, pending: list[tuple[Task, Limits]], running: list[_Running]) -> None:
-        """Starts tasks, cheapest first, while a worker is free and the memory limits fit the budget."""
+    def _admit(
+        self,
+        pending: list[tuple[Task, Limits]],
+        running: list[_Running],
+        settled: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Start ready tasks in cost order and record unusable prerequisites."""
+        blocked = []
         while len(running) < self.config.workers:
-            committed = sum(entry.limits.memory_mb for entry in running)
-            room = self.config.memory_budget_mb - committed
-            fits = next((i for i, (_, limits) in enumerate(pending) if limits.memory_mb <= room), None)
+            room = self.config.memory_budget_mb - sum(entry.limits.memory_mb for entry in running)
+            fits = next(
+                (
+                    i
+                    for i, (task, limits) in enumerate(pending)
+                    if limits.memory_mb <= room and self._dependencies_settled(task, settled)
+                ),
+                None,
+            )
             if fits is None:
-                return
+                break
+            task, limits = pending.pop(fits)
+            try:
+                inputs = self._resolve_inputs(task, settled)
+            except ArtifactError as problem:
+                blocked.append(self._block(task, limits, str(problem)))
+                continue
             # Register the child before handling interruptions. The watchdog unblocks signals.
             signals = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
             try:
-                running.append(self._start(*pending.pop(fits)))
+                running.append(self._start(task, limits, inputs))
             finally:
                 signal.pthread_sigmask(signal.SIG_SETMASK, signals)
+        return blocked
 
-    def _start(self, task: Task, limits: Limits) -> _Running:
-        attempt_id = uuid4().hex
-        log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
-        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+    def _dependencies_settled(self, task: Task, settled: dict[str, dict[str, Any]]) -> bool:
+        node = self.graph.nodes.get(task.id)
+        return node is None or all(source.producer in settled for source in node.inputs.values())
+
+    def _resolve_inputs(self, task: Task, settled: dict[str, dict[str, Any]]) -> dict[str, Any]:
+        inputs: dict[str, Any] = {}
+        node = self.graph.nodes.get(task.id)
+        if node is None:
+            return inputs
+        for name, source in node.inputs.items():
+            record = settled[source.producer]
+            if record["status"] != Status.OK:
+                why = f": {record['error']}" if record.get("error") else ""
+                raise ArtifactError(f"prerequisite {source.producer} ended {record['status']}{why}")
+            try:
+                inputs[name] = self._read_output(record, source.output, source.kind) | {
+                    "producer": source.producer,
+                    "record_id": record["record_id"],
+                    "attempt_id": record["attempt_id"],
+                }
+            except (ArtifactError, OSError) as problem:
+                raise ArtifactError(f"prerequisite {source.producer}: {problem}") from problem
+        for name, source in node.inputs.items():
+            if source.model_input is not None:
+                expected = inputs[source.model_input]["digest"]
+                if inputs[name]["data"]["payload"]["model_digest"] != expected:
+                    raise ArtifactError(
+                        f"prerequisite {source.producer}/{source.output} has an incompatible model"
+                    )
+        return inputs
+
+    def _claim(
+        self, task: Task, attempt_id: str, started_at: str, log: Path | None, inputs: dict[str, Any]
+    ) -> None:
         if isinstance(self.store, SQLiteStore):
             self.store.start_attempt(
                 self.stamp["run_id"],
                 self._active_plan[task.id].manifest_entry(),
                 attempt_id,
                 started_at,
-                str(log.relative_to(self.run_dir)),
+                str(log.relative_to(self.run_dir)) if log else None,
+                prerequisites=[ref["record_id"] for ref in inputs.values()],
             )
-        invocation = RunnerInvocation.prepare(self.runner, "run", task.payload, self.run_dir / "requests")
+
+    def _block(self, task: Task, limits: Limits, error: str) -> dict[str, Any]:
+        attempt_id = uuid4().hex
+        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+        self._claim(task, attempt_id, started_at, None, {})
+        return self._result_record(
+            task,
+            limits,
+            attempt_id,
+            started_at,
+            None,
+            {},
+            JobResult(0, 0, {}),
+            Status.BLOCKED,
+            error,
+        )
+
+    def _start(self, task: Task, limits: Limits, inputs: dict[str, Any]) -> _Running:
+        attempt_id = uuid4().hex
+        log = self.run_dir / "logs" / f"{_slug(task.id)}-{attempt_id}.log"
+        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+        self._claim(task, attempt_id, started_at, log, inputs)
+        payload = task.payload | ({"inputs": inputs} if inputs else {})
+        invocation = RunnerInvocation.prepare(self.runner, "run", payload, self.run_dir / "requests")
         try:
             job = self.backend.start(invocation.command, limits, log, cwd=REPOSITORY)
         except BaseException:
             invocation.cleanup()
             raise
-        return _Running(
-            task=task,
-            limits=limits,
-            job=job,
-            invocation=invocation,
-            log=log,
-            attempt_id=attempt_id,
-            started_at=started_at,
-        )
+        return _Running(task, limits, job, invocation, log, attempt_id, started_at, inputs)
 
     # ending ----------------------------------------------------------------------------------------
 
@@ -285,16 +414,74 @@ class Scheduler:
             )
 
         result = result or {}
+        staged = result.pop("artifacts", {})
+        result.pop("artifact_outputs", None)
+        result.pop("artifact_inputs", None)
+        node = self.graph.nodes.get(entry.task.id)
+        if status == Status.OK and (staged or (node is not None and node.outputs)):
+            try:
+                result["artifact_outputs"] = self._publish_outputs(entry, staged)
+            except (ArtifactError, OSError, ValueError) as problem:
+                status = Status.ERROR
+                error = f"invalid artifact output: {problem}"
+        if entry.inputs:
+            result["artifact_inputs"] = {
+                name: {key: value for key, value in ref.items() if key != "data"}
+                for name, ref in entry.inputs.items()
+            }
         keep_log = status not in RUNNER_STATUSES
         if not keep_log:
             entry.log.unlink(missing_ok=True)
+        return self._result_record(
+            entry.task,
+            entry.limits,
+            entry.attempt_id,
+            entry.started_at,
+            entry.log if keep_log else None,
+            result,
+            outcome,
+            status,
+            error,
+        )
+
+    def _publish_outputs(self, entry: _Running, staged: Any) -> dict[str, Any]:
+        node = self.graph.nodes.get(entry.task.id)
+        if (
+            node is None
+            or self.artifacts is None
+            or not isinstance(staged, dict)
+            or staged.keys() != node.outputs.keys()
+        ):
+            raise ArtifactError("returned artifact names must match the graph declaration")
+        for name, kind in node.outputs.items():
+            data = staged[name]
+            if not isinstance(data, dict) or data.get("kind") != kind:
+                raise ArtifactError(f"output {name} must be a {kind} artifact")
+        return {
+            name: {"kind": kind, "digest": self.artifacts.publish(staged[name], entry.attempt_id)}
+            for name, kind in node.outputs.items()
+        }
+
+    def _result_record(
+        self,
+        task: Task,
+        limits: Limits,
+        attempt_id: str,
+        started_at: str,
+        log: Path | None,
+        result: dict[str, Any],
+        outcome: JobResult,
+        status: Status,
+        error: str | None,
+    ) -> dict[str, Any]:
+        exit_code = outcome.returncode
         record = {
-            "task_id": entry.task.id,
-            "attempt_id": entry.attempt_id,
-            "task": entry.task.payload,
+            "task_id": task.id,
+            "attempt_id": attempt_id,
+            "task": task.payload,
             "status": str(status),
             "value": result.get("value"),
-            "predicted": result.get("predicted", entry.task.payload.get("predicted")),
+            "predicted": result.get("predicted", task.payload.get("predicted")),
             "agrees": result.get("agrees"),
             "detail": {
                 key: value
@@ -313,14 +500,14 @@ class Scheduler:
                 "effective_job": outcome.data.get("effective"),
                 "effective_run": outcome.data.get("effective_run"),
             },
-            "limits": entry.limits.as_dict(),
+            "limits": limits.as_dict(),
             "memory_guard": self.guard.name,
-            "exit_code": exit_code if exit_code >= 0 else None,
+            "exit_code": exit_code if exit_code >= 0 and status != Status.BLOCKED else None,
             "exit_signal": signal.Signals(-exit_code).name if exit_code < 0 else None,
-            "started_at": entry.started_at,
-            "log": str(entry.log.relative_to(self.run_dir)) if keep_log else None,
+            "started_at": started_at,
+            "log": str(log.relative_to(self.run_dir)) if log else None,
         }
-        planned = self._active_plan[entry.task.id]
+        planned = self._active_plan[task.id]
         return (
             record
             | self.stamp

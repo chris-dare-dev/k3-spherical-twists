@@ -300,6 +300,57 @@ took about 0.007 s and 0.08 s, respectively. A fresh process took 0.39 s to vali
 and reload the model and 4.03 s to reload the presentation and form the sheaf.
 These timings exclude M2 startup, publication, and initial bundle construction.
 
+### Dependent batches
+
+A batch can include a versioned `[graph]` table. Node IDs refer to the task IDs
+printed by `k3batch plan`. Tasks without graph declarations remain independent.
+
+```toml
+[graph]
+version = 1
+
+[[graph.nodes]]
+id = "make-model"
+outputs = { model = "k3-model" }
+
+[[graph.nodes]]
+id = "make-prefix"
+outputs = { cone = "graded-complex" }
+inputs.surface = { producer = "make-model", output = "model", kind = "k3-model" }
+
+[[graph.nodes]]
+id = "measure-prefix"
+[graph.nodes.inputs.surface]
+producer = "make-model"
+output = "model"
+kind = "k3-model"
+[graph.nodes.inputs.prefix]
+producer = "make-prefix"
+output = "cone"
+kind = "graded-complex"
+model_input = "surface"
+```
+
+Use `--store DATABASE` for a graph. Artifacts live in the sibling directory
+`DATABASE.artifacts`. A runner receives verified inputs by name in `inputs`, with
+the artifact data, digest and source attempt. Return exact artifact envelopes by
+name in the result's `artifacts` field. Supported output kinds are `k3-model`,
+`graded-presentation` and `graded-complex`. A dependent mathematical artifact
+requires its model to be registered. Use an upstream model node to obtain the
+model digest for a new complex or presentation.
+
+The coordinator validates graph topology and contracts before admitting tasks.
+It verifies the content of an input and any declared `model_input` relationship
+before starting a consumer. Each new claim is recorded in SQLite, and a producer's
+artifacts are published before its successful attempt is committed. Descendants
+of a failed prerequisite record its cause as `blocked`. Independent work can finish.
+
+On resume, a successful linked attempt can supply its artifacts again. If a
+process dies between artifact publication and the attempt commit, the next run
+repeats that attempt and identical bytes share the existing artifact. Consumer
+records pin the upstream record IDs, so retrying a producer selects new work for
+its consumers. Runs with no graph edges follow the usual scheduling and reuse rules.
+
 ## Design
 
 Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.
@@ -333,7 +384,7 @@ function, computation function, kind version, and requirement names. Planning us
 catalogue and prediction metadata from the surface parameters. Each task constructs
 and validates its surface when it runs. A kind may provide output descriptors with
 `name`, `media_type`, and `digest`. These descriptors travel with the result
-record. The runner does not persist or resolve the artifacts they describe.
+record. The dependency scheduler publishes and resolves artifacts for declared graph nodes.
 
 Custom shell runners use the legacy `expand` and `run` commands with argv JSON
 and marker lines. The bundled M2 entry point also accepts those modes for direct use
