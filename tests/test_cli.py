@@ -142,8 +142,17 @@ class CommandLine(unittest.TestCase):
         self.k3batch("run", batch)
         again = self.k3batch("run", batch, "--retry", "timeout,memory")
         self.assertEqual(again.returncode, EXIT_LIMITS, again.stderr)
-        self.assertEqual(self.journal.started().count("fake/sleeper"), 2)
-        self.assertEqual(len(self.journal.started()), 4)
+        # The watchdog may time out before the runner emits a start event.
+        # The two persisted attempts establish the retry independently of startup time.
+        rows = self.records()
+        attempts = [row for row in rows if row["task_id"] == "fake/sleeper"]
+        self.assertEqual([row["status"] for row in attempts], ["timeout", "timeout"])
+        self.assertEqual(len({row["attempt_id"] for row in attempts}), 2)
+        self.assertEqual(len(rows), 4)
+        self.assertCountEqual([row["task_id"] for row in rows if row["status"] == "ok"], ["fake/a", "fake/b"])
+        self.assertCountEqual(
+            [task_id for task_id in self.journal.started() if task_id != "fake/sleeper"], ["fake/a", "fake/b"]
+        )
 
     def test_changed_definition_and_removed_task_only_affect_the_new_report(self) -> None:
         first = self.k3batch("run", self.batch(AGREEING, DIFFERING))
