@@ -12,6 +12,7 @@ import sys
 from collections import Counter
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
+from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,7 @@ from .execution import LocalBackend
 from .identity import RECORD_SCHEMA
 from .memory import available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
+from .resources import ResourcePolicy
 from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError, code_version, expand
 from .scheduler import PlannedTask, Scheduler
 from .sqlite_store import SQLiteStore
@@ -48,6 +50,9 @@ def _parser() -> argparse.ArgumentParser:
 
     def batch_arguments(command: argparse.ArgumentParser) -> None:
         database_argument(command)
+        command.add_argument(
+            "--resource-retries", type=int, metavar="N", help="override automatic retry count"
+        )
         command.add_argument("batch", type=Path, help="the batch file (TOML)")
         command.add_argument("--out", type=Path, help="run directory (default: results/<name of the batch>)")
         command.add_argument("--workers", type=int, help="task processes at a time")
@@ -121,6 +126,11 @@ def _prepare(arguments: argparse.Namespace) -> tuple[BatchConfig, tuple[str, ...
         time_seconds=arguments.time_limit,
         memory_mb=arguments.memory_limit,
     )
+    if arguments.resource_retries is not None:
+        settings = asdict(config.resources or ResourcePolicy()) | {
+            "retry_attempts": arguments.resource_retries
+        }
+        config = replace(config, resources=ResourcePolicy.parse(settings))
     if config.graph is not None and arguments.store is None:
         raise ConfigError("a dependency graph requires --store DATABASE")
     runner = tuple(shlex.split(arguments.runner)) if arguments.runner else DEFAULT_RUNNER
@@ -162,8 +172,12 @@ def _command_plan(arguments: argparse.Namespace) -> int:
     plan = scheduler.plan()
     pending = scheduler.pending(plan)
     print("\n".join(_plan_lines(config, plan, pending)))
+    estimates = {entry.task.id: entry.resources for entry in plan}
     for task, limits in pending:
-        print(f"{task.cost:8g}  {limits.time_seconds:8g} s  {limits.memory_mb:7d} MB  {task.id}")
+        request = f"{task.cost:8g}  {limits.time_seconds:8g} s  {limits.memory_mb:7d} MB"
+        estimate = estimates[task.id]
+        note = f"  {limits.cpu_cores} cores  {estimate['basis']}" if estimate else ""
+        print(f"{request}  {task.id}{note}")
     return EXIT_OK
 
 

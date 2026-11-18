@@ -33,9 +33,11 @@ class Limits:
 
     time_seconds: float
     memory_mb: int
+    cpu_cores: int | None = None
 
     def as_dict(self) -> dict[str, Any]:
-        return {"time_seconds": self.time_seconds, "memory_mb": self.memory_mb}
+        result = {"time_seconds": self.time_seconds, "memory_mb": self.memory_mb}
+        return result | ({"cpu_cores": self.cpu_cores} if self.cpu_cores is not None else {})
 
 
 @dataclass(frozen=True)

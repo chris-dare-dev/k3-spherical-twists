@@ -138,7 +138,7 @@ def watch(spec: dict[str, Any], command: list[str]) -> dict[str, Any]:
             or effective["cpu_cores"] > spec["cpu_cores"]
             or run["memory_bytes"] > spec["run_memory_bytes"]
             or run["swap_bytes"] != 0
-            or run["cpu_cores"] > spec["cpu_cores"]
+            or run["cpu_cores"] > spec.get("run_cpu_cores", spec["cpu_cores"])
         ):
             raise RuntimeError("systemd did not enforce the requested cgroup limits")
         initial_run_oom = counters(group.parent, "memory.events.local").get("oom", 0)

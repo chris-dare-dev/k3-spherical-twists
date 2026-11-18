@@ -343,22 +343,26 @@ class SQLiteStore:
 
     def latest_by_computation(self, identities: Sequence[str]) -> dict[str, dict[str, Any]]:
         """Find the latest eligible result for each requested computation through the index."""
+        return {identity: rows[0] for identity, rows in self.recent_by_computation(identities, 1).items()}
+
+    def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[dict[str, Any]]]:
+        history: dict[str, list[dict[str, Any]]] = {}
         with self._read() as db:
             if db is None:
-                return {}
-            return {
-                row["computation_id"]: _result(row)
-                for chunk in _chunks(tuple(dict.fromkeys(identities)))
-                for row in db.execute(
+                return history
+            for chunk in _chunks(tuple(dict.fromkeys(identities))):
+                rows = db.execute(
                     "SELECT computation_id, result, log_directory FROM ("
                     " SELECT computation_id, result, log_directory,"
                     " ROW_NUMBER() OVER (PARTITION BY computation_id ORDER BY started_at DESC, seq DESC) rank"
                     " FROM attempts WHERE result IS NOT NULL AND record_id IS NOT NULL"
                     f" AND check_id IS NOT NULL AND computation_id IN ({_placeholders(len(chunk))})"
-                    ") WHERE rank = 1",
-                    chunk,
+                    ") WHERE rank <= ? ORDER BY computation_id, rank",
+                    (*chunk, limit),
                 )
-            }
+                for row in rows:
+                    history.setdefault(row["computation_id"], []).append(_result(row))
+        return history
 
     def by_record_id(self, identities: Sequence[str]) -> dict[str, dict[str, Any]]:
         """Find the exact records reserved by run members."""
