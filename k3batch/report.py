@@ -214,6 +214,38 @@ def render(
                 ["task", "cost", "wall (s)", "peak (MB)"],
                 [[_name(r), r["task"].get("cost"), r["wall_seconds"], r["peak_rss_mb"]] for r in slowest],
             )
+    if full:
+        artifacts = []
+        for record in records:
+            detail = record.get("detail", {})
+            for field in ("artifact_inputs", "artifact_outputs"):
+                for name, ref in sorted(detail.get(field, {}).items()):
+                    producer = ref.get("producer", record["task_id"])
+                    attempt = ref.get("attempt_id", record.get("attempt_id"))
+                    artifacts.append(
+                        [
+                            _name(record),
+                            field.removeprefix("artifact_"),
+                            name,
+                            ref["digest"],
+                            producer,
+                            attempt,
+                            record.get("resource_controls", {}).get("mode"),
+                        ]
+                    )
+        if artifacts:
+            lines += ["## Artifacts", ""]
+            lines += _table(
+                ["task", "use", "name", "digest", "producer", "source attempt", "memory control"], artifacts
+            )
+        evidence = [
+            [_name(record), record["detail"]["evidence"], record["task"].get("prediction")]
+            for record in records
+            if record.get("detail", {}).get("evidence")
+        ]
+        if evidence:
+            lines += ["## Mathematical evidence", ""]
+            lines += _table(["task", "evidence", "prediction"], evidence)
     return "\n".join(lines).rstrip() + "\n"
 
 

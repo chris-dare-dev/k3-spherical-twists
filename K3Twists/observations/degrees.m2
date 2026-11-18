@@ -78,6 +78,8 @@ observeCohomology = (subject, F, shift, requested) -> (
 
 cohomologyObservation = method(Options => {Degrees => null})
 cohomologyObservation CoherentSheaf := DegreeObservation => opts -> F -> observeCohomology(F, F, 0, opts.Degrees)
+cohomologyObservation(CoherentSheaf, ZZ) := DegreeObservation => opts -> (F, a) ->
+    observeCohomology((F, a), F, a, opts.Degrees)
 cohomologyObservation K3ObjectReference := DegreeObservation => opts -> E -> (
     (F, shift) := observationTerm E;
     observeCohomology(E, F, shift, opts.Degrees)
@@ -97,6 +99,8 @@ observeExt = (subjects, E, F, offset, requested) -> (
 extObservation = method(Options => {Degrees => null})
 extObservation(CoherentSheaf, CoherentSheaf) := DegreeObservation => opts -> (E, F) ->
     observeExt({E, F}, E, F, 0, opts.Degrees)
+extObservation(CoherentSheaf, CoherentSheaf, ZZ, ZZ) := DegreeObservation => opts -> (E, F, a, b) ->
+    observeExt({(E, a), (F, b)}, E, F, a - b, opts.Degrees)
 extObservation(K3ObjectReference, K3ObjectReference) := DegreeObservation => opts -> (A, B) -> (
     requireObjectModel(A#"surface", B#"surface");
     (E, a) := observationTerm A;

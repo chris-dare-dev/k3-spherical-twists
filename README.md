@@ -351,6 +351,39 @@ repeats that attempt and identical bytes share the existing artifact. Consumer
 records pin the upstream record IDs, so retrying a producer selects new work for
 its consumers. Runs with no graph edges follow the usual scheduling and reuse rules.
 
+### Resumable marked quartic study
+
+At the Macaulay2 prompt, load the package and evaluate the expressions in
+`examples/resumable-quartic.m2`. From the repository root the same session runs
+with `M2 --script examples/resumable-quartic.m2`. The conic marking gives
+the ordered basis `H, C` with Gram matrix `{{4,2},{2,-2}}`. The script shows
+the catalogue, the class `(-3,(1,0),-1)` of the forward twist of `O(H)` about
+`O`, its realization as `M_H[1]`, and the capability response for the
+inverse twist about `O` on `O(H)`.
+
+The batch uses the same marked quartic, input line bundle and signed word.
+Run through the cone checkpoint, then resume against the same ledger.
+
+```bash
+scratch=$(mktemp -d)
+python3 -m k3batch run batches/resumable-quartic.toml \
+    --store "$scratch/study.sqlite" --out "$scratch/run" \
+    --checkpoint-after quartic_prefix/realize
+python3 -m k3batch run batches/resumable-quartic.toml \
+    --store "$scratch/study.sqlite" --out "$scratch/run"
+python3 -m k3batch report "$scratch/run" \
+    --store "$scratch/study.sqlite" --run RUN_ID --full
+```
+
+The checkpoint returns status 130 after the cone and its attempt have been
+committed. On resume, the model and cone are reused and the two observations
+each reload their verified inputs in a fresh process. Substitute the printed
+ID of the resumed run for `RUN_ID`. The pinned report records the degrees
+and dimensions, hypotheses and prediction versions, artifact digests, source
+attempt IDs, and memory-control mode. The cohomology table is `(0,0,4)` in
+degrees −1 through 1, and Ext from the realized object to `O` is `(4,0,0)`
+in degrees 1 through 3.
+
 ## Design
 
 Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.

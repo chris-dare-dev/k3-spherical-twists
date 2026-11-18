@@ -134,6 +134,7 @@ load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"
 
 load "./K3Twists/derived/quarticCones.m2"
+load "./K3Twists/tasks/quartic-prefix.m2"
 
 beginDocumentation()
 

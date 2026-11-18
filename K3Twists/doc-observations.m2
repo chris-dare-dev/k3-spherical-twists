@@ -4,10 +4,12 @@ doc ///
         (net, DegreeObservation)
         cohomologyObservation
         (cohomologyObservation, CoherentSheaf)
+        (cohomologyObservation, CoherentSheaf, ZZ)
         (cohomologyObservation, K3ObjectReference)
         [cohomologyObservation, Degrees]
         extObservation
         (extObservation, CoherentSheaf, CoherentSheaf)
+        (extObservation, CoherentSheaf, CoherentSheaf, ZZ, ZZ)
         (extObservation, K3ObjectReference, K3ObjectReference)
         [extObservation, Degrees]
         observedDimension
@@ -24,6 +26,7 @@ doc ///
             A degree outside the known support has dimension zero. Inside the support,
             an uncomputed degree has null dimension. @TO degreeStatus@ also identifies
             unsupported observations such as a symbolic reference with no sheaf realization.
+            Pass the cohomological shifts after the native sheaf arguments.
             Direct Ext uses the dimension bound on a certified smooth K3 model.
         Example
             K = k3Surface 2;

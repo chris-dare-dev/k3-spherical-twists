@@ -80,6 +80,9 @@ def _parser() -> argparse.ArgumentParser:
         "--overcommit", action="store_true",
         help="run even if the memory budget is above the memory now available",
     )  # fmt: skip
+    run.add_argument(
+        "--checkpoint-after", metavar="TASK_ID", help="pause after committing a newly successful task"
+    )
     run.add_argument("--quiet", action="store_true", help="do not print a line per task")
 
     rep = commands.add_parser("report", help="print tables from the records of a run directory")
@@ -181,10 +184,21 @@ def _command_run(arguments: argparse.Namespace) -> int:
     store = _result_store(run_dir, arguments.store)
     with store, backend:
         tasks, runner_versions = expand(runner, config.description, execute=backend.execute)
+        checkpoint = arguments.checkpoint_after
+        if checkpoint and not any(task.id == checkpoint for task in tasks):
+            raise ConfigError(f"unknown checkpoint task {checkpoint!r}")
+
+        def progress(record: dict[str, Any], finished: int, total: int) -> None:
+            if not arguments.quiet:
+                _print_progress(record, finished, total)
+            if record["task_id"] == checkpoint and record["status"] == Status.OK:
+                print(f"checkpoint committed at {checkpoint}", file=sys.stderr)
+                raise KeyboardInterrupt
+
         scheduler = Scheduler(
             config=config, tasks=tasks, store=store, run_dir=run_dir, runner=runner, guard=guard,
             stamp={"run_id": run_id, "runner": runner_versions, "code": code},
-            retry=retry, progress=None if arguments.quiet else _print_progress,
+            retry=retry, progress=progress,
         )  # fmt: skip
         plan = scheduler.plan()
         pending = scheduler.pending(plan)

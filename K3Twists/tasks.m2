@@ -118,7 +118,7 @@ runTask HashTable := HashTable => task -> (
     checkFields(out, "task result", {
             ("value", isAnything), ("predicted", isAnything), ("agrees", nullable isBoolean),
             ("method", isString), ("setup_seconds", isNonnegativeNumber), ("compute_seconds", isNonnegativeNumber)
-            }, {("outputs", x -> instance(x, List)), ("artifacts", x -> instance(x, HashTable))});
+            }, {("outputs", x -> instance(x, List)), ("artifacts", x -> instance(x, HashTable)), ("evidence", x -> instance(x, HashTable))});
     scan(opt(out, "outputs", {}), reference -> checkFields(reference, "output reference", {
                 ("name", isString), ("media_type", isString), ("digest", isString)
                 }, {}));
