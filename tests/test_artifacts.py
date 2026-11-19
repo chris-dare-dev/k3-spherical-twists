@@ -162,6 +162,24 @@ class ArtifactRegistry(unittest.TestCase):
         ]:
             with self.subTest(endpoint=bad), self.assertRaisesRegex(ArtifactError, message):
                 self.store.publish(chain_map | {"payload": info | {"target_digest": bad}}, "invalid")
+        staged = chain_map | {
+            "payload": {
+                "model_digest": model,
+                "source_output": "src",
+                "target_output": "dst",
+                "components": [],
+            }
+        }
+        declared = {"arrow": "graded-chain-map", "src": "graded-complex", "dst": "graded-complex"}
+        outputs = {
+            "arrow": staged,
+            "src": complex_data,
+            "dst": complex_data | {"payload": complex_data["payload"] | {"base": 1}},
+        }
+        self.assertEqual(self.store.publish_outputs(outputs, declared, "staged")["arrow"]["digest"], digest)
+        wrong = staged | {"payload": staged["payload"] | {"target_output": "arrow"}}
+        with self.assertRaisesRegex(ArtifactError, "must name a graded-complex sibling output"):
+            self.store.publish_outputs(outputs | {"arrow": wrong}, declared, "invalid")
         (self.store.objects / f"{source}.json").write_bytes(b"damaged")
         with self.assertRaisesRegex(ArtifactError, "failed digest verification"):
             self.store.read(digest)
