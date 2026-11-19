@@ -17,10 +17,13 @@ from .wire import unique_object
 
 MODEL = "k3-model"
 COMPLEX = "graded-complex"
+CHAIN_MAP = "graded-chain-map"
+ENDPOINTS = ("source_digest", "target_digest")
 PAYLOAD_FIELDS = {
     MODEL: {"parameters", "coordinates", "grading", "equations", "markings"},
     "graded-presentation": {"model_digest", "source", "target", "matrix"},
     COMPLEX: {"model_digest", "base", "terms", "differentials"},
+    CHAIN_MAP: {"model_digest", *ENDPOINTS, "components"},
 }
 
 
@@ -46,6 +49,9 @@ def _describe(data: Any) -> tuple[int, str, str | None]:
     payload = data["payload"]
     if not isinstance(payload, dict) or set(payload) != PAYLOAD_FIELDS[kind]:
         raise ArtifactError(f"invalid {kind} payload fields")
+    if kind == CHAIN_MAP:
+        for endpoint in ENDPOINTS:
+            _digest(payload[endpoint])
     return version, kind, None if kind == MODEL else _digest(payload["model_digest"])
 
 
@@ -107,8 +113,7 @@ class ArtifactStore:
         body = _canonical(data)
         digest = sha256(body).hexdigest()
         with self._connect() as connection:
-            if model is not None:
-                self._require_model(connection, model)
+            self._require_references(connection, data, model)
             self._publish_file(digest, body)
             connection.execute(
                 "INSERT INTO artifact VALUES (?, ?, ?, ?, ?) ON CONFLICT(digest) DO NOTHING",
@@ -145,7 +150,7 @@ class ArtifactStore:
         finally:
             os.close(directory)
 
-    def _read(self, connection: sqlite3.Connection, digest: str) -> tuple[bytes, str, str | None]:
+    def _read(self, connection: sqlite3.Connection, digest: str) -> tuple[bytes, dict[str, Any], str | None]:
         row = connection.execute(
             "SELECT size, version, kind, model_digest FROM artifact WHERE digest = ?", (digest,)
         ).fetchone()
@@ -157,15 +162,25 @@ class ArtifactStore:
             raise ArtifactError(f"registered artifact {digest} has no file") from None
         if len(body) != row[0] or sha256(body).hexdigest() != digest:
             raise ArtifactError(f"artifact {digest} failed digest verification")
-        version, kind, model = _describe(read_artifact_json(body))
+        data = read_artifact_json(body)
+        version, kind, model = _describe(data)
         if row[1:] != (version, kind, model):
             raise ArtifactError(f"artifact {digest} disagrees with its registry metadata")
-        return body, kind, model
+        return body, data, model
 
-    def _require_model(self, connection: sqlite3.Connection, digest: str) -> None:
-        _, kind, _ = self._read(connection, digest)
-        if kind != MODEL:
-            raise ArtifactError(f"artifact {digest} is not a K3 model")
+    def _require_references(
+        self, connection: sqlite3.Connection, data: dict[str, Any], model: str | None
+    ) -> None:
+        if model is not None:
+            _, parent, _ = self._read(connection, model)
+            if parent["kind"] != MODEL:
+                raise ArtifactError(f"artifact {model} is not a K3 model")
+        if data["kind"] == CHAIN_MAP:
+            for endpoint in ENDPOINTS:
+                digest = data["payload"][endpoint]
+                _, complex_data, parent_model = self._read(connection, digest)
+                if complex_data["kind"] != COMPLEX or parent_model != model:
+                    raise ArtifactError(f"chain map {endpoint} must name a graded complex over its model")
 
     def publish_outputs(
         self, staged: Any, declared: dict[str, str], producer: str
@@ -198,9 +213,8 @@ class ArtifactStore:
         return {"digest": digest, "data": data}
 
     def read(self, digest: str) -> bytes:
-        """Verify the registered artifact and its model before returning canonical JSON."""
+        """Verify the registered artifact and its references before returning canonical JSON."""
         with self._connect() as connection:
-            body, _, model = self._read(connection, _digest(digest))
-            if model is not None:
-                self._require_model(connection, model)
+            body, data, model = self._read(connection, _digest(digest))
+            self._require_references(connection, data, model)
         return body
