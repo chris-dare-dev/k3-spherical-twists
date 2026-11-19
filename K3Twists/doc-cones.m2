@@ -5,6 +5,7 @@ doc ///
         (mukaiClass, TwistRealization)
         realizeTwistImage
         (realizeTwistImage, K3ObjectReference)
+        (realizeTwistImage, SphericalTwistWord, K3ObjectReference)
         realizedHomology
         (realizedHomology, TwistRealization, ZZ)
     Headline
@@ -32,6 +33,13 @@ doc ///
             to the four coordinate sections. The result records the evaluation chain map
             and pairing matrix. Its degree-zero and degree-one sheaf homology are
             O(-H) and four copies of O, respectively.
+
+            Pass the signed word and the starting reference directly to
+            @TO realizeTwistImage@ to realize the forward structure twist of O(-H)
+            followed by its inverse. This entry point retains both steps for the
+            chain-level computation. The result includes the forward realization,
+            inverse coevaluation and a comparison from the original line bundle
+            to the shifted cone of the coevaluation.
 
             For a certified spherical line bundle O or O(H), the degree-zero identity in its
             self-evaluation splits off. The degree-two Serre trace then gives the surviving

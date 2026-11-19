@@ -139,6 +139,41 @@ quarticHigherEvaluation = (E, input, shift) -> (
             "sourceAugmentation" => augmentation, "traceCocycle" => homomorphism map(source next, source trace, ambient trace)})
     )
 
+quarticInverseCancellation = (E, input, shift) -> (
+    K := E#"surface";
+    R := K#"ring";
+    forward := realizeTwistImage E#"prefix";
+    u := forward#"chainMap";
+    C := if shift == 0 then forward#"complex" else cone u;
+    D := source u;
+    aug := forward#"sourceAugmentation";
+    coevaluation := (aug[-1] * canonicalMap(D[-1], C))[-shift];
+    inclusion := (canonicalMap(C, target u))[-shift];
+    if not isComplexMorphism coevaluation or coevaluation * inclusion != 0 then
+        error "the coevaluation must be a chain map and kill the line-bundle inclusion";
+
+    -- The forward evaluation triangle gives H^3(C) = H^2(O)^4 as its only
+    -- hypercohomology. Restrict the four components to the lowest term of C.
+    -- By Serre duality the computed dual-section rank is the rank of their
+    -- pairings on H^2 of that term, which maps to H^3(C).
+    pairingRank := rank part(0, Hom(coevaluation_(shift-1), R^1));
+    if pairingRank != 4 then error "inverse coevaluation must give four independent Serre functionals";
+
+    B := (cone coevaluation)[1];
+    L := source inclusion;
+    comparison := map(B, L, hashTable {shift => map(B_shift, L_shift, inclusion_shift)}, Degree => 0);
+    if not isComplexMorphism comparison then error "invalid comparison with the line bundle";
+
+    -- The cone projection has L as its termwise kernel. Composing it with
+    -- the validated sheaf quasi-isomorphism aug preserves its homotopy fiber.
+    realizedDerived(E, shiftObject(input, shift), B, "quartic-degree-two-inverse-cancellation",
+        {"certified O generator", "rank-four Serre pairing for the coevaluation",
+            "termwise cone projection and sheaf-quasi-isomorphic augmentation"},
+        hashTable {"directions" => {1,-1}, "shift" => shift, "chainMap" => coevaluation,
+            "comparison" => comparison, "serrePairingRank" => pairingRank, "forward" => forward,
+            "derivedHomDegrees" => {{shift - 1,4}}})
+    )
+
 -- Split the identity summand in the derived category. This comparison is independent of a lift
 -- of the degree-two class. The surviving one-term complex represents the actual cone.
 quarticSelfEvaluation = E -> (
@@ -171,7 +206,6 @@ quarticSelfEvaluation = E -> (
 realizeQuarticDerived = E -> (
     self := quarticSelfEvaluation E;
     if self =!= null then return self;
-    if E#"length" != 1 then return null;
     signedStep := E#"step";
     K := E#"surface";
     H := K#"polarization"#"coordinates";
@@ -180,7 +214,14 @@ realizeQuarticDerived = E -> (
     (input, shift) := unshiftReference E#"start";
     D := lineCoordinates input;
     zero := apply(H, i -> 0);
-    if signedStep#"direction" == 1 and generator === zero and D === apply(H, h -> -h) then
+    negativeHyperplane := apply(H, h -> -h);
+    if E#"length" == 2 and signedStep#"direction" == -1 and generator === zero and D === negativeHyperplane then (
+        firstStep := E#"prefix"#"step";
+        if firstStep#"direction" == 1 and certifiedStep firstStep and lineCoordinates stepObject firstStep === zero
+            then return quarticInverseCancellation(E, input, shift);
+        );
+    if E#"length" != 1 then return null;
+    if signedStep#"direction" == 1 and generator === zero and D === negativeHyperplane then
         return quarticHigherEvaluation(E, input, shift);
     if generator =!= H then return null;
     if signedStep#"direction" == -1 and D === zero then
