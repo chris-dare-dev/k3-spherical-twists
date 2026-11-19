@@ -43,6 +43,16 @@ class ResumableQuartic(unittest.TestCase):
             {"hypercohomology": [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]},
         )
 
+    def test_inverse_and_hypercohomology_share_one_saved_forward_prefix(self) -> None:
+        self.check_checkpoint(
+            "resumable-quartic-inverse",
+            "O(-1H)",
+            1,
+            {"class": [-3, [-1, 0], -1], "shift": 0},
+            {"hypercohomology": [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]},
+            inverse=True,
+        )
+
     def check_checkpoint(
         self,
         batch_name: str,
@@ -50,6 +60,8 @@ class ResumableQuartic(unittest.TestCase):
         artifact_version: int,
         realization: dict,
         tables: dict[str, list[list[int]]],
+        *,
+        inverse: bool = False,
     ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -85,10 +97,13 @@ class ResumableQuartic(unittest.TestCase):
             first = selected(first_id)
             self.assertEqual(set(first), {"model", "realize"})
             second_output = cli(*run)
-            self.assertIn(f"{len(tables)} to compute, 2 already recorded", second_output)
+            self.assertIn(f"{len(tables) + inverse} to compute, 2 already recorded", second_output)
             second_id = run_id(second_output)
             records = selected(second_id)
-            self.assertEqual(set(records), {"model", "realize", *tables})
+            expected = {"model", "realize", *tables}
+            if inverse:
+                expected.add("inverse")
+            self.assertEqual(set(records), expected)
             durable = records["realize"]
             self.assertEqual(first["realize"]["attempt_id"], durable["attempt_id"])
             self.assertEqual(durable["task"]["target"], target)
@@ -125,6 +140,8 @@ class ResumableQuartic(unittest.TestCase):
                 self.assertEqual(source["surface"]["attempt_id"], first["model"]["attempt_id"])
                 self.assertEqual(source["prefix"]["digest"], cone)
                 self.assertEqual(source["prefix"]["attempt_id"], durable["attempt_id"])
+            if inverse:
+                self.check_inverse(records["inverse"], durable, store, model, cone)
             args = ("report", str(output), *database, "--run", second_id, "--full")
             report = cli(*args)
             self.assertIn(cone, report)
@@ -133,6 +150,11 @@ class ResumableQuartic(unittest.TestCase):
             self.assertIn(hypothesis, report)
             if "hypercohomology" in tables:
                 self.assertIn("degree-zero Koszul total complex", report)
+            if inverse:
+                self.assertIn("nonzero_dimensions ((3, 4))", report)
+                self.assertIn("sheaf quasi-isomorphism with O(-H)", report)
+                for name in ("evaluation", "augmentation"):
+                    self.assertIn(durable["detail"]["artifact_outputs"][name]["digest"], report)
             cli(*run)
             self.assertEqual(cli(*args), report)
 
@@ -153,3 +175,27 @@ class ResumableQuartic(unittest.TestCase):
             self.assertNotEqual(invalid["check_id"], records[observation]["check_id"])
             self.assertEqual(invalid["status"], "mismatch")
             self.assertEqual(cli(*args), report)
+
+    def check_inverse(self, record: dict, forward: dict, store: ArtifactStore, model: str, cone: str) -> None:
+        self.assertEqual(record["status"], "ok")
+        self.assertTrue(record["agrees"])
+        self.assertEqual(
+            record["value"],
+            {"class": [1, [-1, 0], 3], "serre_pairing_rank": 4, "sheaf_quasi_isomorphism": True},
+        )
+        self.assertEqual(record["detail"]["method"], "quartic-degree-two-inverse-cancellation")
+        self.assertEqual(record["detail"]["evidence"]["directions"], [1, -1])
+        inputs = record["detail"]["artifact_inputs"]
+        outputs = forward["detail"]["artifact_outputs"]
+        self.assertEqual(inputs["surface"]["digest"], model)
+        self.assertEqual(inputs["prefix"]["digest"], cone)
+        self.assertEqual(set(inputs), {"surface", "prefix"} | (outputs.keys() - {"cone"}))
+        for name in inputs.keys() - {"surface"}:
+            self.assertEqual(inputs[name]["attempt_id"], forward["attempt_id"])
+            self.assertEqual(inputs[name]["digest"], outputs["cone" if name == "prefix" else name]["digest"])
+        for name, target in (("evaluation", "evaluation_target"), ("augmentation", "augmentation_target")):
+            artifact = json.loads(store.read(inputs[name]["digest"]))
+            self.assertEqual(artifact["kind"], "graded-chain-map")
+            self.assertEqual(artifact["payload"]["source_digest"], inputs["evaluation_source"]["digest"])
+            self.assertEqual(artifact["payload"]["target_digest"], inputs[target]["digest"])
+            self.assertEqual(artifact["payload"]["model_digest"], model)

@@ -131,22 +131,30 @@ requireArtifactChainMap = u -> (
     u
     )
 
-gradedChainMapArtifact = method()
-gradedChainMapArtifact(K3Surface, ComplexMap, String, Sequence) := HashTable => (K, u, model, endpoints) -> (
-    (src, dst) := endpoints;
+artifactChainMapData = (K, u, model) -> (
     D := source u;
     E := target u;
     requireArtifactRing(K, D, model);
     requireArtifactRing(K, E, model);
-    artifactDigest src;
-    artifactDigest dst;
     requireArtifactChainMap u;
     indices := artifactMapIndices(D, E);
-    artifactEnvelope(1, "graded-chain-map", hashTable {
-        "model_digest" => model, "source_digest" => src, "target_digest" => dst,
-        "components" => apply(indices, i -> artifactMatrixData(K, requireArtifactDifferential u_i))
-        })
+    {"model_digest" => model,
+        "components" => apply(indices, i -> artifactMatrixData(K, requireArtifactDifferential u_i))}
     )
+
+gradedChainMapArtifact = method()
+gradedChainMapArtifact(K3Surface, ComplexMap, String, Sequence) := HashTable => (K, u, model, endpoints) -> (
+    (src, dst) := endpoints;
+    artifactDigest src;
+    artifactDigest dst;
+    artifactEnvelope(1, "graded-chain-map", hashTable (artifactChainMapData(K, u, model) |
+        {"source_digest" => src, "target_digest" => dst}))
+    )
+
+-- A task can refer to sibling outputs before the artifact store assigns their digests.
+stagedGradedChainMap = (K, u, model, src, dst) ->
+    artifactEnvelope(1, "graded-chain-map", hashTable (artifactChainMapData(K, u, model) |
+        {"source_output" => src, "target_output" => dst}))
 
 loadGradedChainMap = method()
 loadGradedChainMap(K3Surface, HashTable, Sequence, Sequence) := ComplexMap => (K, data, src, dst) -> (

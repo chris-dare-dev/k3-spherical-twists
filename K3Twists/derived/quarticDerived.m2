@@ -139,14 +139,14 @@ quarticHigherEvaluation = (E, input, shift) -> (
             "sourceAugmentation" => augmentation, "traceCocycle" => homomorphism map(source next, source trace, ambient trace)})
     )
 
-quarticInverseCancellation = (E, input, shift) -> (
-    K := E#"surface";
+quarticInverseComparison = (K, C, u, aug, shift) -> (
     R := K#"ring";
-    forward := realizeTwistImage E#"prefix";
-    u := forward#"chainMap";
-    C := if shift == 0 then forward#"complex" else cone u;
     D := source u;
-    aug := forward#"sourceAugmentation";
+    (dlo, dhi) := concentration D;
+    if target u != complex R^{-1} or source aug != D or target aug != complex(R^4, Base => -2)
+        or not isComplexMorphism aug or not isIsomorphism sheaf homology(-2, aug)
+        or not all(dlo..dhi, i -> i == -2 or sheaf HH_i D == 0) then
+        error "inverse cancellation requires the quartic evaluation and its sheaf quasi-isomorphic augmentation";
     coevaluation := (aug[-1] * canonicalMap(D[-1], C))[-shift];
     inclusion := (canonicalMap(C, target u))[-shift];
     if not isComplexMorphism coevaluation or coevaluation * inclusion != 0 then
@@ -162,10 +162,19 @@ quarticInverseCancellation = (E, input, shift) -> (
     B := (cone coevaluation)[1];
     L := source inclusion;
     comparison := map(B, L, hashTable {shift => map(B_shift, L_shift, inclusion_shift)}, Degree => 0);
-    if not isComplexMorphism comparison then error "invalid comparison with the line bundle";
+    (lo, hi) := concentration B;
+    if not isComplexMorphism comparison or not isIsomorphism sheaf homology(shift, comparison)
+        or not all(lo..hi, i -> i == shift or sheaf HH_i B == 0) then
+        error "the inverse comparison must be a sheaf quasi-isomorphism with the line bundle";
+    (B, coevaluation, comparison, pairingRank)
+    )
 
-    -- The cone projection has L as its termwise kernel. Composing it with
-    -- the validated sheaf quasi-isomorphism aug preserves its homotopy fiber.
+quarticInverseCancellation = (E, input, shift) -> (
+    forward := realizeTwistImage E#"prefix";
+    u := forward#"chainMap";
+    C := if shift == 0 then forward#"complex" else cone u;
+    (B, coevaluation, comparison, pairingRank) :=
+        quarticInverseComparison(E#"surface", C, u, forward#"sourceAugmentation", shift);
     realizedDerived(E, shiftObject(input, shift), B, "quartic-degree-two-inverse-cancellation",
         {"certified O generator", "rank-four Serre pairing for the coevaluation",
             "termwise cone projection and sheaf-quasi-isomorphic augmentation"},

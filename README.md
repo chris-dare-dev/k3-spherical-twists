@@ -487,6 +487,14 @@ Only degree 3 is nonzero, of dimension four. From M2, use
 `hypercohomologyObservation(K, C)` on a graded complex over the quartic model
 `K`. The observed degrees are cohomological.
 
+Use `batches/resumable-quartic-inverse.toml` with the same checkpoint and
+report commands and a fresh SQLite ledger. The forward task writes the cone,
+evaluation, and source augmentation together. After the checkpoint, the
+hypercohomology worker reads the saved cone and the inverse worker checks the
+saved maps against that same cone. The pinned report gives both workers' input
+digests and source attempt, the degree-three hypercohomology, and the verified
+sheaf quasi-isomorphism with `O(-H)`.
+
 ### Resource history and bounded retries
 
 Add a `[resources]` table to opt in to history-based admission. The usual

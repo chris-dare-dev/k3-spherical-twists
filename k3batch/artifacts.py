@@ -195,10 +195,34 @@ class ArtifactStore:
             data = staged[name]
             if not isinstance(data, dict) or data.get("kind") != kind:
                 raise ArtifactError(f"output {name} must be a {kind} artifact")
+        prepared = dict(staged)
+        for name, kind in declared.items():
+            if kind == CHAIN_MAP:
+                prepared[name] = self._bind_map_outputs(staged[name], staged, declared)
+        # The map's referenced complexes must be durable before the map is registered.
+        ordered = sorted(declared, key=lambda name: declared[name] == CHAIN_MAP)
         return {
-            name: {"kind": kind, "digest": self.publish(staged[name], producer)}
-            for name, kind in declared.items()
+            name: {"kind": declared[name], "digest": self.publish(prepared[name], producer)}
+            for name in ordered
         }
+
+    @staticmethod
+    def _bind_map_outputs(
+        data: dict[str, Any], staged: dict[str, Any], declared: dict[str, str]
+    ) -> dict[str, Any]:
+        payload = data.get("payload")
+        names = ("source_output", "target_output")
+        if not isinstance(payload, dict) or not any(name in payload for name in names):
+            return data
+        if set(payload) != {"model_digest", "components", *names}:
+            raise ArtifactError("staged chain maps require both endpoint output names")
+        payload = dict(payload)
+        for name, digest_key in zip(names, ENDPOINTS, strict=True):
+            endpoint = payload.pop(name)
+            if not isinstance(endpoint, str) or declared.get(endpoint) != COMPLEX:
+                raise ArtifactError(f"chain map {name} must name a graded-complex sibling output")
+            payload[digest_key] = sha256(_canonical(staged[endpoint])).hexdigest()
+        return data | {"payload": payload}
 
     def output(self, reference: Any, name: str, kind: str) -> dict[str, Any]:
         """Read the artifact a record refers to as its output `name`, of the kind its reader declared."""
