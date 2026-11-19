@@ -52,3 +52,49 @@ TEST ///
     assumed = assumeSphericalObject(Oref, "no certified evidence");
     assert((realizeTwistImage applyWord(twistWord {twistStep(assumed, 1)}, Oref))#"status" === "unsupported");
 ///
+
+TEST ///
+    needsPackage "Complexes";
+    K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+    Oref = structureObject K;
+    Lref = catalogueObject(K, "O(-1H)");
+    W = twistWord {twistStep(sphericalObject Oref, 1)};
+    result = realizeTwistImage applyWord(W, Lref);
+    assert(result#"status" === "realized" and result#"strategy" === "quartic-degree-two-evaluation");
+    assert(result#"extDimensions" === {{0,0},{1,0},{2,4}});
+    assert(result#"serrePairing" == id_((K#"field")^4));
+
+    R = K#"ring";
+    u = result#"chainMap";
+    D = source u;
+    C = result#"complex";
+    assert(concentration D === (-2,0) and concentration C === (-1,1));
+    assert(isComplexMorphism u and isWellDefined C);
+
+    -- Postcompose the four actual evaluation components with each coordinate.
+    -- Their degree-two cochains agree with the claimed pairings modulo coboundaries.
+    model = first components D;
+    coboundary = transpose (model.dd)_0;
+    traceLift = result#"traceCocycle";
+    inImage = f -> coboundary * (transpose f // coboundary) == transpose f;
+    assert(not inImage traceLift);
+    scan(4, j -> (
+            f := u_0 * (D_[j])_0;
+            scan(4, i -> (
+                    product := map(R^1, source traceLift, (gens R)#i * f);
+                    assert(inImage (product - if i == j then traceLift else 0));
+                    ));
+            ));
+    assert(isIsomorphism sheaf homology(0, canonicalMap(C, target u)));
+    toO = (result#"sourceAugmentation")[-1] * canonicalMap(D[-1], C);
+    assert(isIsomorphism sheaf homology(-1, toO));
+    assert(realizedHomology(result, -1) == 0);
+    v = mukaiClass result;
+    assert({v#"rank", v#"divisor"#"coordinates", v#"eulerComponent"} === {-3,{-1,0},-1});
+
+    shifted = realizeTwistImage applyWord(W, shiftObject(Lref, 1));
+    assert(shifted#"status" === "realized" and shifted#"shift" === 1);
+    assert(concentration shifted#"complex" === (0,2));
+    assert(all(1..2, i -> ((shifted#"complex").dd)_i == -(C.dd)_(i-1)));
+    assert(mukaiClass shifted === mukaiClass shiftObject(result#"representative", 1));
+///

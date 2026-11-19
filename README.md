@@ -303,6 +303,16 @@ vanish. The two maps compose to zero and identify the kernel with `O`,
 which verifies the forward and inverse cancellation.
 [Seidel and Thomas, Definition 2.7 and Proposition 2.10](https://arxiv.org/abs/math/0001043)
 
+The forward twist `T_O(O(-H))` uses the four-dimensional degree-two Ext
+group. The resolution of an ideal defining the affine cone vertex gives a
+finite model of `O[-2]`. Graded local duality identifies its Ext classes
+with sheaf cohomology in the two internal degrees used here. Multiplication by
+the four coordinates gives the Serre pairing in a chosen trace basis. The
+evaluation uses the dual basis and the realization records its chain map,
+Ext dimensions, and pairing matrix. The cone has sheaf homology `O(-H)`
+in cohomological degree zero and `O^4` in degree one, giving Mukai class
+`(-3,-H,-1)`.
+
 For a certified line bundle `S = O` or `O(H)`, `RHom(S,S)` is
 `RΓ(O)` with one-dimensional cohomology in degrees 0 and 2. Splitting
 a complex of vector spaces over the coefficient field gives summands
@@ -313,7 +323,7 @@ basis eliminates the other component, leaving `S[-1]` after the identity
 cone contracts. Dually, coevaluation takes values in `S ⊕ S[2]` and its
 shifted cone leaves `S[1]`. The resulting one-term complexes and the
 comparison apply to shifts of the same generator and to repeated signed
-steps on it. General higher-degree evaluations and other mixed words
+steps on it. Other higher-degree evaluations and mixed words
 still require explicit derived Hom models.
 
 Macaulay2 indexes the complexes homologically. Homological degree `j`
