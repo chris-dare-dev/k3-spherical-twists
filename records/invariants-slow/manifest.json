@@ -1,0 +1,231 @@
+{
+ "batch": "invariants-slow",
+ "run_id": "77bd8514311f46c2bba5b57153758776",
+ "schema_version": 1,
+ "tasks": [
+  {
+   "check": {},
+   "check_id": "d4535b657bcccf09a7f0182221ee9258f0fd74633bee32ad6283bf872aa06933",
+   "comparison": "equals",
+   "computation_id": "1665fbe2187cabbae8b1855594364f17b2a0436564353d51b8dd520efb0aefb9",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(O, O(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(O, O(H))",
+   "predicted": [
+    4,
+    0,
+    0
+   ],
+   "record_id": "0cc92f4c9c4247989a09f58854447d38",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "611a5e8353a85ac2563f6e76dd0b4d49fb27d0ddbc1849734efae881fcae6be9",
+   "comparison": "equals",
+   "computation_id": "83f6c18dade2600ac5a6e249cc09dd340d004788343bcf256608553137c0a850",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(O(H), O)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(O(H), O)",
+   "predicted": [
+    0,
+    0,
+    4
+   ],
+   "record_id": "f6002911c1944ce3990b0f959006b542",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "2a84ac515611fa175debd801f53e25b102ac6b96de4d2f162e5984a27d2edd6a",
+   "comparison": "equals",
+   "computation_id": "4a7dce5fd881bf794bbcf4b88eef8a2d9b73b0f4fb210a1654089cd9ed4d0297",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(O(H), M_H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(O(H), M_H)",
+   "predicted": [
+    0,
+    1,
+    15
+   ],
+   "record_id": "38ffe9cf013342beb8a9f2cf56b27a22",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "64f39e2c61074f707c5934f59e445eae505c35e83a28f3efb23f90a1935602ca",
+   "comparison": "equals",
+   "computation_id": "e4152c058c238fb31a235840b37de4ca2fb3afc0d1d65a724d5f2c7b8502eb92",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(M_x, O_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(M_x, O_x)",
+   "predicted": [
+    2,
+    0,
+    0
+   ],
+   "record_id": "8c339289783147bc8f343a642980f7a7",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "44bb6efa594ae6adc3faa9e6693aba05f0a0090dc3b3b3201cf64b198269f752",
+   "comparison": "equals",
+   "computation_id": "3a01bf5ff1a4fc820abc7244d01a2b80a9f603bb6225af5e7f28272304469f19",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(I_x(H), I_x(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(I_x(H), I_x(H))",
+   "predicted": [
+    1,
+    2,
+    1
+   ],
+   "record_id": "592155afb3644cb8a43b64b9d947d556",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "7d353b41353617d3d40ded0207ba90dd41ff55011a5c334ae0c4d593b51ada8c",
+   "comparison": "equals",
+   "computation_id": "86a7a220e428fb0b06c39a623463ff0064bc3a817907b56d9a29aa1a73bb8ba6",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(M_H, M_H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(M_H, M_H)",
+   "predicted": [
+    1,
+    0,
+    1
+   ],
+   "record_id": "0434482d140b41089492aa2693c9d366",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "9bf9991a8d50e353fc6c23d876b826b73785e6524d00b1f9556eda2f00eb134e",
+   "comparison": "equals",
+   "computation_id": "38079abbf76f2998f6a25d3d03269e598a853a1e358bb557fa0e6e9721364737",
+   "cost": 50,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/Ext^i(M_x, M_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 2000,
+    "time_seconds": 2400
+   },
+   "name": "Ext^i(M_x, M_x)",
+   "predicted": [
+    1,
+    2,
+    1
+   ],
+   "record_id": "be638ca46785441d8ef94997f6f7801c",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  }
+ ]
+}

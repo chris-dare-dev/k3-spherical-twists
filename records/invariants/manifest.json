@@ -1,0 +1,1399 @@
+{
+ "batch": "invariants",
+ "run_id": "d19c8bf881e740889650baf2448f4276",
+ "schema_version": 1,
+ "tasks": [
+  {
+   "check": {},
+   "check_id": "ed8bbf11171443e5f8c854c83788d43b0851cae5901ee99435d3c727040c0928",
+   "comparison": "equals",
+   "computation_id": "bfa027b7775587287c2ad78c83fc90b1f7a2eee4361321fad2ceebfaad86b81f",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(O)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O)",
+   "predicted": [
+    1,
+    0,
+    1
+   ],
+   "record_id": "2095a783753f405a9845be54c1b02da0",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "36eea363310be8eca7294bff9470049844f10aa5cbe597c023a028296f5b2487",
+   "comparison": "equals",
+   "computation_id": "41f7732d172a51d73e5044f64625c645313f30032c2f4598420e786d7c4fcbe6",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(O(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(H))",
+   "predicted": [
+    4,
+    0,
+    0
+   ],
+   "record_id": "a46b5ac818e54d09af8302f07797e084",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "a7d78d050e94701a21b05155e49b748e448670d71595e0e7088407730a22f2fe",
+   "comparison": "equals",
+   "computation_id": "65fbada6cef455ddff133f6c59c6f03624d3db898fa85d39cf36b5bc66bc26f9",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(O(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(-H))",
+   "predicted": [
+    0,
+    0,
+    4
+   ],
+   "record_id": "1ccb49a93d22441fa14e0792ffa446c7",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "a80092ff7b1f60e2ee7c9ec22f3da71192a64530d80886ad18d3d97776e6845f",
+   "comparison": "equals",
+   "computation_id": "22722884dc754326314ddf7c22855abc0ecd18e79a8fed787fbd867c5283a6a8",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(I_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x)",
+   "predicted": [
+    0,
+    0,
+    1
+   ],
+   "record_id": "ef062c2861634322a402b6ee245aeb2d",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "7141041f49705f1cbbb3e049a3cf328a7ad880e0968b5de328a803b98667f204",
+   "comparison": "equals",
+   "computation_id": "e8a244ad24d0842d74810662fabe545e9f4421f0bce2e6a414f9e61a849d720a",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(I_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(-H))",
+   "predicted": [
+    0,
+    1,
+    4
+   ],
+   "record_id": "385c3289fb8f47db9e1dd6839f96cb08",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "6e393ee3bb12bebb4b96625bb3648159c70836e264c7c16c1abbe865e5f29322",
+   "comparison": "equals",
+   "computation_id": "729f740378b4604f953496067fe2496e24941bba5fb7fdc570cad542dac83500",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(I_x(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(H))",
+   "predicted": [
+    3,
+    0,
+    0
+   ],
+   "record_id": "9647f16079df4777804ba49cf556b7ce",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "7a20dff46e2f73d62cc0e1965a3abe3ad72a420a7c6d9e11c8d161ea3614f503",
+   "comparison": "equals",
+   "computation_id": "859fa503cb438f1c4db19123ada1fec347073dc205b52563174bff2139792aa3",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/rank M_H",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_H",
+   "predicted": 3,
+   "record_id": "ed99cd2584bc4261aeee65c11364bfca",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "5483a71ae5fca9aaddd6a963a184e87518c064c8c96c32f5781b63f6171c679b",
+   "comparison": "equals",
+   "computation_id": "30d3fcb992aafcf9f76a5c41352f5c2280f6977a9d12e07bf30983bdac132f6a",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(M_H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H)",
+   "predicted": [
+    0,
+    0,
+    4
+   ],
+   "record_id": "8a7aad9bace54f22a234dbe9233c4e52",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "20253a661d7a23644805e91e23d567bf613bb792a3cee13d8f31501e237a3d65",
+   "comparison": "equals",
+   "computation_id": "0f08b53f3b4ed7b55e149ece3c9e28bb8b559b129784aea393d0297afde5bf4d",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(M_H(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H(-H))",
+   "predicted": [
+    0,
+    1,
+    15
+   ],
+   "record_id": "5baa273ef3234044bc79d8d1b7d39405",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "670338306661c92ff770aa2212572a078cbfe5861f1ea8a3dfb3575d082a19ca",
+   "comparison": "equals",
+   "computation_id": "273e0b5edf139f6ffbe5973ce4844d278e15689ec8d49822f1ff5a82f3af4dc9",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/generators of I_x(H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "generators of I_x(H)",
+   "predicted": 3,
+   "record_id": "b07c14d6cb5e49c097c4083c36e06b99",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "6b5d755f735cc3b3e8396c3f893d49d5dabe0bbe5e8d0b9ef7e87e7fb8546890",
+   "comparison": "equals",
+   "computation_id": "f81e4d98795b6ea29a21802084f48632316889eed1d6cf02f4ad6ed5a73a4d82",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/rank M_x",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_x",
+   "predicted": 2,
+   "record_id": "599ebd6d603844faa3bcef95133e476c",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "c4fd413a9dfc330e94032b52b1de8ad37384e3890c16bb215ca4afbe646c0ab3",
+   "comparison": "equals",
+   "computation_id": "cde3c9c62966ddbda3efd581221bbfed4f6888ae33f65e1c9577e07fd456624a",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(M_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x)",
+   "predicted": [
+    0,
+    0,
+    3
+   ],
+   "record_id": "828804b2c39948468a7f397735272302",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "92dde5a4ccb1372bf86bae3807f12b8efccebb5aef3eef3137551f4424044d7c",
+   "comparison": "equals",
+   "computation_id": "12a0c35310d9da5733ff0299476a2561c843529a89297d505ff2cc4ca5a4e06d",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(M_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x(-H))",
+   "predicted": [
+    0,
+    0,
+    11
+   ],
+   "record_id": "40513f76379046a190499e5d07dfba47",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "8ccef14818626c70c56133d8fcefea1fba847ebc7f3acfb958bb2de5c5a387bc",
+   "comparison": "equals",
+   "computation_id": "2a095c9d5123381936e263406a49e3fc00e90d699ffb972efd52db82833f5d51",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/rank Q",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank Q",
+   "predicted": 3,
+   "record_id": "2477ed23996a43318c19d4ac01588ebc",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "72a46e234a1422b89f724084d9cc43abf742b0f354b9ae6af074bdd3a6ef172d",
+   "comparison": "equals",
+   "computation_id": "dcb56f926b43e0b88543a1b112160f799ecdaf6267c01af46b89a0c6b283264b",
+   "cost": 1,
+   "group": "invariant d2-p32003-s1",
+   "id": "invariant/d2-p32003-s1/h^i(Q)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(Q)",
+   "predicted": [
+    15,
+    1,
+    0
+   ],
+   "record_id": "222009e6759449b7a170f63337b79a4f",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "d4dceabec74b166dbada93e08d7ed0421f5d75a1e6465fcc753fd583299499da",
+   "comparison": "equals",
+   "computation_id": "afebd85836023f9f590f655c1a2d346612994b14ff6841d4de18d1dc9fb0d55a",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(O)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O)",
+   "predicted": [
+    1,
+    0,
+    1
+   ],
+   "record_id": "6c308466e7594795bcc40c6b1a103648",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "a3765fc6b2c760662529cb7b87d14cac23748840f73faa170aad119e88cbe730",
+   "comparison": "equals",
+   "computation_id": "48d3b1ddcd1a60592d8bd86f5e16a9848fb57f1cbe92b7d0fc7c55d253e5a43b",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(O(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(H))",
+   "predicted": [
+    5,
+    0,
+    0
+   ],
+   "record_id": "fd67aa1f6adc405ca842b7ba4a8ed088",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "ab322e44e99a0071a2c3a04ec011730329eaf14c524e1d1b27dfd5b07c04e4c7",
+   "comparison": "equals",
+   "computation_id": "021d10162bc7433e82702d94712dabf79f32f8f11a75aa3e6c0963cfb6ecc331",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(O(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(-H))",
+   "predicted": [
+    0,
+    0,
+    5
+   ],
+   "record_id": "0208c83761bb42eaabc344a4e9ec14f1",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "bac5dea5a3b83b398f0192a12601cd9e7dae2e97f48c2af967d42dbffafa96db",
+   "comparison": "equals",
+   "computation_id": "355f98993bd44af8682e1d0387f8305d0b33d9e0ed84744a81f4432a17f2b268",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(I_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x)",
+   "predicted": [
+    0,
+    0,
+    1
+   ],
+   "record_id": "c93aa30a96a243169b0f29b7983f5123",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "bfb08f18adece3ce853e5e8eb1ec188df4a9257067d8c63a8606a9c08d045426",
+   "comparison": "equals",
+   "computation_id": "e21c62dec0894fdd8201c63becf0dcb6770f054afba9674446bcf034373bf75c",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(I_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(-H))",
+   "predicted": [
+    0,
+    1,
+    5
+   ],
+   "record_id": "6344abc667fa41d0ae4527967148b52a",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "2969a33e22ba9c458167b90ae859c25680e35a1ca849a881f421e69b7a4f5df0",
+   "comparison": "equals",
+   "computation_id": "12f85d310c8d3d8f9780738a943cb9de0c9c9d0198c3e4e5fc59eda9f540958b",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(I_x(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(H))",
+   "predicted": [
+    4,
+    0,
+    0
+   ],
+   "record_id": "7dae5ea791e645129ae57e99b2d0a1cf",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "6f14a34b2473736191ce9567c8e2a1e6d72ba614e0ee8190dae6d2272f320542",
+   "comparison": "equals",
+   "computation_id": "d122c32905d4890061b01c738f2cbcc6c96df3c6b52d3c648e591c5dd21c74f7",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/rank M_H",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_H",
+   "predicted": 4,
+   "record_id": "6842045169d7408991be8bf03ba27c00",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "fe888fdd0b1555b4bd70cb53d526ce6872df346b8708d825627284e98790ccbd",
+   "comparison": "equals",
+   "computation_id": "cdc46f6369a35c69c5a27f2a4be84a760284d85a6257877da328853758d80a74",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(M_H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H)",
+   "predicted": [
+    0,
+    0,
+    5
+   ],
+   "record_id": "34245724cc2148e5a4d4bfbbae509f90",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "e6c412ff386dc18c3f677995ab7081c0dd344bde2fe0392964851ecf40a34da7",
+   "comparison": "equals",
+   "computation_id": "51045dc0e8a88d9972d0f223ef59a62daed4e6fefec9ad3fd4e06fd1886cb053",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(M_H(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H(-H))",
+   "predicted": [
+    0,
+    1,
+    24
+   ],
+   "record_id": "dbb91575694646d395fa302273fb0227",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "09de710cc32ab39b6441ea0ed2b372040dae9ecf4c1cd4300ebe7e1b2fccd243",
+   "comparison": "equals",
+   "computation_id": "3eea488b8a4e644d3f4caa1bd34b4831ce0c59adee03e010785221e7583fec4f",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/generators of I_x(H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "generators of I_x(H)",
+   "predicted": 4,
+   "record_id": "af65b594e1b04c78906d77003d26d964",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "7a5bb3ed8247727ab18ef73542234e3bf4c6aff0a25a455f971aebcd27d3f529",
+   "comparison": "equals",
+   "computation_id": "3a285332bdc5b223b50f5198972daf8700a7ac6975458428b775ff65b5054995",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/rank M_x",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_x",
+   "predicted": 3,
+   "record_id": "b62d0bf4c5044c38bdb80d7fa66fd500",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "507f131cf3396b3bbf25787caa01f73b0818b403e40608c7d008b68dc7d9ce2c",
+   "comparison": "equals",
+   "computation_id": "2cd39a0b94a36db80a8bb929b8b5d2f4336dc0376b4c8ef84c4082037d193807",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(M_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x)",
+   "predicted": [
+    0,
+    0,
+    4
+   ],
+   "record_id": "3dcb963e72de45658d81681047f0860e",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "4c04a66c6194a3ed86b9ffc3e55c4e44ae8fb89adce82bc1a9c21a029232a019",
+   "comparison": "equals",
+   "computation_id": "bf18ee41b4495eff3fd87caff77d73fb8cb352e66b24dbbf643dd14137c5ba47",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(M_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x(-H))",
+   "predicted": [
+    0,
+    0,
+    19
+   ],
+   "record_id": "d34758452eb84c0089b3d5f4ef333637",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "5acd37f2b410487b02307048dcda8734ae23677332405d02eab5b29cee4d7661",
+   "comparison": "equals",
+   "computation_id": "846d8a36bd1a348f86a7436ffe20ce4044dfd26d80c7b25a37ad49684a45ab3a",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/rank Q",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank Q",
+   "predicted": 4,
+   "record_id": "11237c97bcb94c16bf19f12a5fc25388",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "8f9b4fd470cd59866e3b0012e53aa102bb6a61a5bca36743884d05355131e749",
+   "comparison": "equals",
+   "computation_id": "ce85bc035d875cd690f984d29c03ec5fbc5688d9d0c08cdcdb044e7e679fcd93",
+   "cost": 1,
+   "group": "invariant d3-p32003-s1",
+   "id": "invariant/d3-p32003-s1/h^i(Q)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(Q)",
+   "predicted": [
+    24,
+    1,
+    0
+   ],
+   "record_id": "6acc58232fdb44b7bb493f8a3a0b894f",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 3,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "93c49777fdc5c03985bdf11fb8402b90d524687ddce60dae2b057be0d279d8c1",
+   "comparison": "equals",
+   "computation_id": "915dfa8dbe2e9ec28244cab300d08d2419d15be71f96a1bae91ca676f64cc1b3",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(O)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O)",
+   "predicted": [
+    1,
+    0,
+    1
+   ],
+   "record_id": "3cd87f7642014cde8f50fe565ecaee6a",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "6056041c464856b5082e8063fd221e81d0b8119271ab618f8b7d1a119af33bf4",
+   "comparison": "equals",
+   "computation_id": "8d8840d25a35d3812ca9a4278704a1b6a0f64274158908beac4231e559dcd6b9",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(O(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(H))",
+   "predicted": [
+    6,
+    0,
+    0
+   ],
+   "record_id": "39c8a3a3f55a47038e06bde289996041",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "326f9329fed0cf51c8b4e911ed53f981f73682d46c1a1441ac4420b06b34e04d",
+   "comparison": "equals",
+   "computation_id": "44a51eaef2f8c5d113e195627455fa2c200036a895be608131cb1317c0fa3146",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(O(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(O(-H))",
+   "predicted": [
+    0,
+    0,
+    6
+   ],
+   "record_id": "a8b1b5291e5747bdab83ba6a39801738",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "173861b4450b229f4543eac540c2b6882796a4d0ecafded03479c908c931becf",
+   "comparison": "equals",
+   "computation_id": "3f477f9d0880abeafa6a2c35380a973b06441fc09d7de1c6cce3e1751415abb1",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(I_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x)",
+   "predicted": [
+    0,
+    0,
+    1
+   ],
+   "record_id": "acb2b95044bd434fb38a58516cf265fa",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "b5703aa85a483980395698fed9faf1fb1f4f6b6abfe5e451805d20635d5215da",
+   "comparison": "equals",
+   "computation_id": "857bb0499156c629fad5d646dad540e22aaee919bb63a24198b0abda315740cb",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(I_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(-H))",
+   "predicted": [
+    0,
+    1,
+    6
+   ],
+   "record_id": "e7652d25197348c58f785d4bb719bc46",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "559e9ed3c8ada3379d81bc55dc2bee2b23b02c1fc703fc10487457efbe7917c0",
+   "comparison": "equals",
+   "computation_id": "4ec0078ccc47c85d0ce66097b7736a03fad5e5a2d61f4b3627403d3f0e09a0b4",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(I_x(H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(I_x(H))",
+   "predicted": [
+    5,
+    0,
+    0
+   ],
+   "record_id": "959f81d4b76749fbb431a87918440a10",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "715685d217f72d7812871c02f8002423063138eb4b7e72422cd92185bc77a05f",
+   "comparison": "equals",
+   "computation_id": "8a8ce1a05d3e85749ed141369207bf41456269dfe464ee1ad24f85029f4b8864",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/rank M_H",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_H",
+   "predicted": 5,
+   "record_id": "a3985b6a81a14ad8a912fc9d698d383c",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "ffe52b11deb2a466e2ab21c0fe7e5148a961409214fbb3af979d7eeae1073011",
+   "comparison": "equals",
+   "computation_id": "f4fafc7ad1d17c36c7a66e9ff48fc856a01da07566a37062f796454bae4cc565",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(M_H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H)",
+   "predicted": [
+    0,
+    0,
+    6
+   ],
+   "record_id": "2b75e037603c476aae5b4c32b4ef3712",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "d0c6e34222abeea4bf00b6e25cb42350e3b473863ff9ec07e668f55fc0481e05",
+   "comparison": "equals",
+   "computation_id": "dfb6add6f4cce4d4741ccbc67105c866de3e64884a4e018e4b133ff97620f2a4",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(M_H(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_H(-H))",
+   "predicted": [
+    0,
+    1,
+    35
+   ],
+   "record_id": "ab7bb68d67ef44bda1aede242be9405a",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "1383145c771bf8615a767145af8420e47550f6fd2b714f594117db0249312aae",
+   "comparison": "equals",
+   "computation_id": "3ff7989c280fbc83b3136a6b830540063152799d5fcf70dfe6da80d6b6c4cc4f",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/generators of I_x(H)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "generators of I_x(H)",
+   "predicted": 5,
+   "record_id": "b5af8c0fad8a4c70a0cc18114e39dcdc",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "a0505ae7bd915ef268622002b970d798e9a9c6fe9be7ebf1bf67b721cdaba92a",
+   "comparison": "equals",
+   "computation_id": "59809f89b61596b6b7f713da4866f1db451e6069d6f06213bbdad3b84735634a",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/rank M_x",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank M_x",
+   "predicted": 4,
+   "record_id": "41b0f73d5c524145ab5182b1212a5def",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "313c78e9fd51e402d95ca58419b36840a29ae13dcf604bb0934c18f59b823481",
+   "comparison": "equals",
+   "computation_id": "a113f1f3472503904c878dfd1776fa6d89fb9cf0b181f064fa025649e710b4ff",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(M_x)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x)",
+   "predicted": [
+    0,
+    0,
+    5
+   ],
+   "record_id": "3f86919ead61474188e83e9670371bf5",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "e76e21510dcaeb5e1af3dce3f11608016364c203cf628210dbf945569d2276a5",
+   "comparison": "equals",
+   "computation_id": "6e4107b9d1473d6f91b3e4b94241e6383141fbe142644312868c302e535edc60",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(M_x(-H))",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(M_x(-H))",
+   "predicted": [
+    0,
+    0,
+    29
+   ],
+   "record_id": "1bdc52c8549e42c0876913060912fdaa",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "1757ccb725be093fe651fd3ba4beb465d57c184584b125c3d1627e16ee8d4423",
+   "comparison": "equals",
+   "computation_id": "027b76dacb2c8fbd0cdf4f52ba7acea81e8323ec314d78b27c970bed66b1280e",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/rank Q",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "rank Q",
+   "predicted": 5,
+   "record_id": "31ca9535b60c4040b0a9425277a3d466",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "check": {},
+   "check_id": "e1206449c929f89411e33c1f0fe97693a1f8608ecb08bc1cc0548ef1b79717ca",
+   "comparison": "equals",
+   "computation_id": "dae977cb109fcf411af8fb39d26a6eb48ac54674219f954e350a9a4107c1ac6a",
+   "cost": 1,
+   "group": "invariant d4-p32003-s1",
+   "id": "invariant/d4-p32003-s1/h^i(Q)",
+   "kind": "invariant",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 1000,
+    "time_seconds": 600
+   },
+   "name": "h^i(Q)",
+   "predicted": [
+    35,
+    1,
+    0
+   ],
+   "record_id": "4cc835be61394f6395468c162e0fdfc4",
+   "requirements": [
+    "smooth-complete-intersection"
+   ],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 4,
+    "seed": 1,
+    "special_quadric": false
+   }
+  }
+ ]
+}

@@ -12,15 +12,15 @@ hⁱ(O), hⁱ(O(H)), hⁱ(O(−H))
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 4) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(O(H))` | invariants | (4, 0, 0) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 5) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(O(H))` | invariants | (5, 0, 0) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 6) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(O(H))` | invariants | (6, 0, 0) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | not re-run |  |
+| `invariant/d2-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 4) | ok, 2026-11-19, `8014a21`, 0.73 s | (0, 0, 4) |
+| `invariant/d2-p32003-s1/h^i(O(H))` | invariants | (4, 0, 0) | ok, 2026-11-19, `8014a21`, 0.769 s | (4, 0, 0) |
+| `invariant/d2-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 0.771 s | (1, 0, 1) |
+| `invariant/d3-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 5) | ok, 2026-11-19, `8014a21`, 0.774 s | (0, 0, 5) |
+| `invariant/d3-p32003-s1/h^i(O(H))` | invariants | (5, 0, 0) | ok, 2026-11-19, `8014a21`, 0.754 s | (5, 0, 0) |
+| `invariant/d3-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 0.731 s | (1, 0, 1) |
+| `invariant/d4-p32003-s1/h^i(O(-H))` | invariants | (0, 0, 6) | ok, 2026-11-19, `8014a21`, 0.732 s | (0, 0, 6) |
+| `invariant/d4-p32003-s1/h^i(O(H))` | invariants | (6, 0, 0) | ok, 2026-11-19, `8014a21`, 0.75 s | (6, 0, 0) |
+| `invariant/d4-p32003-s1/h^i(O)` | invariants | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 0.751 s | (1, 0, 1) |
 
 <a name="claim-ideal-of-the-point"></a>
 
@@ -30,18 +30,18 @@ hⁱ(I_x), hⁱ(I_x(−H)), hⁱ(I_x(H)); the ideal of x has n − 1 generators
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/generators of I_x(H)` | invariants | 3 | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 4) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(I_x(H))` | invariants | (3, 0, 0) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | not re-run |  |
-| `invariant/d3-p32003-s1/generators of I_x(H)` | invariants | 4 | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 5) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(I_x(H))` | invariants | (4, 0, 0) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | not re-run |  |
-| `invariant/d4-p32003-s1/generators of I_x(H)` | invariants | 5 | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 6) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(I_x(H))` | invariants | (5, 0, 0) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | not re-run |  |
+| `invariant/d2-p32003-s1/generators of I_x(H)` | invariants | 3 | ok, 2026-11-19, `8014a21`, 0.761 s | 3 |
+| `invariant/d2-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 4) | ok, 2026-11-19, `8014a21`, 0.73 s | (0, 1, 4) |
+| `invariant/d2-p32003-s1/h^i(I_x(H))` | invariants | (3, 0, 0) | ok, 2026-11-19, `8014a21`, 0.78 s | (3, 0, 0) |
+| `invariant/d2-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | ok, 2026-11-19, `8014a21`, 0.752 s | (0, 0, 1) |
+| `invariant/d3-p32003-s1/generators of I_x(H)` | invariants | 4 | ok, 2026-11-19, `8014a21`, 0.67 s | 4 |
+| `invariant/d3-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 5) | ok, 2026-11-19, `8014a21`, 0.75 s | (0, 1, 5) |
+| `invariant/d3-p32003-s1/h^i(I_x(H))` | invariants | (4, 0, 0) | ok, 2026-11-19, `8014a21`, 0.735 s | (4, 0, 0) |
+| `invariant/d3-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | ok, 2026-11-19, `8014a21`, 0.772 s | (0, 0, 1) |
+| `invariant/d4-p32003-s1/generators of I_x(H)` | invariants | 5 | ok, 2026-11-19, `8014a21`, 0.714 s | 5 |
+| `invariant/d4-p32003-s1/h^i(I_x(-H))` | invariants | (0, 1, 6) | ok, 2026-11-19, `8014a21`, 0.831 s | (0, 1, 6) |
+| `invariant/d4-p32003-s1/h^i(I_x(H))` | invariants | (5, 0, 0) | ok, 2026-11-19, `8014a21`, 0.83 s | (5, 0, 0) |
+| `invariant/d4-p32003-s1/h^i(I_x)` | invariants | (0, 0, 1) | ok, 2026-11-19, `8014a21`, 0.791 s | (0, 0, 1) |
 
 <a name="claim-m-h"></a>
 
@@ -51,15 +51,15 @@ rank M_H, hⁱ(M_H), hⁱ(M_H(−H))
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 15) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(M_H)` | invariants | (0, 0, 4) | not re-run |  |
-| `invariant/d2-p32003-s1/rank M_H` | invariants | 3 | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 24) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(M_H)` | invariants | (0, 0, 5) | not re-run |  |
-| `invariant/d3-p32003-s1/rank M_H` | invariants | 4 | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 35) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(M_H)` | invariants | (0, 0, 6) | not re-run |  |
-| `invariant/d4-p32003-s1/rank M_H` | invariants | 5 | not re-run |  |
+| `invariant/d2-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 15) | ok, 2026-11-19, `8014a21`, 0.755 s | (0, 1, 15) |
+| `invariant/d2-p32003-s1/h^i(M_H)` | invariants | (0, 0, 4) | ok, 2026-11-19, `8014a21`, 0.749 s | (0, 0, 4) |
+| `invariant/d2-p32003-s1/rank M_H` | invariants | 3 | ok, 2026-11-19, `8014a21`, 0.732 s | 3 |
+| `invariant/d3-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 24) | ok, 2026-11-19, `8014a21`, 0.813 s | (0, 1, 24) |
+| `invariant/d3-p32003-s1/h^i(M_H)` | invariants | (0, 0, 5) | ok, 2026-11-19, `8014a21`, 0.832 s | (0, 0, 5) |
+| `invariant/d3-p32003-s1/rank M_H` | invariants | 4 | ok, 2026-11-19, `8014a21`, 0.75 s | 4 |
+| `invariant/d4-p32003-s1/h^i(M_H(-H))` | invariants | (0, 1, 35) | ok, 2026-11-19, `8014a21`, 1.235 s | (0, 1, 35) |
+| `invariant/d4-p32003-s1/h^i(M_H)` | invariants | (0, 0, 6) | ok, 2026-11-19, `8014a21`, 1.253 s | (0, 0, 6) |
+| `invariant/d4-p32003-s1/rank M_H` | invariants | 5 | ok, 2026-11-19, `8014a21`, 0.792 s | 5 |
 
 <a name="claim-m-x"></a>
 
@@ -69,15 +69,15 @@ rank M_x, hⁱ(M_x), hⁱ(M_x(−H))
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 11) | not re-run |  |
-| `invariant/d2-p32003-s1/h^i(M_x)` | invariants | (0, 0, 3) | not re-run |  |
-| `invariant/d2-p32003-s1/rank M_x` | invariants | 2 | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 19) | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(M_x)` | invariants | (0, 0, 4) | not re-run |  |
-| `invariant/d3-p32003-s1/rank M_x` | invariants | 3 | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 29) | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(M_x)` | invariants | (0, 0, 5) | not re-run |  |
-| `invariant/d4-p32003-s1/rank M_x` | invariants | 4 | not re-run |  |
+| `invariant/d2-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 11) | ok, 2026-11-19, `8014a21`, 0.751 s | (0, 0, 11) |
+| `invariant/d2-p32003-s1/h^i(M_x)` | invariants | (0, 0, 3) | ok, 2026-11-19, `8014a21`, 0.751 s | (0, 0, 3) |
+| `invariant/d2-p32003-s1/rank M_x` | invariants | 2 | ok, 2026-11-19, `8014a21`, 0.712 s | 2 |
+| `invariant/d3-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 19) | ok, 2026-11-19, `8014a21`, 0.751 s | (0, 0, 19) |
+| `invariant/d3-p32003-s1/h^i(M_x)` | invariants | (0, 0, 4) | ok, 2026-11-19, `8014a21`, 0.753 s | (0, 0, 4) |
+| `invariant/d3-p32003-s1/rank M_x` | invariants | 3 | ok, 2026-11-19, `8014a21`, 0.71 s | 3 |
+| `invariant/d4-p32003-s1/h^i(M_x(-H))` | invariants | (0, 0, 29) | ok, 2026-11-19, `8014a21`, 1.113 s | (0, 0, 29) |
+| `invariant/d4-p32003-s1/h^i(M_x)` | invariants | (0, 0, 5) | ok, 2026-11-19, `8014a21`, 1.133 s | (0, 0, 5) |
+| `invariant/d4-p32003-s1/rank M_x` | invariants | 4 | ok, 2026-11-19, `8014a21`, 0.771 s | 4 |
 
 <a name="claim-q"></a>
 
@@ -87,12 +87,12 @@ rank Q, hⁱ(Q)
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/h^i(Q)` | invariants | (15, 1, 0) | not re-run |  |
-| `invariant/d2-p32003-s1/rank Q` | invariants | 3 | not re-run |  |
-| `invariant/d3-p32003-s1/h^i(Q)` | invariants | (24, 1, 0) | not re-run |  |
-| `invariant/d3-p32003-s1/rank Q` | invariants | 4 | not re-run |  |
-| `invariant/d4-p32003-s1/h^i(Q)` | invariants | (35, 1, 0) | not re-run |  |
-| `invariant/d4-p32003-s1/rank Q` | invariants | 5 | not re-run |  |
+| `invariant/d2-p32003-s1/h^i(Q)` | invariants | (15, 1, 0) | ok, 2026-11-19, `8014a21`, 0.751 s | (15, 1, 0) |
+| `invariant/d2-p32003-s1/rank Q` | invariants | 3 | ok, 2026-11-19, `8014a21`, 0.732 s | 3 |
+| `invariant/d3-p32003-s1/h^i(Q)` | invariants | (24, 1, 0) | ok, 2026-11-19, `8014a21`, 0.73 s | (24, 1, 0) |
+| `invariant/d3-p32003-s1/rank Q` | invariants | 4 | ok, 2026-11-19, `8014a21`, 0.671 s | 4 |
+| `invariant/d4-p32003-s1/h^i(Q)` | invariants | (35, 1, 0) | ok, 2026-11-19, `8014a21`, 0.97 s | (35, 1, 0) |
+| `invariant/d4-p32003-s1/rank Q` | invariants | 5 | ok, 2026-11-19, `8014a21`, 0.731 s | 5 |
 
 <a name="claim-again-as-ext"></a>
 
@@ -102,10 +102,10 @@ Four of the above again, as Ext groups of sheaves: Extⁱ(O, O(H)), Extⁱ(O(H),
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/Ext^i(M_x, O_x)` | invariants-slow | (2, 0, 0) | not re-run |  |
-| `invariant/d2-p32003-s1/Ext^i(O(H), M_H)` | invariants-slow | (0, 1, 15) | not re-run |  |
-| `invariant/d2-p32003-s1/Ext^i(O(H), O)` | invariants-slow | (0, 0, 4) | not re-run |  |
-| `invariant/d2-p32003-s1/Ext^i(O, O(H))` | invariants-slow | (4, 0, 0) | not re-run |  |
+| `invariant/d2-p32003-s1/Ext^i(M_x, O_x)` | invariants-slow | (2, 0, 0) | ok, 2026-11-19, `8014a21`, 0.73 s | (2, 0, 0) |
+| `invariant/d2-p32003-s1/Ext^i(O(H), M_H)` | invariants-slow | (0, 1, 15) | ok, 2026-11-19, `8014a21`, 35.123 s | (0, 1, 15) |
+| `invariant/d2-p32003-s1/Ext^i(O(H), O)` | invariants-slow | (0, 0, 4) | ok, 2026-11-19, `8014a21`, 1.332 s | (0, 0, 4) |
+| `invariant/d2-p32003-s1/Ext^i(O, O(H))` | invariants-slow | (4, 0, 0) | ok, 2026-11-19, `8014a21`, 0.872 s | (4, 0, 0) |
 
 <a name="claim-self-ext"></a>
 
@@ -115,9 +115,9 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/d2-p32003-s1/Ext^i(I_x(H), I_x(H))` | invariants-slow | (1, 2, 1) | not re-run |  |
-| `invariant/d2-p32003-s1/Ext^i(M_H, M_H)` | invariants-slow | (1, 0, 1) | not re-run |  |
-| `invariant/d2-p32003-s1/Ext^i(M_x, M_x)` | invariants-slow | (1, 2, 1) | not re-run |  |
+| `invariant/d2-p32003-s1/Ext^i(I_x(H), I_x(H))` | invariants-slow | (1, 2, 1) | ok, 2026-11-19, `8014a21`, 0.851 s | (1, 2, 1) |
+| `invariant/d2-p32003-s1/Ext^i(M_H, M_H)` | invariants-slow | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 122.183 s | (1, 0, 1) |
+| `invariant/d2-p32003-s1/Ext^i(M_x, M_x)` | invariants-slow | (1, 2, 1) | ok, 2026-11-19, `8014a21`, 12.71 s | (1, 2, 1) |
 
 <a name="claim-pairs-d2"></a>
 
@@ -333,20 +333,20 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 | `ext_pair/d2-p32003-s1/M_H/I_x(-1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/M_2H` | ext-table | chi 4 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/M_2H(1H)` | ext-table | chi 70 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_H/M_H` | ext-table, quartic-sample | chi 2 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_H/M_H` | ext-table, quartic-sample | chi 2 | ok, 2026-11-19, `8014a21`, 13.799 s | chi 2, dims (1, 0, 1) |
 | `ext_pair/d2-p32003-s1/M_H/M_H(1H)` | ext-table | chi 20 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/M_H^dual` | ext-table | chi 10 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/M_H^dual(1H)` | ext-table | chi 52 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_H/M_x` | ext-table, limits-demo, quartic-sample | chi 1 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_H/M_x` | ext-table, limits-demo, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 2.421 s | chi 1, dims (0, 0, 1) |
 | `ext_pair/d2-p32003-s1/M_H/M_x(1H)` | ext-table | chi 9 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/M_x^dual` | ext-table | chi 9 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_H/O` | ext-table, quartic-sample | chi 4 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_H/O(1H)` | ext-table, quartic-sample | chi 14 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_H/O` | ext-table, quartic-sample | chi 4 | ok, 2026-11-19, `8014a21`, 0.751 s | chi 4, dims (4, 0, 0) |
+| `ext_pair/d2-p32003-s1/M_H/O(1H)` | ext-table, quartic-sample | chi 14 | ok, 2026-11-19, `8014a21`, 0.79 s | chi 14, dims (15, 1, 0) |
 | `ext_pair/d2-p32003-s1/M_H/O(2H)` | ext-table | chi 36 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/O(3H)` | ext-table | chi 70 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/O(-1H)` | ext-table | chi 6 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H/O(-2H)` | ext-table | chi 20 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_H/O_x` | ext-table, limits-demo, quartic-sample | chi 3 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_H/O_x` | ext-table, limits-demo, quartic-sample | chi 3 | ok, 2026-11-19, `8014a21`, 0.673 s | chi 3, dims (3, 0, 0) |
 | `ext_pair/d2-p32003-s1/M_H^dual(1H)/E_2` | ext-table | chi 194 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H^dual(1H)/E_2(1H)` | ext-table | chi 36 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_H^dual(1H)/I_x` | ext-table | chi 11 | not re-run |  |
@@ -421,20 +421,20 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 | `ext_pair/d2-p32003-s1/M_x/I_x(-1H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/M_2H` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/M_2H(1H)` | ext-table | chi 59 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_x/M_H` | ext-table, quartic-sample | chi 1 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_x/M_H` | ext-table, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 3.398 s | chi 1, dims (1, 0, 0) |
 | `ext_pair/d2-p32003-s1/M_x/M_H(1H)` | ext-table | chi 17 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/M_H^dual` | ext-table | chi 9 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/M_H^dual(1H)` | ext-table | chi 41 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_x/M_x` | ext-table, limits-demo, quartic-sample | chi 0 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_x/M_x` | ext-table, limits-demo, quartic-sample | chi 0 | ok, 2026-11-19, `8014a21`, 11.329 s | chi 0, dims (1, 2, 1) |
 | `ext_pair/d2-p32003-s1/M_x/M_x(1H)` | ext-table | chi 8 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/M_x^dual` | ext-table | chi 8 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_x/O` | ext-table, quartic-sample | chi 3 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_x/O(1H)` | ext-table, quartic-sample | chi 11 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_x/O` | ext-table, quartic-sample | chi 3 | ok, 2026-11-19, `8014a21`, 0.73 s | chi 3, dims (3, 0, 0) |
+| `ext_pair/d2-p32003-s1/M_x/O(1H)` | ext-table, quartic-sample | chi 11 | ok, 2026-11-19, `8014a21`, 0.77 s | chi 11, dims (11, 0, 0) |
 | `ext_pair/d2-p32003-s1/M_x/O(2H)` | ext-table | chi 27 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/O(3H)` | ext-table | chi 51 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/O(-1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x/O(-2H)` | ext-table | chi 11 | not re-run |  |
-| `ext_pair/d2-p32003-s1/M_x/O_x` | ext-table, limits-demo, quartic-sample | chi 2 | not re-run |  |
+| `ext_pair/d2-p32003-s1/M_x/O_x` | ext-table, limits-demo, quartic-sample | chi 2 | ok, 2026-11-19, `8014a21`, 0.654 s | chi 2, dims (2, 0, 0) |
 | `ext_pair/d2-p32003-s1/M_x^dual/E_2` | ext-table | chi 33 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x^dual/E_2(1H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/M_x^dual/I_x` | ext-table | chi 1 | not re-run |  |
@@ -465,20 +465,20 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 | `ext_pair/d2-p32003-s1/O(1H)/I_x(-1H)` | ext-table | chi 9 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/M_2H` | ext-table | chi 36 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/M_2H(1H)` | ext-table | chi 10 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O(1H)/M_H` | ext-table, quartic-sample | chi 14 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O(1H)/M_H` | ext-table, quartic-sample | chi 14 | ok, 2026-11-19, `8014a21`, 0.752 s | chi 14, dims (0, 1, 15) |
 | `ext_pair/d2-p32003-s1/O(1H)/M_H(1H)` | ext-table | chi 4 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/M_H^dual` | ext-table | chi 6 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/M_H^dual(1H)` | ext-table | chi 4 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O(1H)/M_x` | ext-table, limits-demo, quartic-sample | chi 11 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O(1H)/M_x` | ext-table, limits-demo, quartic-sample | chi 11 | ok, 2026-11-19, `8014a21`, 0.751 s | chi 11, dims (0, 0, 11) |
 | `ext_pair/d2-p32003-s1/O(1H)/M_x(1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/M_x^dual` | ext-table | chi 3 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O(1H)/O` | ext-table, quartic-sample | chi 4 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O(1H)/O(1H)` | ext-table, quartic-sample | chi 2 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O(1H)/O` | ext-table, quartic-sample | chi 4 | ok, 2026-11-19, `8014a21`, 0.753 s | chi 4, dims (0, 0, 4) |
+| `ext_pair/d2-p32003-s1/O(1H)/O(1H)` | ext-table, quartic-sample | chi 2 | ok, 2026-11-19, `8014a21`, 0.749 s | chi 2, dims (1, 0, 1) |
 | `ext_pair/d2-p32003-s1/O(1H)/O(2H)` | ext-table | chi 4 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/O(3H)` | ext-table | chi 10 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/O(-1H)` | ext-table | chi 10 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(1H)/O(-2H)` | ext-table | chi 20 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O(1H)/O_x` | ext-table, limits-demo, quartic-sample | chi 1 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O(1H)/O_x` | ext-table, limits-demo, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 0.77 s | chi 1, dims (1, 0, 0) |
 | `ext_pair/d2-p32003-s1/O(2H)/E_2` | ext-table | chi 134 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(2H)/E_2(1H)` | ext-table | chi 52 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O(2H)/I_x` | ext-table | chi 9 | not re-run |  |
@@ -575,20 +575,20 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 | `ext_pair/d2-p32003-s1/O/I_x(-1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/M_2H` | ext-table | chi 10 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/M_2H(1H)` | ext-table | chi 20 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O/M_H` | ext-table, quartic-sample | chi 4 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O/M_H` | ext-table, quartic-sample | chi 4 | ok, 2026-11-19, `8014a21`, 0.741 s | chi 4, dims (0, 0, 4) |
 | `ext_pair/d2-p32003-s1/O/M_H(1H)` | ext-table | chi 6 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/M_H^dual` | ext-table | chi 4 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/M_H^dual(1H)` | ext-table | chi 14 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O/M_x` | ext-table, quartic-sample | chi 3 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O/M_x` | ext-table, quartic-sample | chi 3 | ok, 2026-11-19, `8014a21`, 0.749 s | chi 3, dims (0, 0, 3) |
 | `ext_pair/d2-p32003-s1/O/M_x(1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/M_x^dual` | ext-table | chi 3 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O/O` | ext-table, quartic-sample | chi 2 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O/O(1H)` | ext-table, quartic-sample | chi 4 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O/O` | ext-table, quartic-sample | chi 2 | ok, 2026-11-19, `8014a21`, 0.751 s | chi 2, dims (1, 0, 1) |
+| `ext_pair/d2-p32003-s1/O/O(1H)` | ext-table, quartic-sample | chi 4 | ok, 2026-11-19, `8014a21`, 0.749 s | chi 4, dims (4, 0, 0) |
 | `ext_pair/d2-p32003-s1/O/O(2H)` | ext-table | chi 10 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/O(3H)` | ext-table | chi 20 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/O(-1H)` | ext-table | chi 4 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O/O(-2H)` | ext-table | chi 10 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O/O_x` | ext-table, quartic-sample | chi 1 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O/O_x` | ext-table, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 0.751 s | chi 1, dims (1, 0, 0) |
 | `ext_pair/d2-p32003-s1/O_x/E_2` | ext-table | chi 11 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/E_2(1H)` | ext-table | chi 11 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/I_x` | ext-table | chi 1 | not re-run |  |
@@ -597,20 +597,20 @@ Extⁱ(F, F) for F = I_x(H), M_H, M_x
 | `ext_pair/d2-p32003-s1/O_x/I_x(-1H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/M_2H` | ext-table | chi 9 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/M_2H(1H)` | ext-table | chi 9 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O_x/M_H` | ext-table, quartic-sample | chi 3 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O_x/M_H` | ext-table, quartic-sample | chi 3 | ok, 2026-11-19, `8014a21`, 0.771 s | chi 3, dims (0, 0, 3) |
 | `ext_pair/d2-p32003-s1/O_x/M_H(1H)` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/M_H^dual` | ext-table | chi 3 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/M_H^dual(1H)` | ext-table | chi 3 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O_x/M_x` | ext-table, quartic-sample | chi 2 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O_x/M_x` | ext-table, quartic-sample | chi 2 | ok, 2026-11-19, `8014a21`, 0.75 s | chi 2, dims (0, 0, 2) |
 | `ext_pair/d2-p32003-s1/O_x/M_x(1H)` | ext-table | chi 2 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/M_x^dual` | ext-table | chi 2 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O_x/O` | ext-table, quartic-sample | chi 1 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O_x/O(1H)` | ext-table, quartic-sample | chi 1 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O_x/O` | ext-table, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 0.729 s | chi 1, dims (0, 0, 1) |
+| `ext_pair/d2-p32003-s1/O_x/O(1H)` | ext-table, quartic-sample | chi 1 | ok, 2026-11-19, `8014a21`, 0.77 s | chi 1, dims (0, 0, 1) |
 | `ext_pair/d2-p32003-s1/O_x/O(2H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/O(3H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/O(-1H)` | ext-table | chi 1 | not re-run |  |
 | `ext_pair/d2-p32003-s1/O_x/O(-2H)` | ext-table | chi 1 | not re-run |  |
-| `ext_pair/d2-p32003-s1/O_x/O_x` | ext-table, quartic-sample | chi 0 | not re-run |  |
+| `ext_pair/d2-p32003-s1/O_x/O_x` | ext-table, quartic-sample | chi 0 | unsupported, 2026-11-19, `8014a21`, 0.751 s |  |
 
 <a name="claim-pairs-d3"></a>
 
@@ -2291,10 +2291,10 @@ hⁱ(O_C) and Extⁱ(O_C, O_C) for the marked curve C, with C² = −2
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `invariant/quartic_with_conic-d2-p32003-s1/Ext^i(O_C, O_C)` | marked-quartics | (1, 0, 1) | not re-run |  |
-| `invariant/quartic_with_conic-d2-p32003-s1/h^i(O_C)` | marked-quartics | (1, 0, 0) | not re-run |  |
-| `invariant/quartic_with_line-d2-p32003-s1/Ext^i(O_C, O_C)` | marked-quartics | (1, 0, 1) | not re-run |  |
-| `invariant/quartic_with_line-d2-p32003-s1/h^i(O_C)` | marked-quartics | (1, 0, 0) | not re-run |  |
+| `invariant/quartic_with_conic-d2-p32003-s1/Ext^i(O_C, O_C)` | marked-quartics | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 2.197 s | (1, 0, 1) |
+| `invariant/quartic_with_conic-d2-p32003-s1/h^i(O_C)` | marked-quartics | (1, 0, 0) | ok, 2026-11-19, `8014a21`, 2.398 s | (1, 0, 0) |
+| `invariant/quartic_with_line-d2-p32003-s1/Ext^i(O_C, O_C)` | marked-quartics | (1, 0, 1) | ok, 2026-11-19, `8014a21`, 2.099 s | (1, 0, 1) |
+| `invariant/quartic_with_line-d2-p32003-s1/h^i(O_C)` | marked-quartics | (1, 0, 0) | ok, 2026-11-19, `8014a21`, 2.078 s | (1, 0, 0) |
 
 <a name="claim-twist-of-the-hyperplane-bundle"></a>
 
@@ -2304,10 +2304,10 @@ The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/cohomology` | resumable-quartic | nonzero_dimensions ((1, 4)) | not re-run |  |
-| `quartic_prefix/ext` | resumable-quartic | nonzero_dimensions ((1, 4)) | not re-run |  |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | not re-run |  |
-| `quartic_prefix/realize` | resumable-quartic |  | not re-run |  |
+| `quartic_prefix/cohomology` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.03 s | dimensions ((-1, 0), (0, 0), (1, 4)), nonzero_dimensions ((1, 4)) |
+| `quartic_prefix/ext` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.412 s | dimensions ((1, 4), (2, 0), (3, 0)), nonzero_dimensions ((1, 4)) |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic |  | ok, 2026-11-19, `8014a21`, 0.708 s | class (-3, (1, 0), -1), shift 1 |
 
 <a name="claim-twist-of-the-point"></a>
 
@@ -2317,10 +2317,10 @@ The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups 
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/cohomology` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | not re-run |  |
-| `quartic_prefix/ext` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | not re-run |  |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | not re-run |  |
-| `quartic_prefix/realize` | resumable-quartic-point |  | not re-run |  |
+| `quartic_prefix/cohomology` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.031 s | dimensions ((-1, 0), (0, 0), (1, 1)), nonzero_dimensions ((1, 1)) |
+| `quartic_prefix/ext` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.111 s | dimensions ((1, 1), (2, 0), (3, 0)), nonzero_dimensions ((1, 1)) |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |
 
 <a name="claim-twist-of-the-dual-hyperplane-bundle"></a>
 
@@ -2330,6 +2330,6 @@ The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/hypercohomology` | resumable-quartic-hypercohomology | nonzero_dimensions ((3, 4)) | not re-run |  |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | not re-run |  |
-| `quartic_prefix/realize` | resumable-quartic-hypercohomology |  | not re-run |  |
+| `quartic_prefix/hypercohomology` | resumable-quartic-hypercohomology | nonzero_dimensions ((3, 4)) | ok, 2026-11-19, `8014a21`, 1.715 s | dimensions ((-1, 0), (0, 0), (1, 0), (2, 0), (3, 4)), nonzero_dimensions ((3, 4)) |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic-hypercohomology |  | ok, 2026-11-19, `8014a21`, 0.749 s | class (-3, (-1, 0), -1), shift 0 |

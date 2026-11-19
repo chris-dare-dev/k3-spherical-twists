@@ -81,14 +81,14 @@ Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's 
 <!-- BEGIN GENERATED headline: tools/claims.py tables -->
 | Quantity | Predicted | Computed | Status | Task |
 |---|---|---|---|---|
-| hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0) | (3, 0, 0) |  | not re-run | `invariant/d2-p32003-s1/h^i(I_x(H))` |
-| hⁱ(M_H(−H)) on the quartic: (0, 1, n² − 1) | (0, 1, 15) |  | not re-run | `invariant/d2-p32003-s1/h^i(M_H(-H))` |
-| hⁱ(M_x(−H)) on the quartic: (0, 0, n² − n − 1) | (0, 0, 11) |  | not re-run | `invariant/d2-p32003-s1/h^i(M_x(-H))` |
-| hⁱ(Q) on the quartic: (n² − 1, 1, 0) | (15, 1, 0) |  | not re-run | `invariant/d2-p32003-s1/h^i(Q)` |
-| hⁱ(M_H(−H)) for d = 3 (n = 5) | (0, 1, 24) |  | not re-run | `invariant/d3-p32003-s1/h^i(M_H(-H))` |
-| hⁱ(M_x(−H)) for d = 3 | (0, 0, 19) |  | not re-run | `invariant/d3-p32003-s1/h^i(M_x(-H))` |
-| hⁱ(M_H(−H)) for d = 4 (n = 6) | (0, 1, 35) |  | not re-run | `invariant/d4-p32003-s1/h^i(M_H(-H))` |
-| hⁱ(M_x(−H)) for d = 4 | (0, 0, 29) |  | not re-run | `invariant/d4-p32003-s1/h^i(M_x(-H))` |
+| hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0) | (3, 0, 0) | (3, 0, 0) | ok | `invariant/d2-p32003-s1/h^i(I_x(H))` |
+| hⁱ(M_H(−H)) on the quartic: (0, 1, n² − 1) | (0, 1, 15) | (0, 1, 15) | ok | `invariant/d2-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) on the quartic: (0, 0, n² − n − 1) | (0, 0, 11) | (0, 0, 11) | ok | `invariant/d2-p32003-s1/h^i(M_x(-H))` |
+| hⁱ(Q) on the quartic: (n² − 1, 1, 0) | (15, 1, 0) | (15, 1, 0) | ok | `invariant/d2-p32003-s1/h^i(Q)` |
+| hⁱ(M_H(−H)) for d = 3 (n = 5) | (0, 1, 24) | (0, 1, 24) | ok | `invariant/d3-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) for d = 3 | (0, 0, 19) | (0, 0, 19) | ok | `invariant/d3-p32003-s1/h^i(M_x(-H))` |
+| hⁱ(M_H(−H)) for d = 4 (n = 6) | (0, 1, 35) | (0, 1, 35) | ok | `invariant/d4-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) for d = 4 | (0, 0, 29) | (0, 0, 29) | ok | `invariant/d4-p32003-s1/h^i(M_x(-H))` |
 <!-- END GENERATED headline -->
 
 ## Apply a word in spherical twists

@@ -26,13 +26,13 @@ The sheaves are those of the table at the top of the [README](README.md#what-thi
 <!-- BEGIN GENERATED sheaves: tools/claims.py tables -->
 | Claim | Predicted, with n = d + 2 | Surfaces | Run under the scheduler |
 |---|---|---|---|
-| hⁱ(O), hⁱ(O(H)), hⁱ(O(−H)) | (1, 0, 1), (n, 0, 0), (0, 0, n) | d = 2, 3, 4 | **not re-run**: 9 tasks in `invariants`, no record; [tasks](claims/RECORDS.md#claim-line-bundles) |
-| hⁱ(I_x), hⁱ(I_x(−H)), hⁱ(I_x(H)); the ideal of x has n − 1 generators | (0, 0, 1), (0, 1, n), (n − 1, 0, 0); n − 1 | d = 2, 3, 4 | **not re-run**: 12 tasks in `invariants`, no record; [tasks](claims/RECORDS.md#claim-ideal-of-the-point) |
-| rank M_H, hⁱ(M_H), hⁱ(M_H(−H)) | n − 1, (0, 0, n), (0, 1, n² − 1) | d = 2, 3, 4 | **not re-run**: 9 tasks in `invariants`, no record; [tasks](claims/RECORDS.md#claim-m-h) |
-| rank M_x, hⁱ(M_x), hⁱ(M_x(−H)) | n − 2, (0, 0, n − 1), (0, 0, n² − n − 1) | d = 2, 3, 4 | **not re-run**: 9 tasks in `invariants`, no record; [tasks](claims/RECORDS.md#claim-m-x) |
-| rank Q, hⁱ(Q) | n − 1, (n² − 1, 1, 0) | d = 2, 3, 4 | **not re-run**: 6 tasks in `invariants`, no record; [tasks](claims/RECORDS.md#claim-q) |
-| Four of the above again, as Ext groups of sheaves: Extⁱ(O, O(H)), Extⁱ(O(H), O), Extⁱ(O(H), M_H), Extⁱ(M_x, O_x) | (n, 0, 0), (0, 0, n), (0, 1, n² − 1), (n − 2, 0, 0) | d = 2 | **not re-run**: 4 tasks in `invariants-slow`, no record; [tasks](claims/RECORDS.md#claim-again-as-ext) |
-| Extⁱ(F, F) for F = I_x(H), M_H, M_x | (1, 2, 1), (1, 0, 1), (1, 2, 1) | d = 2 | **not re-run**: 3 tasks in `invariants-slow`, no record; [tasks](claims/RECORDS.md#claim-self-ext) |
+| hⁱ(O), hⁱ(O(H)), hⁱ(O(−H)) | (1, 0, 1), (n, 0, 0), (0, 0, n) | d = 2, 3, 4 | all 9 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-line-bundles) |
+| hⁱ(I_x), hⁱ(I_x(−H)), hⁱ(I_x(H)); the ideal of x has n − 1 generators | (0, 0, 1), (0, 1, n), (n − 1, 0, 0); n − 1 | d = 2, 3, 4 | all 12 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-ideal-of-the-point) |
+| rank M_H, hⁱ(M_H), hⁱ(M_H(−H)) | n − 1, (0, 0, n), (0, 1, n² − 1) | d = 2, 3, 4 | all 9 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-m-h) |
+| rank M_x, hⁱ(M_x), hⁱ(M_x(−H)) | n − 2, (0, 0, n − 1), (0, 0, n² − n − 1) | d = 2, 3, 4 | all 9 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-m-x) |
+| rank Q, hⁱ(Q) | n − 1, (n² − 1, 1, 0) | d = 2, 3, 4 | all 6 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-q) |
+| Four of the above again, as Ext groups of sheaves: Extⁱ(O, O(H)), Extⁱ(O(H), O), Extⁱ(O(H), M_H), Extⁱ(M_x, O_x) | (n, 0, 0), (0, 0, n), (0, 1, n² − 1), (n − 2, 0, 0) | d = 2 | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-again-as-ext) |
+| Extⁱ(F, F) for F = I_x(H), M_H, M_x | (1, 2, 1), (1, 0, 1), (1, 2, 1) | d = 2 | all 3 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-self-ext) |
 <!-- END GENERATED sheaves -->
 
 ## Euler characteristics of pairs
@@ -42,7 +42,7 @@ For two sheaves E, F of the catalogue the task computes the three dimensions of 
 <!-- BEGIN GENERATED pairs: tools/claims.py tables -->
 | Claim | Surface | Ordered pairs | Run under the scheduler |
 |---|---|---|---|
-| χ(E, F) = −⟨v(E), v(F)⟩ for the sheaves E, F of the catalogue | quartic, d = 2 | 22 × 22 = 484 | **not re-run**: 484 tasks in `ext-table`, `limits-demo`, `quartic-sample`, no record; [tasks](claims/RECORDS.md#claim-pairs-d2) |
+| χ(E, F) = −⟨v(E), v(F)⟩ for the sheaves E, F of the catalogue | quartic, d = 2 | 22 × 22 = 484 | tasks: ok 24; unsupported 1; not re-run 459 (of 484); 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-pairs-d2) |
 | the same | quadric and cubic, d = 3 | 22 × 22 = 484 | **not re-run**: 484 tasks in `ext-table`, no record; [tasks](claims/RECORDS.md#claim-pairs-d3) |
 | the same, with the rank 2 bundle of class (2, 1, 2) and its twists in the catalogue | d = 3 with the quadric x₀x₁ + x₂x₃ + x₄² | 26 × 26 = 676 | **not re-run**: 676 tasks in `ext-table`, no record; [tasks](claims/RECORDS.md#claim-pairs-d3-special) |
 | the same | three quadrics, d = 4 | 22 × 22 = 484 | **not re-run**: 484 tasks in `ext-table`, no record; [tasks](claims/RECORDS.md#claim-pairs-d4) |
@@ -55,7 +55,7 @@ Batch: `marked-quartics`.
 <!-- BEGIN GENERATED marked: tools/claims.py tables -->
 | Claim | Predicted | Surfaces | Run under the scheduler |
 |---|---|---|---|
-| hⁱ(O_C) and Extⁱ(O_C, O_C) for the marked curve C, with C² = −2 | (1, 0, 0) and (1, 0, 1) | a quartic with a line, a quartic with a conic | **not re-run**: 4 tasks in `marked-quartics`, no record; [tasks](claims/RECORDS.md#claim-marked-curve) |
+| hⁱ(O_C) and Extⁱ(O_C, O_C) for the marked curve C, with C² = −2 | (1, 0, 0) and (1, 0, 1) | a quartic with a line, a quartic with a conic | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-marked-curve) |
 <!-- END GENERATED marked -->
 
 ## Twists realized as complexes
@@ -65,9 +65,9 @@ Each of the first three rows is one dependent batch: a task builds the marked qu
 <!-- BEGIN GENERATED twists: tools/claims.py tables -->
 | Claim | Predicted | Where | Run under the scheduler |
 |---|---|---|---|
-| The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups to O | cohomology (0, 0, 4) in degrees −1 to 1; Ext to O (4, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic.toml` | **not re-run**: 4 tasks in `resumable-quartic`, no record; [tasks](claims/RECORDS.md#claim-twist-of-the-hyperplane-bundle) |
-| The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups to O | cohomology (0, 0, 1) in degrees −1 to 1; Ext to O (1, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic-point.toml` | **not re-run**: 4 tasks in `resumable-quartic-point`, no record; [tasks](claims/RECORDS.md#claim-twist-of-the-point) |
-| The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only | dimension 4 in degree 3, zero in degrees −1 to 2 | the quartic with a line; `batches/resumable-quartic-hypercohomology.toml` | **not re-run**: 3 tasks in `resumable-quartic-hypercohomology`, no record; [tasks](claims/RECORDS.md#claim-twist-of-the-dual-hyperplane-bundle) |
+| The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups to O | cohomology (0, 0, 4) in degrees −1 to 1; Ext to O (4, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic.toml` | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-hyperplane-bundle) |
+| The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups to O | cohomology (0, 0, 1) in degrees −1 to 1; Ext to O (1, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic-point.toml` | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-point) |
+| The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only | dimension 4 in degree 3, zero in degrees −1 to 2 | the quartic with a line; `batches/resumable-quartic-hypercohomology.toml` | all 3 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-dual-hyperplane-bundle) |
 | The word {T_O, T_O⁻¹} applied to O(−H) is realized, and the comparison with O(−H) is an isomorphism on sheaf homology | Serre pairing of rank 4 | the quartic with a line | no task: a test of the package (`K3Twists/tests-derived-quartic.m2`, run by `make test`); it leaves no record |
 | The image of O_x under the word {T_O, T_{O(H)}⁻¹} has Mukai coordinates (2, 3, 9) | (2, 3, 9) | the quartic | no task: a test of the package (`K3Twists/tests-words.m2`, run by `make test`); it leaves no record |
 | On the Fermat quintic threefold over ZZ/101: hⁱ(O) = (1, 0, 0, 1), and the twist of the marked point about O is realized with numerical class (−1, 1) | (1, 0, 0, 1); (−1, 1) | the quintic threefold | no task: a test of the package (`K3Twists/tests-quintic.m2`, run by `make test`); it leaves no record |
