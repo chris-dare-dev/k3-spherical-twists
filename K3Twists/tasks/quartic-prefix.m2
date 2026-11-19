@@ -2,7 +2,7 @@
 
 quarticPrefixObservations = {"cohomology", "ext", "hypercohomology"}
 quarticPrefixContinuations = {"inverse", "second_forward"}
-quarticPrefixActions = {"model", "realize"} | quarticPrefixContinuations | quarticPrefixObservations
+quarticPrefixActions = {"model", "realize", "mixed_point_inverse"} | quarticPrefixContinuations | quarticPrefixObservations
 quarticPrefixTargets = {"O(1H)", "O_x", "O(-1H)"}
 quarticPrefixPrediction = H -> (
     checkFields(H, "quartic prediction", {
@@ -114,6 +114,21 @@ quarticSecondForwardFromCheckpoint = (K, forward, model) -> (
         R#"strategy", evidence, quarticEvaluationOutputs(K, R, model))
     )
 
+quarticMixedPointFromCheckpoint = (K, C, model) -> (
+    forwardStep := twistStep(sphericalObject structureObject K, 1);
+    inverseStep := twistStep(sphericalObject lineBundleObject(K, K#"polarization"), -1);
+    E := applyWord(twistWord {forwardStep, inverseStep}, catalogueObject(K, "O_x"));
+    R := quarticMixedPointInverse(E, C);
+    expected := hashTable {"class" => prefixMukai mukaiClass E};
+    valueData := hashTable {"class" => prefixMukai mukaiClass R#"representative",
+        "sheaf_homology" => R#"sheafHomologyTypes", "derived_hom_degrees" => R#"derivedHomDegrees"};
+    evidence := hashTable {"directions" => R#"directions", "hypotheses" => R#"hypotheses",
+        "forward_shift" => R#"forwardShift", "forward_comparison" => "I_x[1] is sheaf quasi-isomorphic to the saved cone",
+        "convention" => "cohomological"};
+    (valueData, expected, valueData#"class" === expected#"class", R#"strategy", evidence,
+        quarticEvaluationOutputs(K, R, model))
+    )
+
 runQuarticPrefix = t -> (
     action := t#"action";
     if action === "model" then (
@@ -149,6 +164,10 @@ runQuarticPrefix = t -> (
                 else quarticSecondForwardFromCheckpoint(K, forward, model)
             );
         C := loadGradedComplex(K, prefixData);
+        if action === "mixed_point_inverse" then (
+            if prefixData#"version" =!= 2 then error "mixed point inverse requires the version 2 point cone";
+            return quarticMixedPointFromCheckpoint(K, C, model)
+            );
         O := if action === "hypercohomology" then hypercohomologyObservation(K, C) else (
             if concentration C =!= (0,1) or sheaf HH_0 C != 0 then error "expected a quartic evaluation cone";
             F := sheaf HH_1 C;
