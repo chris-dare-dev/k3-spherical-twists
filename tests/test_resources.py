@@ -7,6 +7,7 @@ import unittest
 from dataclasses import replace
 
 from k3batch.model import Limits, Task
+from k3batch.record import Record
 from k3batch.resources import MIB, ResourcePolicy, estimate, resource_context
 from tests.helpers import SchedulerCase, fake_config
 
@@ -58,6 +59,7 @@ class ResourceRetries(SchedulerCase):
         )
         self.assertEqual(self.run_batch(config), {"ok": 2})
         record = self.latest()["fake/target"]
+        self.assertLessEqual(set(record), set(Record.__annotations__))
         first, second = record["resource_attempts"]
         self.assertEqual([r["status"] for r in (first, second)], ["memory", "ok"])
         self.assertEqual([r["limits"]["memory_mb"] for r in (first, second)], [42, 63])

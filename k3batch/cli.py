@@ -10,8 +10,7 @@ import socket
 import sqlite3
 import sys
 from collections import Counter
-from collections.abc import Iterator, Sequence
-from contextlib import contextmanager
+from collections.abc import Iterable, Sequence
 from dataclasses import asdict, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -24,13 +23,15 @@ from .config import BatchConfig, ConfigError, load_config
 from .execution import LocalBackend, RunDeadlineExpired
 from .identity import RECORD_SCHEMA
 from .memory import MemoryGuard, available_mb, choose_guard
-from .model import COMPLETED_STATUSES, Limits, Status, Task
+from .model import COMPLETED_STATUSES, FAILED_STATUSES, Limits, Status, Task
+from .planning import PlannedTask
+from .record import Record
 from .resources import ResourcePolicy
 from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError
-from .scheduler import PlannedTask, Scheduler
+from .scheduler import Scheduler
 from .source import source_snapshot
 from .sqlite_store import SQLiteStore
-from .store import ResultStore, StoreLocked
+from .store import ResultStore, RunHistory, StoreLocked
 
 EXIT_OK = 0
 EXIT_FAILED = 1  # a mismatch, an error or a crash
@@ -207,17 +208,46 @@ def _local_backend(config: BatchConfig, guard: MemoryGuard) -> LocalBackend:
     )  # fmt: skip
 
 
+def exit_status(statuses: Iterable[str]) -> int:
+    """The status a run ends with, from how the task of each member of the run ended.
+
+    A mismatch, an error, a crash or a blocked task makes the run fail, whatever else happened. A run
+    in which nothing failed but a task was stopped at a limit says so. Tasks without a method count
+    as carried out.
+    """
+    ended = set(statuses)
+    if ended & FAILED_STATUSES:
+        return EXIT_FAILED
+    if ended - COMPLETED_STATUSES:
+        return EXIT_LIMITS
+    return EXIT_OK
+
+
+def _check_memory(config: BatchConfig, backend: LocalBackend, free: int | None, overcommit: bool) -> None:
+    requested = config.memory_budget_mb + backend.coordinator_headroom_mb
+    if free is not None and requested > free and not overcommit:
+        raise ConfigError(
+            f"the memory budget and coordinator headroom use {requested} MB but only {free} MB is available; "
+            "lower --memory-budget, or pass --overcommit to run anyway"
+        )
+
+
+def _manifest(run_id: str, config: BatchConfig, plan: Sequence[PlannedTask]) -> dict[str, Any]:
+    """The members of a run: what a report of this run will select, whatever is computed later."""
+    return {
+        "schema_version": RECORD_SCHEMA,
+        "run_id": run_id,
+        "batch": config.name,
+        "tasks": [entry.manifest_entry() for entry in plan],
+    }
+
+
 def _command_run(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
     free = available_mb()
     guard = choose_guard(arguments.memory_guard)
     backend = _local_backend(config, guard)
-    requested = config.memory_budget_mb + backend.coordinator_headroom_mb
-    if free is not None and requested > free and not arguments.overcommit:
-        raise ConfigError(
-            f"the memory budget and coordinator headroom use {requested} MB but only {free} MB is available; "
-            "lower --memory-budget, or pass --overcommit to run anyway"
-        )
+    _check_memory(config, backend, free, arguments.overcommit)
     started_at = datetime.now(UTC)
     run_id = uuid4().hex
     store = _result_store(run_dir, arguments.store)
@@ -228,7 +258,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
         if checkpoint and not any(task.id == checkpoint for task in tasks):
             raise ConfigError(f"unknown checkpoint task {checkpoint!r}")
 
-        def progress(record: dict[str, Any], finished: int, total: int) -> None:
+        def progress(record: Record, finished: int, total: int) -> None:
             if not arguments.quiet:
                 _print_progress(record, finished, total)
             if record["task_id"] == checkpoint and record["status"] == Status.OK:
@@ -243,12 +273,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
         )  # fmt: skip
         plan = scheduler.plan()
         pending = scheduler.pending(plan)
-        manifest = {
-            "schema_version": RECORD_SCHEMA,
-            "run_id": run_id,
-            "batch": config.name,
-            "tasks": [entry.manifest_entry() for entry in plan],
-        }
+        manifest = _manifest(run_id, config, plan)
         metadata = {
             "run_id": run_id,
             "started_at": started_at.isoformat(timespec="seconds"),
@@ -268,10 +293,9 @@ def _command_run(arguments: argparse.Namespace) -> int:
             "pending": len(pending),
         }
         print("\n".join(_plan_lines(config, plan, pending)), file=sys.stderr)
-        destination = store.path if isinstance(store, SQLiteStore) else run_dir
-        print(f"run {run_id}, memory guard: {guard.name}, results in {destination}", file=sys.stderr)
+        print(f"run {run_id}, memory guard: {guard.name}, results in {store.location}", file=sys.stderr)
         try:
-            with _record_run(store, run_dir, manifest, metadata):
+            with store.run(run_dir, manifest, metadata):
                 outcome = scheduler.run(plan)
                 selected = report.selected_results(store, manifest)
                 if len(selected) != len(plan):
@@ -284,38 +308,19 @@ def _command_run(arguments: argparse.Namespace) -> int:
 
     summary = ", ".join(f"{count} {status}" for status, count in sorted(outcome.items())) or "nothing to do"
     print(f"this run: {summary}", file=sys.stderr)
-    statuses = Counter(record["status"] for record in selected.values())
-    if any(statuses[status] for status in (Status.MISMATCH, Status.ERROR, Status.CRASHED, Status.BLOCKED)):
-        return EXIT_FAILED
-    if any(count for status, count in statuses.items() if status not in COMPLETED_STATUSES):
-        return EXIT_LIMITS
-    return EXIT_OK
+    return exit_status(record["status"] for record in selected.values())
 
 
-def _result_store(run_dir: Path, database: Path | None) -> ResultStore | SQLiteStore:
+def _result_store(run_dir: Path, database: Path | None) -> RunHistory:
     if database is None:
         return ResultStore(run_dir / "results.jsonl")
     return SQLiteStore(database)
 
 
-@contextmanager
-def _record_run(
-    store: ResultStore | SQLiteStore, run_dir: Path, manifest: dict[str, Any], metadata: dict[str, Any]
-) -> Iterator[None]:
-    if isinstance(store, SQLiteStore):
-        with store.run(run_dir, manifest, metadata):
-            yield
-    else:
-        _write_json(run_dir / "runs" / f"{manifest['run_id']}.json", manifest)
-        _write_json(run_dir / "manifest.json", manifest)
-        _append_json(run_dir / "runs.jsonl", metadata)
-        yield
-
-
-def _print_progress(record: dict[str, Any], done: int, total: int) -> None:
+def _print_progress(record: Record, done: int, total: int) -> None:
     note = ""
     if record["status"] == Status.MISMATCH:
-        note = f"  computed {report._cell(record['value'])}, predicted {report._cell(record['predicted'])}"
+        note = f"  computed {report.cell(record['value'])}, predicted {report.cell(record['predicted'])}"
     elif record["error"]:
         note = "  " + record["error"].splitlines()[-1]
     print(
@@ -323,18 +328,6 @@ def _print_progress(record: dict[str, Any], done: int, total: int) -> None:
         f"{record['peak_rss_mb']:7.0f} MB  {record['task_id']}{note}",
         file=sys.stderr, flush=True,
     )  # fmt: skip
-
-
-def _write_json(path: Path, content: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".part")
-    temporary.write_text(json.dumps(content, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-    temporary.replace(path)
-
-
-def _append_json(path: Path, content: dict[str, Any]) -> None:
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(content, sort_keys=True) + "\n")
 
 
 def _command_report(arguments: argparse.Namespace) -> int:

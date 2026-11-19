@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, fields
 from typing import Any
 
@@ -66,7 +67,7 @@ def estimate(
     caps: Limits,
     policy: ResourcePolicy,
     context: dict[str, Any],
-    history: list[dict[str, Any]],
+    history: Sequence[Mapping[str, Any]],
 ) -> tuple[Limits, dict[str, Any]]:
     comparable = [row for row in history if row.get("resource_context") == context]
     measure = context["memory_measure"]

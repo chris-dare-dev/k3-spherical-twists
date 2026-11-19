@@ -41,14 +41,14 @@ class RunnerInvocation:
         *,
         repository: Path = REPOSITORY,
     ) -> RunnerInvocation:
-        script = bundled_script(runner, repository)
-        if script is not None:
-            try:
-                request = wire.FileRequest.create(directory, operation, payload)
-            except (ValueError, TypeError) as problem:
-                raise RunnerError(f"cannot encode request JSON: {problem}") from problem
-            return cls([*runner[:-1], str(script), *request.args], request)
-        return cls([*runner, operation, json.dumps(payload)], None)
+        command = _file_protocol_command(runner, repository)
+        if command is None:
+            return cls([*runner, operation, json.dumps(payload)], None)
+        try:
+            request = wire.FileRequest.create(directory, operation, payload)
+        except (ValueError, TypeError) as problem:
+            raise RunnerError(f"cannot encode request JSON: {problem}") from problem
+        return cls([*command, *request.args], request)
 
     def cleanup(self) -> None:
         if self.request is not None:
@@ -65,10 +65,24 @@ class RunnerInvocation:
 
 
 def bundled_script(runner: tuple[str, ...], repository: Path) -> Path | None:
+    """The bundled Macaulay2 runner as `repository` has it, if `runner` is that script."""
     if runner[-2:-1] == ("--script",):
         script = (repository / runner[-1]).resolve()
         if script == (repository / RUNNER_SCRIPT).resolve():
             return script
+    return None
+
+
+def _file_protocol_command(runner: tuple[str, ...], repository: Path) -> list[str] | None:
+    """The command of a runner that takes request and response files, without its last three arguments.
+
+    The bundled Macaulay2 runner does, and so does any runner whose command ends in `protocol-v2`.
+    """
+    if runner[-1:] == (wire.MODE,):
+        return list(runner[:-1])
+    script = bundled_script(runner, repository)
+    if script is not None:
+        return [*runner[:-1], str(script)]
     return None
 
 
@@ -125,8 +139,7 @@ def _expand(
         try:
             payload = invocation.request.read(done.returncode)
             if payload is not None:
-                serialized, versions = wire.check_expansion(payload)
-                decoded_tasks = [Task.from_payload(task) for task in serialized]
+                decoded_tasks, versions = wire.check_expansion(payload)
                 _check_unique_tasks(decoded_tasks)
                 return decoded_tasks, versions
         except (ValueError, OSError, OverflowError) as problem:

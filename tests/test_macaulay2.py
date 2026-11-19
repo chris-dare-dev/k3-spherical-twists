@@ -14,7 +14,7 @@ from k3batch.memory import CgroupGuard, MemoryGuard, PollingGuard
 from k3batch.runner import DEFAULT_RUNNER, RunnerInvocation, expand, parse_result
 from k3batch.scheduler import Scheduler
 from k3batch.store import ResultStore
-from k3batch.wire import WireError
+from k3batch.wire import WireError, check_task
 
 BATCH = {
     "name": "macaulay2",
@@ -152,6 +152,38 @@ class Macaulay2FileProtocol(unittest.TestCase):
                     self.assertEqual(result["value"], expected)
                     if task.kind == "synthetic":
                         self.assertIs(type(result["value"]["real_zero"]), float)
+
+    def test_macaulay2_and_python_refuse_the_same_tasks(self) -> None:
+        tasks, _ = expand(DEFAULT_RUNNER, {"tasks": [{"kind": "synthetic", "items": [{"name": "x"}]}]})
+        task = tasks[0].payload
+        self.assertEqual(check_task(task), tasks[0])
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        invocation = RunnerInvocation.prepare(DEFAULT_RUNNER, "run", task, Path(scratch.name))
+        request = Path(invocation.command[-2])
+        assert invocation.request is not None
+        envelope = json.loads(request.read_text(encoding="utf-8"))
+        for change, python, macaulay2 in (
+            ({"id": ""}, "id must be a nonempty string", "task requires a string field id"),
+            ({"set": -1}, "set must be an integer >= 0", "nonnegative integer field set"),
+            ({"kind_version": 0}, "kind_version must be an integer >= 1", "kind_version must be positive"),
+            ({"cost": -1}, "cost must be a nonnegative number", "task requires a nonnegative cost"),
+            ({"requirements": "none"}, "requirements must be a list", "task requires a list of requirements"),
+        ):
+            with self.subTest(change=change):
+                with self.assertRaisesRegex(WireError, python):
+                    check_task(task | change)
+                request.write_text(json.dumps(envelope | {"payload": task | change}), encoding="utf-8")
+                done = self.invoke(invocation.command, check=False)
+                self.assertNotEqual(done.returncode, 0)
+                self.assertIn(macaulay2, done.stderr + done.stdout)
+                with self.assertRaisesRegex(WireError, "operation_failed"):
+                    invocation.request.read(done.returncode)
+        request.write_text(json.dumps(envelope), encoding="utf-8")
+        done = self.invoke(invocation.command)
+        result = invocation.task_result(done.stdout, done.returncode)
+        assert result is not None
+        self.assertEqual(result["status"], "ok")
 
     def test_macaulay2_validates_file_headers_and_reports_a_structured_failure(self) -> None:
         with tempfile.TemporaryDirectory() as scratch:

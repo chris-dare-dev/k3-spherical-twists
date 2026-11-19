@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from .model import RUNNER_STATUSES, Status, Task, TaskError
+
 VERSION = 2
+# the argument that asks a runner for this protocol; the request and response files follow it
+MODE = "protocol-v2"
 OPERATIONS = {"expand": 1, "run": 1}
 
 
@@ -25,7 +29,7 @@ def _object(value: Any, label: str) -> dict[str, Any]:
     return value
 
 
-def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
@@ -61,20 +65,15 @@ def _number(obj: dict[str, Any], key: str) -> None:
         raise WireError(f"{key} must be a nonnegative number")
 
 
-def check_task(obj: Any) -> dict[str, Any]:
-    task = _object(obj, "task")
-    for key in ("id", "kind", "group"):
-        _string(task, key)
-    _integer(task, "set")
-    _integer(task, "kind_version", 1)
-    _number(task, "cost")
-    requirements = task.get("requirements")
-    if not isinstance(requirements, list) or any(not isinstance(item, str) for item in requirements):
-        raise WireError("requirements must be a list of strings")
-    return task
+def check_task(obj: Any) -> Task:
+    """A task as the file protocol carries it, in an expansion and in a run request."""
+    try:
+        return Task.from_payload(obj, complete=True)
+    except TaskError as problem:
+        raise WireError(str(problem)) from None
 
 
-def check_expansion(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def check_expansion(payload: dict[str, Any]) -> tuple[list[Task], dict[str, Any]]:
     tasks = payload.get("tasks")
     if not isinstance(tasks, list) or _integer(payload, "count") != len(tasks):
         raise WireError("incomplete expansion")
@@ -86,7 +85,7 @@ def check_expansion(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict
 
 def check_result(payload: dict[str, Any]) -> dict[str, Any]:
     status = _string(payload, "status")
-    if status not in {"ok", "mismatch", "unsupported"}:
+    if status not in RUNNER_STATUSES:
         raise WireError(f"unrecognized result status {status!r}")
     for key in ("value", "predicted", "agrees"):
         if key not in payload:
@@ -94,9 +93,10 @@ def check_result(payload: dict[str, Any]) -> dict[str, Any]:
     agrees = payload["agrees"]
     if agrees is not None and type(agrees) is not bool:
         raise WireError("agrees must be boolean or null")
-    if status == "unsupported" and (payload["value"] is not None or agrees is not None):
+    if status == Status.UNSUPPORTED and (payload["value"] is not None or agrees is not None):
         raise WireError("unsupported result must have null value and agrees")
-    if status != "unsupported" and (payload["value"] is None or (status == "mismatch") != (agrees is False)):
+    computed = status != Status.UNSUPPORTED
+    if computed and (payload["value"] is None or (status == Status.MISMATCH) != (agrees is False)):
         raise WireError("result status disagrees with its fields")
     _string(payload, "method")
     for key in ("setup_seconds", "compute_seconds"):
@@ -130,7 +130,7 @@ class FileRequest:
 
     @property
     def args(self) -> list[str]:
-        return ["protocol-v2", str(self.directory / "request.json"), str(self.directory / "response.json")]
+        return [MODE, str(self.directory / "request.json"), str(self.directory / "response.json")]
 
     def read(self, exit_code: int) -> dict[str, Any] | None:
         response = self.directory / "response.json"
@@ -146,7 +146,7 @@ class FileRequest:
             envelope = _object(
                 json.loads(
                     content,
-                    object_pairs_hook=_unique_object,
+                    object_pairs_hook=unique_object,
                     parse_float=_finite_float,
                     parse_constant=_finite_float,
                 ),

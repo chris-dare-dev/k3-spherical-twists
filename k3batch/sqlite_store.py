@@ -15,7 +15,8 @@ from typing import Any
 
 from .execution import RunDeadlineExpired
 from .identity import RECORD_SCHEMA
-from .store import ResultStore, lock_writer
+from .record import Record, commit, method, surface
+from .store import ResultStore, RunHistory, lock_writer
 
 _APPLICATION_ID = 0x4B334254  # K3BT
 _VERSION = 1
@@ -105,7 +106,7 @@ def _chunks(values: Sequence[str]) -> Iterator[Sequence[str]]:
         yield values[index : index + 500]
 
 
-def _record_identity(record: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
+def _record_identity(record: Record) -> tuple[str | None, str | None, str | None]:
     if record.get("schema_version") != RECORD_SCHEMA:
         return None, None, None
     return (
@@ -115,20 +116,18 @@ def _record_identity(record: dict[str, Any]) -> tuple[str | None, str | None, st
     )
 
 
-def _indexes(record: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
-    surface = _object(record.get("task")).get("surface")
-    return (
-        _json(surface) if surface is not None else None,
-        _string(_object(record.get("detail")).get("method")),
-        _string(_object(record.get("code")).get("commit")),
-    )
+def _indexes(record: Record) -> tuple[str | None, str | None, str | None]:
+    """The provenance a record can be found by: its surface, its method and the commit of its code."""
+    where = surface(record)
+    return (_json(where) if where is not None else None, method(record), commit(record))
 
 
-def _result(row: sqlite3.Row) -> dict[str, Any]:
-    value = _decode(row["result"])
+def _result(row: sqlite3.Row) -> Record:
+    value: Any = _decode(row["result"])
     # The run selected for reporting can differ from the attempt that produced the log.
     value.setdefault("log_directory", row["log_directory"])
-    return value
+    record: Record = value
+    return record
 
 
 def _check_schema(db: sqlite3.Connection) -> None:
@@ -138,8 +137,10 @@ def _check_schema(db: sqlite3.Connection) -> None:
         raise RuntimeError(f"unsupported k3batch database format (application {app_id}, schema {version})")
 
 
-class SQLiteStore:
+class SQLiteStore(RunHistory):
     """Own one writing coordinator, with transactional updates and concurrent read snapshots."""
+
+    supports_graphs = True
 
     def __init__(self, path: Path) -> None:
         self.path = path.resolve()
@@ -193,6 +194,10 @@ class SQLiteStore:
             if self._lock_fd is not None:
                 os.close(self._lock_fd)
                 self._lock_fd = None
+
+    @property
+    def location(self) -> Path:
+        return self.path
 
     @contextmanager
     def _write(self) -> Iterator[sqlite3.Connection]:
@@ -320,7 +325,7 @@ class SQLiteStore:
                 ),
             )
 
-    def append(self, record: dict[str, Any]) -> None:
+    def append(self, record: Record) -> None:
         """Complete the attempt and record its observation, check and any output references atomically."""
         with self._write() as db:
             completed = db.execute(
@@ -342,12 +347,9 @@ class SQLiteStore:
             if completed.rowcount != 1:
                 raise RuntimeError("result does not match a running attempt")
 
-    def latest_by_computation(self, identities: Sequence[str]) -> dict[str, dict[str, Any]]:
-        """Find the latest eligible result for each requested computation through the index."""
-        return {identity: rows[0] for identity, rows in self.recent_by_computation(identities, 1).items()}
-
-    def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[dict[str, Any]]]:
-        history: dict[str, list[dict[str, Any]]] = {}
+    def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[Record]]:
+        """Find the latest eligible results for each requested computation through the index."""
+        history: dict[str, list[Record]] = {}
         with self._read() as db:
             if db is None:
                 return history
@@ -365,7 +367,7 @@ class SQLiteStore:
                     history.setdefault(row["computation_id"], []).append(_result(row))
         return history
 
-    def by_record_id(self, identities: Sequence[str]) -> dict[str, dict[str, Any]]:
+    def by_record_id(self, identities: Sequence[str]) -> dict[str, Record]:
         """Find the exact records reserved by run members."""
         with self._read() as db:
             if db is None:
@@ -379,6 +381,13 @@ class SQLiteStore:
                     chunk,
                 )
             }
+
+    def unpinned(self, run_dir: Path, *, legacy: bool) -> dict[str, Record]:
+        return {
+            record["task_id"]: record
+            for record in self.query(run_dir=run_dir)
+            if not legacy or "schema_version" not in record
+        }
 
     def manifest(
         self, run_dir: Path | None = None, run_id: str | None = None, *, legacy: bool = False
@@ -432,7 +441,7 @@ class SQLiteStore:
         method: str | None = None,
         observation: str | None = None,
         commit: str | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[Record]:
         """Return observations filtered by indexed provenance or the run that pinned them."""
         columns = {
             "a.surface": _json(surface) if surface is not None else None,
@@ -558,7 +567,7 @@ class SQLiteStore:
 
     @staticmethod
     def _import_record(
-        db: sqlite3.Connection, directory: str, record: dict[str, Any], occurrences: Counter[str]
+        db: sqlite3.Connection, directory: str, record: Record, occurrences: Counter[str]
     ) -> int:
         record_id, computation_id, check_id = _record_identity(record)
         attempt_id = _string(record.get("attempt_id"))

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install ruff mypy
+      - run: pip install ruff==0.17.5 mypy==2.4.1
       - run: make lint
 
   fast-tests:
@@ -30,3 +30,17 @@ jobs:
             macaulay2 make coreutils python3 git ca-certificates
       - uses: actions/checkout@v4
       - run: make test
+
+  # The package tests that compute Ext groups: under two minutes on a desktop, 0.5 GB at most.
+  slow-tests:
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    timeout-minutes: 30
+    steps:
+      - name: Install Macaulay2 and make
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            macaulay2 make coreutils git ca-certificates
+      - uses: actions/checkout@v4
+      - run: make test-slow

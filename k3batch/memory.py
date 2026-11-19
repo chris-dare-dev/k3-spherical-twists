@@ -11,9 +11,40 @@ from uuid import uuid4
 
 
 class MemoryGuard:
-    """Policy shared by the planner and task processes."""
+    """How a run and its jobs are held to their limits; the policy the planner and the tasks share.
+
+    This one has nothing enforced from outside: the watchdog of each job samples its memory. A guard
+    that does opens a boundary around the run and one inside it for each job, and names them.
+    """
 
     name = "none"
+
+    def open_run(self, tag: str, memory_mb: int, cpus: int) -> str | None:
+        """Open the boundary of a run; None when the guard keeps none."""
+        return None
+
+    def open_job(self, tag: str, run: str | None, memory_mb: int, cpus: int) -> str | None:
+        """Open the boundary of one job inside that of its run; None when the guard keeps none."""
+        return None
+
+    def confine(
+        self, command: list[str], tag: str, job: str | None, run: str | None, time_seconds: float
+    ) -> tuple[list[str], Path | None]:
+        """The command that starts inside the job's boundary, and where the kernel accounts for it."""
+        return command, None
+
+    def launch_failure(self, error: str | None) -> str | None:
+        """Why a job that could not be launched (with the watchdog's reason, if it gave one) stops the run.
+
+        None when the failure is the job's own: it is then recorded like any other outcome.
+        """
+        return None
+
+    def stop(self, unit: str, *, wait: bool = True) -> None:
+        """Close a boundary and end what runs inside it."""
+
+    def release(self, unit: str) -> None:
+        """Forget the unit a job ran in."""
 
 
 class PollingGuard(MemoryGuard):
@@ -56,6 +87,28 @@ class CgroupGuard(MemoryGuard):
         finally:
             with contextlib.suppress(OSError, subprocess.TimeoutExpired):
                 group.stop(unit)
+
+    def open_run(self, tag: str, memory_mb: int, cpus: int) -> str:
+        return self.open_slice(tag, memory_mb, cpus)
+
+    def open_job(self, tag: str, run: str | None, memory_mb: int, cpus: int) -> str:
+        if run is None:
+            raise RuntimeError("no cgroup run boundary is active")
+        return self.open_slice(tag, memory_mb, cpus)
+
+    def confine(
+        self, command: list[str], tag: str, job: str | None, run: str | None, time_seconds: float
+    ) -> tuple[list[str], Path]:
+        assert job is not None
+        group = self.group_path(job)
+        if group.parent.name != run:
+            raise RuntimeError("the job slice is outside the configured run boundary")
+        return self.wrap(command, tag, job, time_seconds), group
+
+    def launch_failure(self, error: str | None) -> str:
+        if error is None:
+            return "systemd could not launch the scoped job; see the job log"
+        return f"cannot run the job under enforced cgroup limits: {error}"
 
     def open_slice(self, tag: str, budget_mb: int, cpus: int) -> str:
         unit = f"{tag}.slice"

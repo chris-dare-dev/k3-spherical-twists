@@ -1,4 +1,4 @@
-"""The results of a batch: one JSON object per line, one line per task that ended."""
+"""The results of earlier runs: what every store of them offers, and the store that is a file of lines."""
 
 from __future__ import annotations
 
@@ -6,9 +6,15 @@ import errno
 import fcntl
 import json
 import os
-from collections.abc import Collection
+import re
+from abc import ABC, abstractmethod
+from collections.abc import Collection, Iterator, Sequence
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar, cast
+
+from .identity import RECORD_SCHEMA
+from .record import Record
 
 
 class StoreLocked(RuntimeError):
@@ -28,13 +34,96 @@ def lock_writer(path: Path) -> int:
     return fd
 
 
-class ResultStore:
+class RunHistory(ABC):
+    """What the scheduler, the reports and the command line ask of the results of earlier runs.
+
+    A record is the JSON object of one attempt that ended. A history lists records newest first, in
+    the order in which the store came to know of the attempts. `ResultStore` keeps the records of one
+    run directory in a file of lines; `SQLiteStore` keeps those of many in one database.
+    """
+
+    # Whether a run with a dependency graph can be kept: its attempts are claimed with their
+    # prerequisites before they start, and looked up by record afterwards.
+    supports_graphs: ClassVar[bool]
+    path: Path
+    unreadable_lines: int
+
+    @property
+    @abstractmethod
+    def location(self) -> Path:
+        """Where a run is told its results are."""
+
+    @abstractmethod
+    def __enter__(self) -> RunHistory:
+        """Become the one writer of the store."""
+
+    @abstractmethod
+    def __exit__(self, *exc: object) -> None: ...
+
+    @abstractmethod
+    def run(
+        self, run_dir: Path, manifest: dict[str, Any], metadata: dict[str, Any]
+    ) -> AbstractContextManager[None]:
+        """Record the members of a run before its work starts, and how it ended."""
+
+    @abstractmethod
+    def start_attempt(
+        self,
+        run_id: str,
+        member: dict[str, Any],
+        attempt_id: str,
+        started_at: str,
+        log: str | None,
+        *,
+        prerequisites: Sequence[str] = (),
+    ) -> None:
+        """Claim an attempt of a member of the active run, before its process starts."""
+
+    @abstractmethod
+    def append(self, record: Record) -> None:
+        """Keep the record of an attempt that ended."""
+
+    @abstractmethod
+    def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[Record]]:
+        """The history of each computation that has one: its last `limit` reusable records."""
+
+    def latest_by_computation(self, identities: Sequence[str]) -> dict[str, Record]:
+        """The latest reusable record of each computation that has one."""
+        return {identity: rows[0] for identity, rows in self.recent_by_computation(identities, 1).items()}
+
+    @abstractmethod
+    def by_record_id(self, identities: Sequence[str]) -> dict[str, Record]:
+        """The records that run members reserved, by their record ID."""
+
+    @abstractmethod
+    def manifest(
+        self, run_dir: Path | None = None, run_id: str | None = None, *, legacy: bool = False
+    ) -> dict[str, Any]:
+        """The members of the latest run of a directory or of the run with the given ID.
+
+        With `legacy`, the manifest from before versioned runs if there is one, and otherwise none.
+        """
+
+    @abstractmethod
+    def unpinned(self, run_dir: Path, *, legacy: bool) -> dict[str, Record]:
+        """The latest record of each task of a directory whose manifest pins no records.
+
+        With `legacy`, only the records from before versioned runs count.
+        """
+
+
+class ResultStore(RunHistory):
     """An append-only file of records, written by one scheduler at a time.
 
     Each append writes and syncs a complete record before returning. An interrupted write can leave
     an incomplete last line. Readers skip and count invalid lines, and the next writer closes off
     the tail at a newline before appending.
+
+    The members of each run are files next to it: `manifest.json` (the latest run), `runs/<id>.json`
+    and a line of `runs.jsonl`. An attempt leaves no trace before it ends, so there is nothing to claim.
     """
+
+    supports_graphs = False
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -45,14 +134,14 @@ class ResultStore:
 
     # reading ---------------------------------------------------------------------------------------
 
-    def records(self) -> list[dict[str, Any]]:
+    def records(self) -> list[Record]:
         """Every record in the file, oldest first."""
         self.unreadable_lines = 0
         try:
             handle = self.path.open("rb")
         except FileNotFoundError:
             return []
-        records = []
+        records: list[Record] = []
         with handle:
             for line in handle:
                 try:
@@ -68,18 +157,64 @@ class ResultStore:
                     and isinstance(record.get("task_id"), str)
                     and isinstance(record.get("status"), str)
                 ):
-                    records.append(record)
+                    records.append(cast(Record, record))
                 else:
                     self.unreadable_lines += 1
         return records
 
-    def latest(self) -> dict[str, dict[str, Any]]:
+    def latest(self) -> dict[str, Record]:
         """The most recent record of each task."""
         return {record["task_id"]: record for record in self.records()}
 
     def finished(self, retry: Collection[str] = ()) -> set[str]:
         """Ids of the tasks a run must not compute again: those whose latest status is not in `retry`."""
         return {task_id for task_id, record in self.latest().items() if record["status"] not in retry}
+
+    @property
+    def location(self) -> Path:
+        return self.path.parent
+
+    def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[Record]]:
+        wanted = set(identities)
+        history: dict[str, list[Record]] = {}
+        for record in self.records():
+            identity = record.get("computation_id")
+            if (
+                record.get("schema_version") == RECORD_SCHEMA
+                and isinstance(identity, str)
+                and identity in wanted
+                and all(isinstance(record.get(key), str) for key in ("check_id", "record_id"))
+            ):
+                rows = history.setdefault(identity, [])
+                rows.insert(0, record)
+                del rows[limit:]
+        return history
+
+    def by_record_id(self, identities: Sequence[str]) -> dict[str, Record]:
+        wanted = set(identities)
+        return {
+            record["record_id"]: record
+            for record in self.records()
+            if record.get("schema_version") == RECORD_SCHEMA
+            and isinstance(record.get("record_id"), str)
+            and record["record_id"] in wanted
+        }
+
+    def manifest(
+        self, run_dir: Path | None = None, run_id: str | None = None, *, legacy: bool = False
+    ) -> dict[str, Any]:
+        directory = run_dir or self.path.parent
+        if legacy:
+            latest = _read_manifest(directory, None)
+            return {} if "schema_version" in latest else latest
+        return _read_manifest(directory, run_id)
+
+    def unpinned(self, run_dir: Path, *, legacy: bool) -> dict[str, Record]:
+        return {
+            record["task_id"]: record
+            for record in self.records()
+            if not legacy or "schema_version" not in record
+        }
 
     # writing ---------------------------------------------------------------------------------------
 
@@ -99,7 +234,27 @@ class ResultStore:
             raise
         self._write_failed = False
 
-    def append(self, record: dict[str, Any]) -> None:
+    @contextmanager
+    def run(self, run_dir: Path, manifest: dict[str, Any], metadata: dict[str, Any]) -> Iterator[None]:
+        _write_json(run_dir / "runs" / f"{manifest['run_id']}.json", manifest)
+        _write_json(run_dir / "manifest.json", manifest)
+        with (run_dir / "runs.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(metadata, sort_keys=True) + "\n")
+        yield
+
+    def start_attempt(
+        self,
+        run_id: str,
+        member: dict[str, Any],
+        attempt_id: str,
+        started_at: str,
+        log: str | None,
+        *,
+        prerequisites: Sequence[str] = (),
+    ) -> None:
+        pass
+
+    def append(self, record: Record) -> None:
         if self._fd is None:
             raise RuntimeError("the store is not open for writing")
         if self._write_failed:
@@ -135,3 +290,26 @@ def _write_synced(fd: int, data: bytes) -> None:
             raise OSError(errno.EIO, "writing the result store made no progress")
         remaining = remaining[written:]
     os.fsync(fd)
+
+
+def _write_json(path: Path, content: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".part")
+    temporary.write_text(json.dumps(content, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def _read_manifest(run_dir: Path, run_id: str | None) -> dict[str, Any]:
+    """The latest manifest of a run directory, or the immutable one of a run."""
+    if run_id is None:
+        path = run_dir / "manifest.json"
+        if not path.exists():
+            return {}
+    else:
+        if not re.fullmatch(r"[0-9a-f]{32}", run_id):
+            raise RuntimeError(f"invalid run ID: {run_id!r}")
+        path = run_dir / "runs" / f"{run_id}.json"
+        if not path.exists():
+            raise RuntimeError(f"run {run_id} is not in {run_dir}")
+    manifest: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return manifest

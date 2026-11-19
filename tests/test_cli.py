@@ -14,11 +14,12 @@ import time
 import unittest
 from pathlib import Path
 
-from k3batch.cli import EXIT_FAILED, EXIT_INTERRUPTED, EXIT_LIMITS, EXIT_OK, EXIT_USAGE
+from k3batch.cli import EXIT_FAILED, EXIT_INTERRUPTED, EXIT_LIMITS, EXIT_OK, EXIT_USAGE, exit_status
+from k3batch.model import Status
 from k3batch.runner import REPOSITORY, code_version
 from k3batch.sqlite_store import SQLiteStore
 
-from .helpers import FAKE_RUNNER, Journal
+from .helpers import FAKE_RUNNER, FILE_VERSIONS, Journal, fake_runner
 
 HEADER = """
 name = "cli"
@@ -50,6 +51,26 @@ def still_runs(pid: int) -> bool:
     return stat.rpartition(")")[2].split()[0] != "Z"
 
 
+class ExitStatus(unittest.TestCase):
+    def test_a_failure_outweighs_a_limit_and_a_limit_outweighs_success(self) -> None:
+        for statuses, expected in (
+            ([], EXIT_OK),
+            (["ok", "ok"], EXIT_OK),
+            (["ok", "unsupported"], EXIT_OK),
+            (["ok", "timeout"], EXIT_LIMITS),
+            (["memory", "unsupported"], EXIT_LIMITS),
+            (["ok", "mismatch"], EXIT_FAILED),
+            (["timeout", "error"], EXIT_FAILED),
+            (["memory", "crashed", "ok"], EXIT_FAILED),
+            (["unsupported", "blocked"], EXIT_FAILED),
+            (["ok", "a status of a later version"], EXIT_LIMITS),
+        ):
+            with self.subTest(statuses=statuses):
+                self.assertEqual(exit_status(statuses), expected)
+                self.assertEqual(exit_status(iter(statuses)), expected)
+        self.assertEqual(exit_status(list(Status)), EXIT_FAILED)
+
+
 class CommandLine(unittest.TestCase):
     def setUp(self) -> None:
         scratch = tempfile.TemporaryDirectory()
@@ -57,7 +78,7 @@ class CommandLine(unittest.TestCase):
         self.scratch = Path(scratch.name)
         self.run_dir = self.scratch / "run"
         self.journal = Journal(self.scratch / "journal")
-        self.runner = shlex.join([sys.executable, str(FAKE_RUNNER), "--journal", str(self.journal.path)])
+        self.runner = shlex.join(fake_runner(self.journal.path))
 
     def batch(self, *task_sets: str) -> Path:
         path = self.scratch / "cli.toml"
@@ -140,7 +161,7 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(runs[0]["config"]["scheduler"], {"workers": 2, "memory_budget_mb": 400})
         self.assertEqual(runs[0]["config"]["limits"]["time_seconds"], 7)
         self.assertEqual((runs[0]["tasks"], runs[0]["pending"], runs[1]["pending"]), (2, 2, 0))
-        self.assertEqual(runs[0]["runner"], {"fake_version": "1"})
+        self.assertEqual(runs[0]["runner"], FILE_VERSIONS)
         self.assertEqual(runs[0]["code"], code_version())
         self.assertIn(runs[0]["memory_guard"], ("cgroup", "poll"))
         for record in self.records():
@@ -332,7 +353,7 @@ class CommandLine(unittest.TestCase):
         script = self.scratch / "runner.py"
         original = FAKE_RUNNER.read_text()
         script.write_text(original)
-        self.runner = shlex.join([sys.executable, str(script), "--journal", str(self.journal.path)])
+        self.runner = shlex.join(fake_runner(self.journal.path, script=script))
         batch = self.batch(items('{ name = "a", value = 1 }'))
         first = self.k3batch("run", batch)
         self.assertEqual(first.returncode, EXIT_OK, first.stderr)
@@ -421,8 +442,8 @@ class CommandLine(unittest.TestCase):
             time.sleep(0.02)
 
     def start_long_run(self) -> subprocess.Popen[bytes]:
-        long = items(*(f'{{ name = "long-{i}", sleep = 60 }}' for i in range(3)))
-        quick = items('{ name = "quick", cost = -1 }')
+        long = items(*(f'{{ name = "long-{i}", sleep = 60, cost = 1 }}' for i in range(3)))
+        quick = items('{ name = "quick" }')
         process = subprocess.Popen(
             self.command("run", self.batch(quick, long)), cwd=REPOSITORY, stderr=subprocess.DEVNULL
         )

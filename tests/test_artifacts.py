@@ -14,7 +14,7 @@ from hashlib import sha256
 from pathlib import Path
 from unittest.mock import patch
 
-from k3batch.artifacts import ArtifactError, ArtifactStore, read_artifact_json
+from k3batch.artifacts import ArtifactError, ArtifactStore, model_digest, read_artifact_json
 
 MODEL = {
     "version": 1,
@@ -96,6 +96,44 @@ class ArtifactRegistry(unittest.TestCase):
             self.store.read(presentation_digest)
         with self.assertRaisesRegex(ArtifactError, "failed digest verification"):
             self.store.publish(MODEL, "run")
+
+    def test_outputs_are_published_under_their_declaration_and_read_by_reference(self) -> None:
+        model = self.store.publish(MODEL, "earlier")
+        bound = {
+            "version": 1,
+            "kind": "graded-presentation",
+            "payload": {"model_digest": model, "source": [], "target": [], "matrix": []},
+        }
+        declared = {"surface": "k3-model", "sheaf": "graded-presentation"}
+        references = self.store.publish_outputs({"surface": MODEL, "sheaf": bound}, declared, "attempt")
+        self.assertEqual(references["surface"], {"kind": "k3-model", "digest": model})
+        self.assertEqual(references["sheaf"]["kind"], "graded-presentation")
+        for staged, problem in (
+            ({"surface": MODEL}, "names must match"),
+            ({"surface": MODEL, "sheaf": bound, "extra": MODEL}, "names must match"),
+            ([MODEL, bound], "names must match"),
+            ({"surface": bound, "sheaf": bound}, "output surface must be a k3-model artifact"),
+            ({"surface": MODEL, "sheaf": "text"}, "output sheaf must be a graded-presentation artifact"),
+        ):
+            with self.subTest(problem=problem), self.assertRaisesRegex(ArtifactError, problem):
+                self.store.publish_outputs(staged, declared, "attempt")
+
+        read = self.store.output(references["sheaf"], "sheaf", "graded-presentation")
+        self.assertEqual(read, {"digest": references["sheaf"]["digest"], "data": bound})
+        self.assertEqual((model_digest(read["data"]), model_digest(MODEL)), (model, None))
+        for reference, kind, problem in (
+            (None, "k3-model", "missing k3-model artifact surface"),
+            (references["sheaf"], "k3-model", "missing k3-model artifact surface"),
+            ({"kind": "k3-model"}, "k3-model", "missing digest for artifact surface"),
+            (
+                {"kind": "k3-model", "digest": references["sheaf"]["digest"]},
+                "k3-model",
+                "has kind graded-pres",
+            ),
+            ({"kind": "k3-model", "digest": "0" * 64}, "k3-model", "is not registered"),
+        ):
+            with self.subTest(problem=problem), self.assertRaisesRegex(ArtifactError, problem):
+                self.store.output(reference, "surface", kind)
 
     def test_cli_publishes_and_reads_canonical_bytes(self) -> None:
         directory = self.store.database.parent

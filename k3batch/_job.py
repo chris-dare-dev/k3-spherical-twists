@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 MIB = 1024**2
 PR_SET_PDEATHSIG = 1
@@ -109,7 +109,27 @@ def child_exited(pid: int) -> bool:
     raise RuntimeError("the job watchdog requires Linux")
 
 
-def watch(spec: dict[str, Any], command: list[str]) -> dict[str, Any]:
+class JobSpec(TypedDict):
+    """What the backend tells the watchdog of one job, as the JSON of its first argument."""
+
+    parent: int  # the coordinator; the watchdog stops the job when it is gone
+    started: float  # monotonic clock
+    deadline: float
+    deadline_scope: str  # "job", or "run" when the deadline of the run comes first
+    workspace: str | None  # the scratch directory of the run, removed if the coordinator died
+    memory_bytes: int
+    run_memory_bytes: int
+    cpu_cores: int
+    run_cpu_cores: int
+    run_slice: str | None  # the boundary of the run, stopped if the coordinator died
+    file_bytes: int
+    scratch_bytes: int
+    scratch: str
+    outcome: str  # the file the watchdog writes its result to
+    group: NotRequired[str]  # the cgroup of the job, when the kernel enforces its limits
+
+
+def watch(spec: JobSpec, command: list[str]) -> dict[str, Any]:
     libc = ctypes.CDLL(None, use_errno=True)
     cancelled = False
 
@@ -207,7 +227,7 @@ def watch(spec: dict[str, Any], command: list[str]) -> dict[str, Any]:
 
 
 def main() -> int:
-    spec = json.loads(sys.argv[1])
+    spec: JobSpec = json.loads(sys.argv[1])
     path = Path(spec["outcome"])
     try:
         result = watch(spec, sys.argv[2:])
@@ -226,8 +246,9 @@ def main() -> int:
                     timeout=1,
                     check=False,
                 )
-        if spec.get("workspace"):
-            shutil.rmtree(spec["workspace"], ignore_errors=True)
+        workspace = spec.get("workspace")
+        if workspace:
+            shutil.rmtree(workspace, ignore_errors=True)
         shutil.rmtree(path.parent, ignore_errors=True)
         return 0
     path.write_text(json.dumps(result), encoding="utf-8")

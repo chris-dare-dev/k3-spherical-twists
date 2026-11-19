@@ -113,6 +113,25 @@ class DependencyGraph(SchedulerCase):
         self.assertEqual(fresh["fake/prefix"]["status"], "error")
         self.assertEqual(fresh["fake/second"]["status"], "blocked")
 
+    def test_an_attempt_without_a_run_is_refused_by_the_store(self) -> None:
+        config = fake_config([{"name": "a"}])
+        tasks, versions = expand(self.runner, config.description)
+        run_id = uuid4().hex
+        with SQLiteStore(self.database) as store:
+            unnamed = Scheduler(
+                config=config, tasks=tasks, store=store, run_dir=self.run_dir, runner=self.runner,
+                guard=PollingGuard(), stamp={"runner": versions},
+            )  # fmt: skip
+            plan = unnamed.plan()
+            manifest = {"run_id": run_id, "schema_version": 1, "tasks": [p.manifest_entry() for p in plan]}
+            with (
+                self.assertRaisesRegex(RuntimeError, "attempt must belong to a task in an active run"),
+                store.run(self.run_dir, manifest, {}),
+            ):
+                unnamed.run(plan)
+        self.assertEqual(self.journal.started(), [])
+        self.assertEqual(self.store.manifest(run_id=run_id)["run_state"], "failed")
+
     def test_validate_graph_before_execution(self) -> None:
         config = fake_config([{"name": "a"}, {"name": "b"}])
         tasks, _ = expand(self.runner, config.description)

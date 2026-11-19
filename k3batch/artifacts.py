@@ -13,7 +13,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
-from .wire import _unique_object
+from .wire import unique_object
 
 MODEL = "k3-model"
 COMPLEX = "graded-complex"
@@ -50,10 +50,15 @@ def _describe(data: Any) -> tuple[int, str, str | None]:
 
 
 def read_artifact_json(body: bytes) -> dict[str, Any]:
-    data = json.loads(body.decode("utf-8"), object_pairs_hook=_unique_object)
+    data = json.loads(body.decode("utf-8"), object_pairs_hook=unique_object)
     _describe(data)
     assert isinstance(data, dict)
     return data
+
+
+def model_digest(data: dict[str, Any]) -> str | None:
+    """The model an artifact is bound to; None for a model, which is bound to nothing."""
+    return _describe(data)[2]
 
 
 def _canonical(data: dict[str, Any]) -> bytes:
@@ -161,6 +166,36 @@ class ArtifactStore:
         _, kind, _ = self._read(connection, digest)
         if kind != MODEL:
             raise ArtifactError(f"artifact {digest} is not a K3 model")
+
+    def publish_outputs(
+        self, staged: Any, declared: dict[str, str], producer: str
+    ) -> dict[str, dict[str, str]]:
+        """Publish what a task returned, under the names and kinds declared for it.
+
+        Returns the reference to each artifact that the record of the task keeps.
+        """
+        if not isinstance(staged, dict) or staged.keys() != declared.keys():
+            raise ArtifactError("returned artifact names must match the graph declaration")
+        for name, kind in declared.items():
+            data = staged[name]
+            if not isinstance(data, dict) or data.get("kind") != kind:
+                raise ArtifactError(f"output {name} must be a {kind} artifact")
+        return {
+            name: {"kind": kind, "digest": self.publish(staged[name], producer)}
+            for name, kind in declared.items()
+        }
+
+    def output(self, reference: Any, name: str, kind: str) -> dict[str, Any]:
+        """Read the artifact a record refers to as its output `name`, of the kind its reader declared."""
+        if not isinstance(reference, dict) or reference.get("kind") != kind:
+            raise ArtifactError(f"missing {kind} artifact {name}")
+        digest = reference.get("digest")
+        if not isinstance(digest, str):
+            raise ArtifactError(f"missing digest for artifact {name}")
+        data = read_artifact_json(self.read(digest))
+        if data["kind"] != kind:
+            raise ArtifactError(f"artifact {name} has kind {data['kind']}, expected {kind}")
+        return {"digest": digest, "data": data}
 
     def read(self, digest: str) -> bytes:
         """Verify the registered artifact and its model before returning canonical JSON."""

@@ -16,6 +16,17 @@ from k3batch.scheduler import Scheduler
 from k3batch.store import ResultStore
 
 FAKE_RUNNER = Path(__file__).with_name("fake_runner.py")
+# what the fake runner says of itself, in marker lines and through the file protocol
+MARKER_VERSIONS = {"fake_version": "1"}
+FILE_VERSIONS = MARKER_VERSIONS | {"m2_version": "none", "package": "fake 1", "protocol_version": 2}
+
+
+def fake_runner(
+    journal: Path | None = None, *, markers: bool = False, script: Path = FAKE_RUNNER
+) -> tuple[str, ...]:
+    """The fake runner's command: the file protocol of the bundled runner, or the legacy marker lines."""
+    command = (sys.executable, str(script), *(("--journal", str(journal)) if journal else ()))
+    return command if markers else (*command, "protocol-v2")
 
 
 def fake_config(
@@ -66,13 +77,14 @@ class SchedulerCase(unittest.TestCase):
     """A test case with a run directory, a journal and a fake runner."""
 
     guard_class: type[MemoryGuard] = PollingGuard
+    markers = False  # the file protocol, as the bundled runner speaks it
 
     def setUp(self) -> None:
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         self.run_dir = Path(scratch.name) / "run"
         self.journal = Journal(Path(scratch.name) / "journal")
-        self.runner = (sys.executable, str(FAKE_RUNNER), "--journal", str(self.journal.path))
+        self.runner = fake_runner(self.journal.path, markers=self.markers)
 
     def run_batch(self, config: BatchConfig, **options: Any) -> Counter[str]:
         tasks, versions = expand(self.runner, config.description)

@@ -580,8 +580,9 @@ and validates its surface when it runs. A kind may provide output descriptors wi
 record. The dependency scheduler publishes and resolves artifacts for declared graph nodes.
 
 Custom shell runners use the legacy `expand` and `run` commands with argv JSON
-and marker lines. The bundled M2 entry point also accepts those modes for direct use
-and for compatibility with older drivers.
+and marker lines. A custom runner whose command ends in `protocol-v2` is given the
+request and response files instead, as the bundled one is. The bundled M2 entry point
+also accepts the legacy modes for direct use and for compatibility with older drivers.
 
 ## Tests
 
@@ -593,7 +594,7 @@ make test
 make test-slow
 ```
 
-`make test` runs the fast tests of the package (twelve tests, a few seconds) and the tests of the scheduler (about twenty seconds; they include real Macaulay2 tasks stopped at a time limit and at a memory limit). `make test-slow` runs the three package tests that compute Ext groups and take about a minute together; a test is slow when its first line is `-- slow`. `make test-all` runs both. In Macaulay2, `check "K3Twists"` runs every test of the package.
+`make test` runs the fast tests of the package (every test that is not slow, about twenty seconds; the test runner prints how many) and the tests of the scheduler (about two minutes; they include real Macaulay2 tasks stopped at a time limit and at a memory limit). `make test-slow` runs the slow package tests, which compute Ext groups and take under two minutes together; a test is slow when its first line is `-- slow`. `make test-all` runs both. In Macaulay2, `check "K3Twists"` runs every test of the package.
 
 `make lint` runs `ruff` and `mypy` on the scheduler; neither is needed to run it. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
 

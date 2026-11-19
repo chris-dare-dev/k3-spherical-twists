@@ -7,10 +7,11 @@ from unittest.mock import patch
 
 from k3batch.config import ConfigError
 from k3batch.memory import CgroupGuard
+from k3batch.record import Record
 from k3batch.scheduler import Scheduler
 from k3batch.store import ResultStore
 
-from .helpers import SchedulerCase, fake_config
+from .helpers import FILE_VERSIONS, MARKER_VERSIONS, SchedulerCase, fake_config
 
 SLEEPER = {"name": "sleeper", "sleep": 60}
 HOG = {"name": "hog", "allocate_mb": 400, "sleep": 60}
@@ -27,6 +28,7 @@ class Outcomes(SchedulerCase):
                 {"name": "fails", "exit": 3},
                 {"name": "segfault", "signal": "SIGSEGV"},
                 {"name": "says-nothing", "silent": True},
+                {"name": "garbled", "garbled": True},
             ],
             {"items": [SLEEPER], "limits": {"time_seconds": 0.4}},
             [HOG],
@@ -42,20 +44,26 @@ class Outcomes(SchedulerCase):
                 "no-method": "unsupported",
                 "fails": "error",
                 "segfault": "crashed",
-                "says-nothing": "crashed",
+                # no result is a crash for marker lines; the file protocol knows the response is missing
+                "says-nothing": "crashed" if self.markers else "error",
+                "garbled": "crashed" if self.markers else "error",
                 "sleeper": "timeout",
                 "hog": "memory",
             },
         )
-        self.assertEqual(outcome.total(), 9)
+        self.assertEqual(outcome.total(), 10)
         records = {task_id.removeprefix("fake/"): record for task_id, record in self.latest().items()}
+
+        for name, record in records.items():
+            self.assertLessEqual(set(record), set(Record.__annotations__), name)
 
         fine = records["fine"]
         self.assertEqual((fine["value"], fine["predicted"], fine["agrees"]), (7, 7, True))
         self.assertEqual(fine["task"]["name"], "fine")
-        self.assertEqual(fine["detail"], {"method": "fake"})
+        timing = {} if self.markers else {"setup_seconds": 0, "compute_seconds": 0}
+        self.assertEqual(fine["detail"], {"method": "fake"} | timing)
         self.assertEqual(fine["limits"], {"time_seconds": 20, "memory_mb": 100})
-        self.assertEqual(fine["runner"], {"fake_version": "1"})
+        self.assertEqual(fine["runner"], MARKER_VERSIONS if self.markers else FILE_VERSIONS)
         self.assertEqual(fine["code"], {"commit": "0" * 40, "dirty": False})
         self.assertEqual(fine["memory_guard"], self.guard_class.name)
         self.assertGreater(fine["peak_rss_mb"], 1)
@@ -71,7 +79,12 @@ class Outcomes(SchedulerCase):
         self.assertIn("asked to fail", records["fails"]["error"])
         self.assertEqual(records["fails"]["exit_code"], 3)
         self.assertEqual(records["segfault"]["exit_signal"], "SIGSEGV")
-        self.assertEqual(records["says-nothing"]["error"], "ended without a result")
+        if self.markers:
+            self.assertEqual(records["says-nothing"]["error"], "ended without a result")
+            self.assertEqual(records["garbled"]["error"], "ended without a result")
+        else:
+            self.assertIn("exited successfully without a response", records["says-nothing"]["error"])
+            self.assertIn("invalid response JSON", records["garbled"]["error"])
 
         self.assertEqual(records["sleeper"]["exit_signal"], "SIGKILL")
         self.assertLess(records["sleeper"]["wall_seconds"], 5)
@@ -79,9 +92,9 @@ class Outcomes(SchedulerCase):
         self.assertLess(records["hog"]["wall_seconds"], 20)
         self.assertGreater(records["hog"]["peak_rss_mb"], 50)
 
-        for name in ("fails", "segfault", "says-nothing", "sleeper", "hog"):
+        for name in ("fails", "segfault", "says-nothing", "garbled", "sleeper", "hog"):
             self.assertTrue((self.run_dir / records[name]["log"]).exists(), name)
-        self.assertEqual(len(list((self.run_dir / "logs").iterdir())), 5)
+        self.assertEqual(len(list((self.run_dir / "logs").iterdir())), 6)
 
     def test_a_killed_task_does_not_lose_the_others(self) -> None:
         quick = [{"name": f"quick-{i}", "sleep": 0.05, "value": i, "predicted": i} for i in range(12)]
@@ -212,6 +225,10 @@ class Scheduling(SchedulerCase):
         with self.assertRaises(ConfigError):
             self.run_batch(config)
         self.assertEqual(self.journal.started(), [])
+
+
+class OutcomesOfAMarkerLineRunner(Outcomes):
+    markers = True
 
 
 @unittest.skipUnless(CgroupGuard.available(), "systemd-run --user --scope is not available")

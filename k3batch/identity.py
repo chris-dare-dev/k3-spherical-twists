@@ -7,6 +7,7 @@ import json
 import platform
 import shutil
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -131,7 +132,7 @@ def task_identities(task: Task, implementation: str, graph: dict[str, Any] | Non
     return computation_id, check_id
 
 
-def recheck(task: Task, record: dict[str, Any], check_id: str) -> dict[str, Any]:
+def recheck(task: Task, record: Mapping[str, Any], check_id: str) -> dict[str, Any]:
     """Record a new check against the original observation when its prediction changed."""
     if record["check_id"] == check_id:
         return {}

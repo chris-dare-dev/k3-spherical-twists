@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from ._job import MIB
-from .memory import CgroupGuard, MemoryGuard
+from ._job import MIB, JobSpec
+from .memory import MemoryGuard
 from .model import Limits
 from .scratch import tmpfs_capacity
 
@@ -108,8 +108,7 @@ class LocalBackend:
                 if self.scratch_capacity > self.scratch_budget_mb * MIB:
                     raise ValueError("scratch tmpfs is larger than the requested hard capacity")
                 self._workspace = tempfile.TemporaryDirectory(prefix="k3batch-run-", dir=root)
-            if isinstance(self.guard, CgroupGuard):
-                self.slice_name = self.guard.open_slice(self.run_tag, self.memory_mb, self.cpu_cores)
+            self.slice_name = self.guard.open_run(self.run_tag, self.memory_mb, self.cpu_cores)
             self.check_deadline()
         except BaseException:
             self.__exit__()
@@ -118,7 +117,7 @@ class LocalBackend:
 
     def __exit__(self, *error: object) -> None:
         try:
-            if self.slice_name is not None and isinstance(self.guard, CgroupGuard):
+            if self.slice_name is not None:
                 with contextlib.suppress(OSError, subprocess.TimeoutExpired):
                     self.guard.stop(self.slice_name)
                 self.slice_name = None
@@ -191,7 +190,7 @@ class LocalBackend:
             temporary.cleanup()
             raise
         scratch = Path(scratch_temporary.name) if scratch_temporary is not None else job_directory / "scratch"
-        spec = {
+        spec: JobSpec = {
             "parent": os.getpid(),
             "started": started,
             "deadline": deadline,
@@ -209,15 +208,10 @@ class LocalBackend:
         }
         try:
             scratch.mkdir(exist_ok=scratch_temporary is not None)
-            if isinstance(self.guard, CgroupGuard):
-                if self.slice_name is None:
-                    raise RuntimeError("no cgroup run boundary is active")
-                job_slice = self.guard.open_slice(tag, limits.memory_mb, job_cores)
-                group = self.guard.group_path(job_slice)
-                if group.parent.name != self.slice_name:
-                    raise RuntimeError("the job slice is outside the configured run boundary")
+            job_slice = self.guard.open_job(tag, self.slice_name, limits.memory_mb, job_cores)
+            command, group = self.guard.confine(command, tag, job_slice, self.slice_name, limits.time_seconds)
+            if group is not None:
                 spec["group"] = str(group)
-                command = self.guard.wrap(command, tag, job_slice, limits.time_seconds)
             launch = [sys.executable, str(watchdog), json.dumps(spec), *command]
             with contextlib.ExitStack() as stack:
                 output = stack.enter_context(log.open("xb"))
@@ -235,7 +229,7 @@ class LocalBackend:
         return LocalJob(process, temporary, outcome, scope, job_slice, started, scratch_temporary)
 
     def _release(self, scope: str, job_slice: str | None) -> None:
-        if job_slice is not None and isinstance(self.guard, CgroupGuard):
+        if job_slice is not None:
             with contextlib.suppress(OSError, subprocess.TimeoutExpired):
                 self.guard.stop(job_slice, wait=False)
                 self.guard.release(scope)
@@ -249,13 +243,13 @@ class LocalBackend:
         try:
             if job.outcome.is_file():
                 data: dict[str, Any] = json.loads(job.outcome.read_text(encoding="utf-8"))
-                if "launch_error" in data and isinstance(self.guard, CgroupGuard):
-                    raise RuntimeError(
-                        f"cannot run the job under enforced cgroup limits: {data['launch_error']}"
-                    )
+                problem = self.guard.launch_failure(data["launch_error"]) if "launch_error" in data else None
+                if problem is not None:
+                    raise RuntimeError(problem)
                 return JobResult(int(data["returncode"]), float(data.get("wall_seconds", wall)), data)
-            if isinstance(self.guard, CgroupGuard) and status > 0:
-                raise RuntimeError("systemd could not launch the scoped job; see the job log")
+            problem = self.guard.launch_failure(None) if status > 0 else None
+            if problem is not None:
+                raise RuntimeError(problem)
             # A dead watchdog cannot prove that a cgroup-local limit caused its death.
             return JobResult(status or 125, wall, {})
         finally:
@@ -268,10 +262,9 @@ class LocalBackend:
             job.process.terminate()
             job.process.wait(timeout=2)
         except subprocess.TimeoutExpired:
-            if isinstance(self.guard, CgroupGuard):
+            if job.slice_name is not None:
                 with contextlib.suppress(OSError, subprocess.TimeoutExpired):
-                    if job.slice_name is not None:
-                        self.guard.stop(job.slice_name)
+                    self.guard.stop(job.slice_name)
             job.process.kill()
             job.process.wait()
         finally:

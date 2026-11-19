@@ -9,6 +9,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 from k3batch.execution import JobResult, LocalBackend, LocalJob, RunDeadlineExpired
@@ -210,6 +211,85 @@ class SharedRunBoundaries(unittest.TestCase):
                 LocalBackend(PollingGuard(), 96, 2, scratch_root=root, scratch_budget_mb=1),
             ):
                 self.fail("accepted a mount larger than its configured capacity")
+
+
+class NamedBoundaries(MemoryGuard):
+    """A guard whose boundaries are names: it shows what the backend asks of a guard, without systemd."""
+
+    name = "named"
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[Any, ...]] = []
+
+    def open_run(self, tag: str, memory_mb: int, cpus: int) -> str:
+        self.calls.append(("open_run", memory_mb, cpus))
+        return f"{tag}.slice"
+
+    def open_job(self, tag: str, run: str | None, memory_mb: int, cpus: int) -> str:
+        self.calls.append(("open_job", run, memory_mb, cpus))
+        return f"{tag}.slice"
+
+    def confine(
+        self, command: list[str], tag: str, job: str | None, run: str | None, time_seconds: float
+    ) -> tuple[list[str], Path | None]:
+        self.calls.append(("confine", job, run, time_seconds))
+        return command, None
+
+    def launch_failure(self, error: str | None) -> str:
+        return f"the guard refuses: {error}"
+
+    def stop(self, unit: str, *, wait: bool = True) -> None:
+        self.calls.append(("stop", unit, wait))
+
+    def release(self, unit: str) -> None:
+        self.calls.append(("release", unit))
+
+
+@unittest.skipUnless(sys.platform == "linux", "requires the Linux job watchdog")
+class GuardSeam(unittest.TestCase):
+    def setUp(self) -> None:
+        self.directory = Path(self.enterContext(tempfile.TemporaryDirectory()))
+
+    def finish(self, backend: LocalBackend, command: list[str], limits: Limits) -> LocalJob:
+        job = backend.start(command, limits, self.directory / f"{backend.guard.name}.log")
+        self.addCleanup(job.cleanup)
+        job.process.wait(timeout=10)
+        return job
+
+    def test_the_backend_asks_the_guard_for_every_boundary(self) -> None:
+        guard = NamedBoundaries()
+        with LocalBackend(guard, 128, 2) as backend:
+            run = backend.slice_name
+            self.assertEqual(guard.calls, [("open_run", 128, 2)])
+            self.assertEqual(backend.controls()["mode"], "cgroup-v2")
+            job = self.finish(backend, [sys.executable, "-c", "print('ok')"], Limits(5, 96, 1))
+            result = backend.observe(job)
+            assert result is not None
+            self.assertEqual((result.returncode, result.data["effective"]), (0, None))
+            self.assertEqual(
+                guard.calls[1:],
+                [
+                    ("open_job", run, 96, 1),
+                    ("confine", job.slice_name, run, 5),
+                    ("stop", job.slice_name, False),
+                    ("release", job.scope),
+                ],
+            )
+        self.assertEqual(guard.calls[-1], ("stop", run, True))
+        self.assertIsNone(backend.slice_name)
+
+    def test_the_guard_says_whether_a_failed_launch_is_the_jobs_own(self) -> None:
+        command = [str(self.directory / "no-such-program")]
+        with LocalBackend(PollingGuard(), 128, 2) as backend:
+            self.assertIsNone(backend.slice_name)
+            result = backend.observe(self.finish(backend, command, Limits(5, 96)))
+            assert result is not None
+            self.assertEqual(result.returncode, 125)
+            self.assertIn("no-such-program", result.data["launch_error"])
+        with LocalBackend(NamedBoundaries(), 128, 2) as backend:
+            job = self.finish(backend, command, Limits(5, 96))
+            with self.assertRaisesRegex(RuntimeError, "the guard refuses: .*no-such-program"):
+                backend.observe(job)
 
 
 class GuardSelection(unittest.TestCase):
