@@ -295,6 +295,15 @@ python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinn
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
+Use `export-run` to copy a pinned SQLite run and its registered mathematical
+artifacts to a new directory. The bundle contains the selected manifest and
+records, file digests, and content-addressed artifact files. Chain maps bring
+both complex endpoints and their model with them.
+
+```bash
+python3 -m k3batch export-run results/quartic-sample exported-run --store results/study.sqlite --run RUN_ID
+```
+
 ### Marked quintic threefold
 
 The same object and signed-word API can run on a smooth Fermat quintic over
