@@ -1,6 +1,7 @@
 -- This study checkpoints one evaluation cone and measures its sheaf homology twice.
 
 quarticPrefixActions = {"model", "realize", "cohomology", "ext"}
+quarticPrefixTargets = {"O(1H)", "O_x"}
 quarticPrefixPrediction = H -> (
     checkFields(H, "quartic prediction", {
         ("name", isString), ("version", isString), ("hypotheses", isStringList), ("dimensions", x -> instance(x, List))
@@ -14,6 +15,8 @@ quarticPrefixPrediction = H -> (
 quarticPrefixDefinition = t -> (
     action := t#"action";
     if not member(action, quarticPrefixActions) then error "unknown quartic prefix action";
+    if t#?"target" and (action =!= "realize" or not member(t#"target", quarticPrefixTargets)) then
+        error "quartic realization target must be O(1H) or O_x";
     if member(action, {"cohomology", "ext"}) then (
         if not t#?"prediction" then error "quartic observation requires a prediction";
         quarticPrefixPrediction t#"prediction"
@@ -30,6 +33,8 @@ expandQuarticPrefix = (i, spec, surfaces) -> (
         "id" => "quartic_prefix/" | spec#"action", "kind" => "quartic_prefix", "set" => i,
         "group" => "marked quartic prefix", "cost" => 1, "surface" => first surfaces, "action" => spec#"action"
         };
+    if spec#"action" === "realize" then fields = merge(fields,
+        hashTable {"target" => opt(spec, "target", "O(1H)")}, (a,b) -> b);
     if not spec#?"prediction" then return {fields};
     p := spec#"prediction";
     {merge(fields, hashTable {"prediction" => p, "comparison" => "fields",
@@ -56,7 +61,8 @@ runQuarticPrefix = t -> (
     (seconds, answer) := timed(() -> (
         K := loadK3ModelArtifact(modelInput#"data", modelInput#"digest");
         if action === "realize" then (
-            E := lineBundleObject(K, K#"polarization");
+            targetName := opt(t, "target", "O(1H)");
+            E := catalogueObject(K, targetName);
             W := twistWord {twistStep(sphericalObject structureObject K, 1)};
             R := realizeTwistImage applyWord(W, E);
             if R#"status" =!= "realized" then return (null, null, null,
@@ -92,12 +98,12 @@ registerTaskKind("quartic_prefix", hashTable {
     "version" => 1, "requirements" => {"smooth-marked-quartic", "dependency-graph-v1"},
     "validate_set" => (s -> (
         checkFields(s, "quartic prefix", taskKindField | {("action", isString)},
-            {("prediction", x -> instance(x, HashTable))});
+            {("prediction", x -> instance(x, HashTable)), ("target", isString)});
         quarticPrefixDefinition s
         )),
     "validate_task" => (t -> (
         checkTaskFields(t, {("action", isString), ("surface", x -> instance(x, HashTable))},
-            {("prediction", x -> instance(x, HashTable))});
+            {("prediction", x -> instance(x, HashTable)), ("target", isString)});
         quarticPrefixDefinition t
         )),
     "validate_result" => (r -> if r#"value" =!= null and not instance(r#"value", HashTable) then

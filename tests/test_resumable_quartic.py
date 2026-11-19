@@ -17,12 +17,20 @@ from k3batch.runner import REPOSITORY
 @unittest.skipUnless(sys.platform.startswith("linux") and shutil.which("M2"), "requires M2 on Linux")
 class ResumableQuartic(unittest.TestCase):
     def test_two_observations_reuse_one_realization_after_checkpoint(self) -> None:
+        self.check_checkpoint("resumable-quartic", "O(1H)", 1, [-3, [1, 0], -1], 4)
+
+    def test_point_observations_reuse_the_version_two_cone(self) -> None:
+        self.check_checkpoint("resumable-quartic-point", "O_x", 2, [-1, [0, 0], 0], 1)
+
+    def check_checkpoint(
+        self, batch_name: str, target: str, artifact_version: int, mukai: list, dimension: int
+    ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             ledger = root / "study.sqlite"
             output = root / "run"
             database = ("--store", str(ledger))
-            batch = "batches/resumable-quartic.toml"
+            batch = f"batches/{batch_name}.toml"
             run = ("run", batch, "--out", str(output), "--memory-guard", "poll", *database)
 
             def cli(*args: str, code: int = 0) -> str:
@@ -57,7 +65,8 @@ class ResumableQuartic(unittest.TestCase):
             self.assertEqual(set(records), {"model", "realize", "cohomology", "ext"})
             durable = records["realize"]
             self.assertEqual(first["realize"]["attempt_id"], durable["attempt_id"])
-            self.assertEqual(durable["value"], {"class": [-3, [1, 0], -1], "shift": 1})
+            self.assertEqual(durable["task"]["target"], target)
+            self.assertEqual(durable["value"], {"class": mukai, "shift": 1})
             self.assertIn("RHom concentrated in degree zero", durable["detail"]["evidence"]["hypotheses"])
             model = first["model"]["detail"]["artifact_outputs"]["model"]["digest"]
             cone = durable["detail"]["artifact_outputs"]["cone"]["digest"]
@@ -65,10 +74,12 @@ class ResumableQuartic(unittest.TestCase):
             self.assertEqual(
                 json.loads(store.read(model))["payload"]["parameters"]["family"], "quartic_with_line"
             )
-            self.assertEqual(json.loads(store.read(cone))["payload"]["model_digest"], model)
+            artifact = json.loads(store.read(cone))
+            self.assertEqual(artifact["version"], artifact_version)
+            self.assertEqual(artifact["payload"]["model_digest"], model)
             for name, table, support in (
-                ("cohomology", [[-1, 0], [0, 0], [1, 4]], [-1, 1]),
-                ("ext", [[1, 4], [2, 0], [3, 0]], [1, 3]),
+                ("cohomology", [[-1, 0], [0, 0], [1, dimension]], [-1, 1]),
+                ("ext", [[1, dimension], [2, 0], [3, 0]], [1, 3]),
             ):
                 record = records[name]
                 self.assertEqual(record["status"], "ok")
@@ -80,6 +91,7 @@ class ResumableQuartic(unittest.TestCase):
                 self.assertEqual(record["resource_controls"]["mode"], "sampled")
                 source = record["detail"]["artifact_inputs"]
                 self.assertEqual(source["surface"]["digest"], model)
+                self.assertEqual(source["surface"]["attempt_id"], first["model"]["attempt_id"])
                 self.assertEqual(source["prefix"]["digest"], cone)
                 self.assertEqual(source["prefix"]["attempt_id"], durable["attempt_id"])
             args = ("report", str(output), *database, "--run", second_id, "--full")
@@ -94,7 +106,9 @@ class ResumableQuartic(unittest.TestCase):
             revised = root / "revised.toml"
             original = (REPOSITORY / batch).read_text(encoding="utf-8")
             revised.write_text(
-                original.replace('version = "1"', 'version = "2"', 1).replace("[1, 4]]", "[1, 5]]", 1),
+                original.replace('version = "1"', 'version = "2"', 1).replace(
+                    f"[1, {dimension}]]", f"[1, {dimension + 1}]]", 1
+                ),
                 encoding="utf-8",
             )
             revision = cli(run[0], str(revised), *run[2:], code=1)

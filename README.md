@@ -466,6 +466,12 @@ in degrees 1 through 3.
 Use `batches/marked-quartics.toml` for cohomology and self-Ext of the marked
 line and conic as curves on their respective quartics.
 
+Use `batches/resumable-quartic-point.toml` with the same checkpoint and report
+commands and a fresh ledger to study the marked point. Its realization selects
+`target = "O_x"` and publishes a version 2 cone because the point sheaf has a
+presented module term. The cohomology of `I_x[1]` is `(0,0,1)` in degrees −1
+through 1, and Ext to `O` is `(1,0,0)` in degrees 1 through 3.
+
 ### Resource history and bounded retries
 
 Add a `[resources]` table to opt in to history-based admission. The usual
