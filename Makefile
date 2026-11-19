@@ -49,10 +49,10 @@ format:
 	ruff format $(CHECKED)
 
 plan:
-	$(K3BATCH) plan $(BATCH) $(RUNNER) $(ARGS)
+	$(K3BATCH) plan $(BATCH) $(RUNNER) $(STORE) $(ARGS)
 
 run:
-	$(K3BATCH) run $(BATCH) $(RUNNER) $(ARGS)
+	$(K3BATCH) run $(BATCH) $(RUNNER) $(STORE) $(ARGS)
 
 report:
 	$(K3BATCH) report $(RUN_DIR) $(REPORT_ARGS)
