@@ -495,6 +495,13 @@ saved maps against that same cone. The pinned report gives both workers' input
 digests and source attempt, the degree-three hypercohomology, and the verified
 sheaf quasi-isomorphism with `O(-H)`.
 
+Use `batches/resumable-quartic-second-forward.toml` to run a third consumer of
+that saved forward prefix. It computes the second forward twist from the
+reloaded evaluation triangle and publishes the second cone, evaluation, and
+source augmentation. The pinned report records one shared forward attempt,
+the restored Mukai class, and sheaf homology `O(-H)`, `O^4`, and `O^4` in
+cohomological degrees 0, 1, and 2.
+
 ### Resource history and bounded retries
 
 Add a `[resources]` table to opt in to history-based admission. The usual

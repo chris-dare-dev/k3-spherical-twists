@@ -50,7 +50,17 @@ class ResumableQuartic(unittest.TestCase):
             1,
             {"class": [-3, [-1, 0], -1], "shift": 0},
             {"hypercohomology": [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]},
-            inverse=True,
+            continuations=("inverse",),
+        )
+
+    def test_second_forward_shares_the_prefix_and_checkpoints_its_evaluation(self) -> None:
+        self.check_checkpoint(
+            "resumable-quartic-second-forward",
+            "O(-1H)",
+            1,
+            {"class": [-3, [-1, 0], -1], "shift": 0},
+            {"hypercohomology": [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]},
+            continuations=("inverse", "second_forward"),
         )
 
     def check_checkpoint(
@@ -61,7 +71,7 @@ class ResumableQuartic(unittest.TestCase):
         realization: dict,
         tables: dict[str, list[list[int]]],
         *,
-        inverse: bool = False,
+        continuations: tuple[str, ...] = (),
     ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -97,13 +107,10 @@ class ResumableQuartic(unittest.TestCase):
             first = selected(first_id)
             self.assertEqual(set(first), {"model", "realize"})
             second_output = cli(*run)
-            self.assertIn(f"{len(tables) + inverse} to compute, 2 already recorded", second_output)
+            self.assertIn(f"{len(tables) + len(continuations)} to compute, 2 already recorded", second_output)
             second_id = run_id(second_output)
             records = selected(second_id)
-            expected = {"model", "realize", *tables}
-            if inverse:
-                expected.add("inverse")
-            self.assertEqual(set(records), expected)
+            self.assertEqual(set(records), {"model", "realize", *tables, *continuations})
             durable = records["realize"]
             self.assertEqual(first["realize"]["attempt_id"], durable["attempt_id"])
             self.assertEqual(durable["task"]["target"], target)
@@ -140,8 +147,12 @@ class ResumableQuartic(unittest.TestCase):
                 self.assertEqual(source["surface"]["attempt_id"], first["model"]["attempt_id"])
                 self.assertEqual(source["prefix"]["digest"], cone)
                 self.assertEqual(source["prefix"]["attempt_id"], durable["attempt_id"])
-            if inverse:
-                self.check_inverse(records["inverse"], durable, store, model, cone)
+            for action in continuations:
+                self.check_continuation_inputs(records[action], durable, store, model, cone)
+            if "inverse" in continuations:
+                self.check_inverse(records["inverse"])
+            if "second_forward" in continuations:
+                self.check_second_forward(records["second_forward"], store, model, cone)
             args = ("report", str(output), *database, "--run", second_id, "--full")
             report = cli(*args)
             self.assertIn(cone, report)
@@ -150,11 +161,24 @@ class ResumableQuartic(unittest.TestCase):
             self.assertIn(hypothesis, report)
             if "hypercohomology" in tables:
                 self.assertIn("degree-zero Koszul total complex", report)
-            if inverse:
+            for action in (*tables, *continuations):
+                self.assertIn(
+                    f"| `quartic_prefix/{action}` | inputs | prefix | {cone} | quartic_prefix/realize"
+                    f" | {durable['attempt_id']} |",
+                    report,
+                )
+            if "inverse" in continuations:
                 self.assertIn("nonzero_dimensions ((3, 4))", report)
                 self.assertIn("sheaf quasi-isomorphism with O(-H)", report)
                 for name in ("evaluation", "augmentation"):
                     self.assertIn(durable["detail"]["artifact_outputs"][name]["digest"], report)
+            if "second_forward" in continuations:
+                self.assertIn("sheaf_homology ((0, O(-H)), (1, O^4), (2, O^4))", report)
+                self.assertIn("class (1, (-1, 0), 3)", report)
+                for name in ("cone", "evaluation"):
+                    self.assertIn(
+                        records["second_forward"]["detail"]["artifact_outputs"][name]["digest"], report
+                    )
             cli(*run)
             self.assertEqual(cli(*args), report)
 
@@ -176,7 +200,7 @@ class ResumableQuartic(unittest.TestCase):
             self.assertEqual(invalid["status"], "mismatch")
             self.assertEqual(cli(*args), report)
 
-    def check_inverse(self, record: dict, forward: dict, store: ArtifactStore, model: str, cone: str) -> None:
+    def check_inverse(self, record: dict) -> None:
         self.assertEqual(record["status"], "ok")
         self.assertTrue(record["agrees"])
         self.assertEqual(
@@ -185,6 +209,10 @@ class ResumableQuartic(unittest.TestCase):
         )
         self.assertEqual(record["detail"]["method"], "quartic-degree-two-inverse-cancellation")
         self.assertEqual(record["detail"]["evidence"]["directions"], [1, -1])
+
+    def check_continuation_inputs(
+        self, record: dict, forward: dict, store: ArtifactStore, model: str, cone: str
+    ) -> None:
         inputs = record["detail"]["artifact_inputs"]
         outputs = forward["detail"]["artifact_outputs"]
         self.assertEqual(inputs["surface"]["digest"], model)
@@ -193,9 +221,57 @@ class ResumableQuartic(unittest.TestCase):
         for name in inputs.keys() - {"surface"}:
             self.assertEqual(inputs[name]["attempt_id"], forward["attempt_id"])
             self.assertEqual(inputs[name]["digest"], outputs["cone" if name == "prefix" else name]["digest"])
+        self.check_evaluation_bindings(inputs, store, model)
+
+    def check_evaluation_bindings(self, bindings: dict, store: ArtifactStore, model: str) -> None:
         for name, target in (("evaluation", "evaluation_target"), ("augmentation", "augmentation_target")):
-            artifact = json.loads(store.read(inputs[name]["digest"]))
+            artifact = json.loads(store.read(bindings[name]["digest"]))
             self.assertEqual(artifact["kind"], "graded-chain-map")
-            self.assertEqual(artifact["payload"]["source_digest"], inputs["evaluation_source"]["digest"])
-            self.assertEqual(artifact["payload"]["target_digest"], inputs[target]["digest"])
+            self.assertEqual(artifact["payload"]["source_digest"], bindings["evaluation_source"]["digest"])
+            self.assertEqual(artifact["payload"]["target_digest"], bindings[target]["digest"])
             self.assertEqual(artifact["payload"]["model_digest"], model)
+
+    def check_second_forward(self, record: dict, store: ArtifactStore, model: str, prefix: str) -> None:
+        self.assertEqual(record["status"], "ok")
+        self.assertTrue(record["agrees"])
+        self.assertEqual(
+            record["value"],
+            {
+                "class": [1, [-1, 0], 3],
+                "derived_hom_degrees": [[3, 4]],
+                "sheaf_homology": [[0, "O(-H)"], [1, "O^4"], [2, "O^4"]],
+            },
+        )
+        detail = record["detail"]
+        self.assertEqual(detail["method"], "quartic-degree-three-evaluation")
+        self.assertEqual(detail["evidence"]["directions"], [1, 1])
+        self.assertEqual(detail["evidence"]["evaluation_class_rank"], 4)
+        outputs = detail["artifact_outputs"]
+        self.assertEqual(outputs["evaluation_target"]["digest"], prefix)
+        self.check_evaluation_bindings(outputs, store, model)
+        cone = outputs["cone"]["digest"]
+        self.assertNotEqual(cone, prefix)
+        self.assertEqual(json.loads(store.read(cone))["payload"]["model_digest"], model)
+
+        # Verify the actual second evaluation and its cone in another Macaulay2 process.
+        domain, evaluation = (outputs[name]["digest"] for name in ("evaluation_source", "evaluation"))
+        script = store.database.parent / "reload-second.m2"
+        script.write_text(
+            f"""
+            path = prepend("./", path);
+            needsPackage "K3Twists"; needsPackage "JSON"; needsPackage "Complexes";
+            objects = {json.dumps(str(store.objects) + "/")};
+            readData = digest -> fromJSON get(objects | digest | ".json");
+            K = loadK3ModelArtifact(readData "{model}", "{model}");
+            D = loadGradedComplex(K, readData "{domain}");
+            C = loadGradedComplex(K, readData "{prefix}");
+            u = loadGradedChainMap(K, readData "{evaluation}", (D, "{domain}"), (C, "{prefix}"));
+            assert(isComplexMorphism u);
+            assert(gradedComplexArtifact(K, cone u, "{model}") === readData "{cone}");
+            """,
+            encoding="utf-8",
+        )
+        completed = subprocess.run(
+            ["M2", "--script", str(script)], cwd=REPOSITORY, capture_output=True, text=True, timeout=40
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)

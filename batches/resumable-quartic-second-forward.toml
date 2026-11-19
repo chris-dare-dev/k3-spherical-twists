@@ -1,0 +1,97 @@
+name = "resumable-quartic-second-forward"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1800
+
+[limits]
+time_seconds = 100
+memory_mb = 800
+
+[[surfaces]]
+family = "quartic_with_line"
+seed = 1
+characteristic = 32003
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "model"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "realize"
+target = "O(-1H)"
+checkpoint_maps = true
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "hypercohomology"
+[tasks.prediction]
+name = "degree-two twist hypercohomology"
+version = "1"
+hypotheses = ["smooth quartic", "degree-two evaluation induces an isomorphism on H^2"]
+dimensions = [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "inverse"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "second_forward"
+
+[graph]
+version = 1
+
+[[graph.nodes]]
+id = "quartic_prefix/model"
+outputs = { model = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/realize"
+[graph.nodes.outputs]
+cone = "graded-complex"
+evaluation = "graded-chain-map"
+augmentation = "graded-chain-map"
+evaluation_source = "graded-complex"
+evaluation_target = "graded-complex"
+augmentation_target = "graded-complex"
+
+[graph.nodes.inputs]
+surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/hypercohomology"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+
+[[graph.nodes]]
+id = "quartic_prefix/inverse"
+
+[graph.nodes.inputs]
+surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+evaluation = { producer = "quartic_prefix/realize", output = "evaluation", kind = "graded-chain-map", model_input = "surface" }
+augmentation = { producer = "quartic_prefix/realize", output = "augmentation", kind = "graded-chain-map", model_input = "surface" }
+evaluation_source = { producer = "quartic_prefix/realize", output = "evaluation_source", kind = "graded-complex", model_input = "surface" }
+evaluation_target = { producer = "quartic_prefix/realize", output = "evaluation_target", kind = "graded-complex", model_input = "surface" }
+augmentation_target = { producer = "quartic_prefix/realize", output = "augmentation_target", kind = "graded-complex", model_input = "surface" }
+
+[[graph.nodes]]
+id = "quartic_prefix/second_forward"
+[graph.nodes.outputs]
+cone = "graded-complex"
+evaluation = "graded-chain-map"
+augmentation = "graded-chain-map"
+evaluation_source = "graded-complex"
+evaluation_target = "graded-complex"
+augmentation_target = "graded-complex"
+
+[graph.nodes.inputs]
+surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+evaluation = { producer = "quartic_prefix/realize", output = "evaluation", kind = "graded-chain-map", model_input = "surface" }
+augmentation = { producer = "quartic_prefix/realize", output = "augmentation", kind = "graded-chain-map", model_input = "surface" }
+evaluation_source = { producer = "quartic_prefix/realize", output = "evaluation_source", kind = "graded-complex", model_input = "surface" }
+evaluation_target = { producer = "quartic_prefix/realize", output = "evaluation_target", kind = "graded-complex", model_input = "surface" }
+augmentation_target = { producer = "quartic_prefix/realize", output = "augmentation_target", kind = "graded-complex", model_input = "surface" }
