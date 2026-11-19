@@ -26,6 +26,13 @@ doc ///
             and zero. The forward twist sends the quotient representative back to the
             structure sheaf by the dual coordinate sequence.
 
+            The forward twist about O also supports O(-H). Its derived Hom is
+            four-dimensional in degree two. A finite resolution of an ideal cutting out
+            the vertex of the affine cone supplies the evaluation classes Serre dual
+            to the four coordinate sections. The result records the evaluation chain map
+            and pairing matrix. Its degree-zero and degree-one sheaf homology are
+            O(-H) and four copies of O, respectively.
+
             For a certified spherical line bundle O or O(H), the degree-zero identity in its
             self-evaluation splits off. The degree-two Serre trace then gives the surviving
             shift by minus one for a forward twist and plus one for an inverse twist.

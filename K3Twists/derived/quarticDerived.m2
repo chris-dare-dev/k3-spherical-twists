@@ -9,6 +9,7 @@ lineCoordinates = E -> (
     H := K#"polarization"#"coordinates";
     if D#"name" === "O" then return apply(H, i -> 0);
     if D#"name" === "O(1H)" then return H;
+    if D#"name" === "O(-1H)" then return apply(H, h -> -h);
     null
     )
 
@@ -74,6 +75,86 @@ quarticQuotientEvaluation = (E, shift) -> (
             "kernelInclusion" => inclusion, "relativeShift" => 1, "derivedHomDegrees" => {{0,4}}})
     )
 
+-- Three squared projection parameters give a short Koszul resolution when the
+-- affine grid contains a point off the quartic. The four squares also cut out
+-- only the vertex of the affine cone, including over the small prime fields.
+quarticEvaluationIdeal = K -> (
+    R := K#"ring";
+    f := first K#"equations";
+    coordinates := gens ring f;
+    scalars := toList(0..min(4, char R - 1));
+    grid := flatten flatten apply(scalars, a -> apply(scalars, b -> apply(scalars, c -> {1,a,b,c})));
+    centers := select(1, grid, p -> sub(f, apply(coordinates, p, (x,t) -> x => t)) != 0);
+    x := gens R;
+    if #centers == 0 then return ideal apply(x, t -> t^2);
+    p := first centers;
+    ideal apply(1..3, i -> (x#i - p#i*x#0)^2)
+    )
+
+quarticHigherEvaluation = (E, input, shift) -> (
+    K := E#"surface";
+    R := K#"ring";
+    kk := K#"field";
+    O := structureObject K;
+    ext := extObservation(O, input);
+    dimensions := apply(3, i -> {i, observedDimension(ext, i)});
+    if dimensions =!= {{0,0},{1,0},{2,4}} then error "expected Ext concentrated in degree two";
+
+    -- For this quartic the graded canonical module is R. Graded local duality
+    -- identifies Ext^2(J,R) with the graded dual of R/J for this vertex ideal J.
+    -- The map to H^2(O_X(*)) is dual to R -> R/J, an isomorphism in degrees 0 and 1.
+    J := module quarticEvaluationIdeal K;
+    aug := resolutionMap(complex J, LengthLimit => 3);
+    F := source aug;
+    next := Hom(F.dd_3, R^1);
+    classes := kernel next / image Hom(F.dd_2, R^1);
+    frame := basis(-1, classes);
+    trace := basis(0, classes);
+    if numColumns frame != 4 or numColumns trace != 1 then error "unexpected graded Ext basis dimensions";
+
+    -- Multiplication by x_i gives the cup product with its coordinate section.
+    -- Use the chosen nonzero class of H^2(O) as the trace generator.
+    serrePairing := columns -> matrix(kk, apply(gens R, x -> (
+        row := (x * columns) // trace;
+        if trace * row != x * columns then error "could not express the cup product in the trace basis";
+        first entries sub(row, kk)
+        )));
+    pairing := serrePairing frame;
+    if rank pairing != 4 then error "the coordinate sections do not give a perfect pairing";
+    dualFrame := frame * map(source frame, source frame, sub(pairing^(-1), R));
+    pairing = serrePairing dualFrame;
+    if pairing != id_(kk^4) then error "the evaluation classes are not Serre dual to the coordinates";
+
+    lifts := map(source next, source dualFrame, ambient dualFrame);
+    evaluations := apply(4, i -> homomorphism(lifts_i));
+    truncated := complex(canonicalTruncation(F, 0, 2), Base => -2);
+    D := directSum toList(4 : truncated);
+    L := R^{-1};
+    f := map(L, D_0, fold((a,b) -> a | b, evaluations));
+    if not isHomogeneous f or not isWellDefined f then
+        error "degree-two evaluation must preserve the grading and descend to the finite model";
+    u := map(complex L, D, hashTable {0 => f}, Degree => 0);
+    C := cone u;
+
+    oneAugmentation := map(complex(R^1, Base => -2), truncated,
+        hashTable {-2 => inducedMap(R^1, J) * aug_0}, Degree => 0);
+    if not isIsomorphism sheaf homology(-2, oneAugmentation)
+        or not all({-1,0}, i -> HH_i truncated == 0) then
+        error "the finite model does not resolve O in degree two";
+    augmentation := directSum toList(4 : oneAugmentation);
+
+    -- The cone triangle gives O(-H) in degree zero and O^4 in degree one.
+    v := mukaiClass input;
+    coneClass := mukaiClass(v#"rank" - 4, v#"divisor", v#"eulerComponent" - 4);
+    representative := objectReference(K, "T_O(O(-H))", coneClass);
+    realizedDerived(E, shiftObject(representative, shift), C[-shift],
+        "quartic-degree-two-evaluation", {"smooth quartic K3", "certified O generator",
+            "graded local duality at the irrelevant ideal", "Serre-dual coordinate evaluation"},
+        hashTable {"direction" => 1, "shift" => shift, "chainMap" => u, "evaluation" => f,
+            "derivedHomDegrees" => {{2,4}}, "extDimensions" => dimensions, "serrePairing" => pairing,
+            "sourceAugmentation" => augmentation, "traceCocycle" => homomorphism map(source next, source trace, ambient trace)})
+    )
+
 -- Split the identity summand in the derived category. This comparison is independent of a lift
 -- of the degree-two class. The surviving one-term complex represents the actual cone.
 quarticSelfEvaluation = E -> (
@@ -110,9 +191,15 @@ realizeQuarticDerived = E -> (
     signedStep := E#"step";
     K := E#"surface";
     H := K#"polarization"#"coordinates";
-    if not certifiedStep signedStep or lineCoordinates stepObject signedStep =!= H then return null;
+    if not certifiedStep signedStep then return null;
+    generator := lineCoordinates stepObject signedStep;
     (input, shift) := unshiftReference E#"start";
-    if signedStep#"direction" == -1 and lineCoordinates input === apply(H, i -> 0) then
+    D := lineCoordinates input;
+    zero := apply(H, i -> 0);
+    if signedStep#"direction" == 1 and generator === zero and D === apply(H, h -> -h) then
+        return quarticHigherEvaluation(E, input, shift);
+    if generator =!= H then return null;
+    if signedStep#"direction" == -1 and D === zero then
         return quarticCoevaluation(E, input, shift);
     if signedStep#"direction" == 1 and input === hyperplaneQuotientReference K then
         return quarticQuotientEvaluation(E, shift);
