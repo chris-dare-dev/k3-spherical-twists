@@ -75,22 +75,6 @@ quarticQuotientEvaluation = (E, shift) -> (
             "kernelInclusion" => inclusion, "relativeShift" => 1, "derivedHomDegrees" => {{0,4}}})
     )
 
--- Three squared projection parameters give a short Koszul resolution when the
--- affine grid contains a point off the quartic. The four squares also cut out
--- only the vertex of the affine cone, including over the small prime fields.
-quarticEvaluationIdeal = K -> (
-    R := K#"ring";
-    f := first K#"equations";
-    coordinates := gens ring f;
-    scalars := toList(0..min(4, char R - 1));
-    grid := flatten flatten apply(scalars, a -> apply(scalars, b -> apply(scalars, c -> {1,a,b,c})));
-    centers := select(1, grid, p -> sub(f, apply(coordinates, p, (x,t) -> x => t)) != 0);
-    x := gens R;
-    if #centers == 0 then return ideal apply(x, t -> t^2);
-    p := first centers;
-    ideal apply(1..3, i -> (x#i - p#i*x#0)^2)
-    )
-
 quarticHigherEvaluation = (E, input, shift) -> (
     K := E#"surface";
     R := K#"ring";
@@ -103,7 +87,7 @@ quarticHigherEvaluation = (E, input, shift) -> (
     -- For this quartic the graded canonical module is R. Graded local duality
     -- identifies Ext^2(J,R) with the graded dual of R/J for this vertex ideal J.
     -- The map to H^2(O_X(*)) is dual to R -> R/J, an isomorphism in degrees 0 and 1.
-    J := module quarticEvaluationIdeal K;
+    J := module ideal apply(quarticCoverForms K, x -> x^2);
     aug := resolutionMap(complex J, LengthLimit => 3);
     F := source aug;
     next := Hom(F.dd_3, R^1);

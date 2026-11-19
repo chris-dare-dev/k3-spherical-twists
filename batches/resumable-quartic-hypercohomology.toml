@@ -1,0 +1,49 @@
+name = "resumable-quartic-hypercohomology"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1800
+
+[limits]
+time_seconds = 100
+memory_mb = 800
+
+[[surfaces]]
+family = "quartic_with_line"
+seed = 1
+characteristic = 32003
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "model"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "realize"
+target = "O(-1H)"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "hypercohomology"
+[tasks.prediction]
+name = "degree-two twist hypercohomology"
+version = "1"
+hypotheses = ["smooth quartic", "degree-two evaluation induces an isomorphism on H^2"]
+dimensions = [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]
+
+[graph]
+version = 1
+
+[[graph.nodes]]
+id = "quartic_prefix/model"
+outputs = { model = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/realize"
+outputs = { cone = "graded-complex" }
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/hypercohomology"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }

@@ -17,13 +17,39 @@ from k3batch.runner import REPOSITORY
 @unittest.skipUnless(sys.platform.startswith("linux") and shutil.which("M2"), "requires M2 on Linux")
 class ResumableQuartic(unittest.TestCase):
     def test_two_observations_reuse_one_realization_after_checkpoint(self) -> None:
-        self.check_checkpoint("resumable-quartic", "O(1H)", 1, [-3, [1, 0], -1], 4)
+        self.check_checkpoint(
+            "resumable-quartic",
+            "O(1H)",
+            1,
+            {"class": [-3, [1, 0], -1], "shift": 1},
+            {"cohomology": [[-1, 0], [0, 0], [1, 4]], "ext": [[1, 4], [2, 0], [3, 0]]},
+        )
 
     def test_point_observations_reuse_the_version_two_cone(self) -> None:
-        self.check_checkpoint("resumable-quartic-point", "O_x", 2, [-1, [0, 0], 0], 1)
+        self.check_checkpoint(
+            "resumable-quartic-point",
+            "O_x",
+            2,
+            {"class": [-1, [0, 0], 0], "shift": 1},
+            {"cohomology": [[-1, 0], [0, 0], [1, 1]], "ext": [[1, 1], [2, 0], [3, 0]]},
+        )
+
+    def test_hypercohomology_uses_the_reloaded_degree_two_cone(self) -> None:
+        self.check_checkpoint(
+            "resumable-quartic-hypercohomology",
+            "O(-1H)",
+            1,
+            {"class": [-3, [-1, 0], -1], "shift": 0},
+            {"hypercohomology": [[-1, 0], [0, 0], [1, 0], [2, 0], [3, 4]]},
+        )
 
     def check_checkpoint(
-        self, batch_name: str, target: str, artifact_version: int, mukai: list, dimension: int
+        self,
+        batch_name: str,
+        target: str,
+        artifact_version: int,
+        realization: dict,
+        tables: dict[str, list[list[int]]],
     ) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -59,15 +85,20 @@ class ResumableQuartic(unittest.TestCase):
             first = selected(first_id)
             self.assertEqual(set(first), {"model", "realize"})
             second_output = cli(*run)
-            self.assertIn("2 to compute, 2 already recorded", second_output)
+            self.assertIn(f"{len(tables)} to compute, 2 already recorded", second_output)
             second_id = run_id(second_output)
             records = selected(second_id)
-            self.assertEqual(set(records), {"model", "realize", "cohomology", "ext"})
+            self.assertEqual(set(records), {"model", "realize", *tables})
             durable = records["realize"]
             self.assertEqual(first["realize"]["attempt_id"], durable["attempt_id"])
             self.assertEqual(durable["task"]["target"], target)
-            self.assertEqual(durable["value"], {"class": mukai, "shift": 1})
-            self.assertIn("RHom concentrated in degree zero", durable["detail"]["evidence"]["hypotheses"])
+            self.assertEqual(durable["value"], realization)
+            hypothesis = (
+                "Serre-dual coordinate evaluation"
+                if target == "O(-1H)"
+                else "RHom concentrated in degree zero"
+            )
+            self.assertIn(hypothesis, durable["detail"]["evidence"]["hypotheses"])
             model = first["model"]["detail"]["artifact_outputs"]["model"]["digest"]
             cone = durable["detail"]["artifact_outputs"]["cone"]["digest"]
             store = ArtifactStore(root / "study.sqlite.artifacts")
@@ -77,17 +108,17 @@ class ResumableQuartic(unittest.TestCase):
             artifact = json.loads(store.read(cone))
             self.assertEqual(artifact["version"], artifact_version)
             self.assertEqual(artifact["payload"]["model_digest"], model)
-            for name, table, support in (
-                ("cohomology", [[-1, 0], [0, 0], [1, dimension]], [-1, 1]),
-                ("ext", [[1, dimension], [2, 0], [3, 0]], [1, 3]),
-            ):
+            for name, table in tables.items():
                 record = records[name]
                 self.assertEqual(record["status"], "ok")
                 self.assertTrue(record["agrees"])
                 self.assertEqual(record["value"]["dimensions"], table)
                 self.assertEqual(record["task"]["prediction"]["version"], "1")
-                self.assertEqual(record["detail"]["evidence"]["support"], support)
-                self.assertEqual(record["detail"]["evidence"]["shift"], 1)
+                evidence = record["detail"]["evidence"]
+                self.assertEqual(evidence["support"], [table[0][0], table[-1][0]])
+                self.assertEqual(evidence["convention"], "cohomological")
+                if name != "hypercohomology":
+                    self.assertEqual(evidence["shift"], 1)
                 self.assertEqual(record["resource_controls"]["mode"], "sampled")
                 source = record["detail"]["artifact_inputs"]
                 self.assertEqual(source["surface"]["digest"], model)
@@ -99,22 +130,26 @@ class ResumableQuartic(unittest.TestCase):
             self.assertIn(cone, report)
             self.assertIn(durable["attempt_id"], report)
             self.assertIn("sampled", report)
-            self.assertIn("RHom concentrated in degree zero", report)
+            self.assertIn(hypothesis, report)
+            if "hypercohomology" in tables:
+                self.assertIn("degree-zero Koszul total complex", report)
             cli(*run)
             self.assertEqual(cli(*args), report)
 
             revised = root / "revised.toml"
             original = (REPOSITORY / batch).read_text(encoding="utf-8")
+            observation, table = next(iter(tables.items()))
+            degree, dimension = next((d, n) for d, n in table if n)
             revised.write_text(
                 original.replace('version = "1"', 'version = "2"', 1).replace(
-                    f"[1, {dimension}]]", f"[1, {dimension + 1}]]", 1
+                    f"[{degree}, {dimension}]]", f"[{degree}, {dimension + 1}]]", 1
                 ),
                 encoding="utf-8",
             )
             revision = cli(run[0], str(revised), *run[2:], code=1)
-            self.assertIn("0 to compute, 4 already recorded", revision)
-            invalid = selected(run_id(revision))["cohomology"]
-            self.assertEqual(invalid["record_id"], records["cohomology"]["record_id"])
-            self.assertNotEqual(invalid["check_id"], records["cohomology"]["check_id"])
+            self.assertIn(f"0 to compute, {len(records)} already recorded", revision)
+            invalid = selected(run_id(revision))[observation]
+            self.assertEqual(invalid["record_id"], records[observation]["record_id"])
+            self.assertNotEqual(invalid["check_id"], records[observation]["check_id"])
             self.assertEqual(invalid["status"], "mismatch")
             self.assertEqual(cli(*args), report)

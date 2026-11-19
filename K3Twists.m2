@@ -79,6 +79,7 @@ export {
     "ObservationPrediction",
     "ObservationCheck",
     "cohomologyObservation",
+    "hypercohomologyObservation",
     "extObservation",
     "observedDimension",
     "degreeStatus",
@@ -150,6 +151,7 @@ load "./K3Twists/tasks/invariant.m2"
 load "./K3Twists/tasks/synthetic.m2"
 load "./K3Twists/derived/objects.m2"
 load "./K3Twists/observations/degrees.m2"
+load "./K3Twists/observations/hypercohomology.m2"
 load "./K3Twists/observations/predictions.m2"
 load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"

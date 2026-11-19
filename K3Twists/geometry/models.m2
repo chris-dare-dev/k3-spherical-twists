@@ -106,3 +106,18 @@ cached = (K, key, f) -> (
     if not K.cache#?key then K.cache#key = f();
     K.cache#key
     )
+
+-- Three projection forms through a point off the quartic cover Proj. The
+-- coordinate cover also works when the affine grid has no such point.
+quarticCoverForms = K -> (
+    R := K#"ring";
+    f := first K#"equations";
+    coordinates := gens ring f;
+    scalars := toList(0..min(4, char R - 1));
+    grid := flatten flatten apply(scalars, a -> apply(scalars, b -> apply(scalars, c -> {1,a,b,c})));
+    centers := select(1, grid, p -> sub(f, apply(coordinates, p, (x,t) -> x => t)) != 0);
+    x := gens R;
+    if #centers == 0 then return x;
+    p := first centers;
+    apply(toList(1..3), i -> x#i - p#i*x#0)
+    )

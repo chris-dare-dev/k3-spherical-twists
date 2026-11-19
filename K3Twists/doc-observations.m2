@@ -7,6 +7,9 @@ doc ///
         (cohomologyObservation, CoherentSheaf, ZZ)
         (cohomologyObservation, K3ObjectReference)
         [cohomologyObservation, Degrees]
+        hypercohomologyObservation
+        (hypercohomologyObservation, K3Surface, Complex)
+        [hypercohomologyObservation, Degrees]
         extObservation
         (extObservation, CoherentSheaf, CoherentSheaf)
         (extObservation, CoherentSheaf, CoherentSheaf, ZZ, ZZ)
@@ -17,7 +20,7 @@ doc ///
         degreeStatus
         (degreeStatus, DegreeObservation, ZZ)
     Headline
-        observe cohomology and Ext in signed cohomological degrees
+        observe cohomology, hypercohomology and Ext in signed cohomological degrees
     Description
         Text
             An observation keeps its subjects, method, support interval and measured dimensions.
@@ -28,6 +31,9 @@ doc ///
             unsupported observations such as a symbolic reference with no sheaf realization.
             Pass the cohomological shifts after the native sheaf arguments.
             Direct Ext uses the dimension bound on a certified smooth K3 model.
+            Hypercohomology takes a quartic model and a bounded graded complex.
+            It uses the degree-zero part of a dual Koszul total complex to compute
+            the cohomology of the derived global sections.
         Example
             K = k3Surface 2;
             E = shiftObject(structureObject K, 1);
