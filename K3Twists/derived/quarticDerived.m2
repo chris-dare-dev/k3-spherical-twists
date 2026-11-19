@@ -139,14 +139,20 @@ quarticHigherEvaluation = (E, input, shift) -> (
             "sourceAugmentation" => augmentation, "traceCocycle" => homomorphism map(source next, source trace, ambient trace)})
     )
 
-quarticInverseComparison = (K, C, u, aug, shift) -> (
+requireQuarticForwardMaps = (K, u, aug) -> (
     R := K#"ring";
     D := source u;
     (dlo, dhi) := concentration D;
     if target u != complex R^{-1} or source aug != D or target aug != complex(R^4, Base => -2)
-        or not isComplexMorphism aug or not isIsomorphism sheaf homology(-2, aug)
+        or not isComplexMorphism u or not isComplexMorphism aug or not isIsomorphism sheaf homology(-2, aug)
         or not all(dlo..dhi, i -> i == -2 or sheaf HH_i D == 0) then
-        error "inverse cancellation requires the quartic evaluation and its sheaf quasi-isomorphic augmentation";
+        error "expected the quartic evaluation and its sheaf quasi-isomorphic augmentation";
+    )
+
+quarticInverseComparison = (K, C, u, aug, shift) -> (
+    requireQuarticForwardMaps(K, u, aug);
+    R := K#"ring";
+    D := source u;
     coevaluation := (aug[-1] * canonicalMap(D[-1], C))[-shift];
     inclusion := (canonicalMap(C, target u))[-shift];
     if not isComplexMorphism coevaluation or coevaluation * inclusion != 0 then
@@ -183,11 +189,12 @@ quarticInverseCancellation = (E, input, shift) -> (
             "derivedHomDegrees" => {{shift - 1,4}}})
     )
 
-quarticSecondForwardEvaluation = (E, input, shift) -> (
+quarticSecondForwardEvaluation = (E, input, shift, forward) -> (
     K := E#"surface";
     R := K#"ring";
-    forward := realizeTwistImage E#"prefix";
     firstEvaluation := forward#"chainMap";
+    firstAugmentation := forward#"sourceAugmentation";
+    requireQuarticForwardMaps(K, firstEvaluation, firstAugmentation);
     C := if shift == 0 then forward#"complex" else cone firstEvaluation;
 
     -- The same acyclic Koszul cover used for derived global sections also
@@ -226,7 +233,7 @@ quarticSecondForwardEvaluation = (E, input, shift) -> (
     B := cone u;
     (lo, hi) := concentration B;
     fromLine := canonicalMap(B, C) * canonicalMap(C, target firstEvaluation);
-    firstProjection := (forward#"sourceAugmentation")[-1] * canonicalMap((source firstEvaluation)[-1], C);
+    firstProjection := firstAugmentation[-1] * canonicalMap((source firstEvaluation)[-1], C);
     secondProjection := sourceAugmentation[-1] * canonicalMap((source u)[-1], B);
     if not isIsomorphism sheaf homology(0, fromLine)
         or not isIsomorphism sheaf homology(-1, firstProjection)
@@ -243,7 +250,8 @@ quarticSecondForwardEvaluation = (E, input, shift) -> (
         {"certified O generator", "degree-zero Koszul Hom strand", "four degree-three cocycles modulo coboundaries"},
         hashTable {"directions" => {1,1}, "shift" => shift, "chainMap" => u, "forward" => forward,
             "derivedHomDegrees" => dimensions, "sourceAugmentation" => sourceAugmentation,
-            "evaluationClassRank" => basisRank})
+            "evaluationClassRank" => basisRank,
+            "sheafHomologyTypes" => {{-shift,"O(-H)"},{1-shift,"O^4"},{2-shift,"O^4"}}})
     )
 
 -- Split the identity summand in the derived category. This comparison is independent of a lift
@@ -290,7 +298,8 @@ realizeQuarticDerived = E -> (
     if E#"length" == 2 and generator === zero and D === negativeHyperplane then (
         firstStep := E#"prefix"#"step";
         if firstStep#"direction" == 1 and certifiedStep firstStep and lineCoordinates stepObject firstStep === zero
-            then return (if signedStep#"direction" == 1 then quarticSecondForwardEvaluation(E, input, shift)
+            then return (if signedStep#"direction" == 1 then
+                quarticSecondForwardEvaluation(E, input, shift, realizeTwistImage E#"prefix")
                 else quarticInverseCancellation(E, input, shift));
         );
     if E#"length" != 1 then return null;

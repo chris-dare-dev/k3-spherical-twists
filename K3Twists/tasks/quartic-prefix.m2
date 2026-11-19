@@ -1,7 +1,8 @@
 -- Checkpoint a quartic evaluation cone and observe the reloaded complex.
 
 quarticPrefixObservations = {"cohomology", "ext", "hypercohomology"}
-quarticPrefixActions = {"model", "realize", "inverse"} | quarticPrefixObservations
+quarticPrefixContinuations = {"inverse", "second_forward"}
+quarticPrefixActions = {"model", "realize"} | quarticPrefixContinuations | quarticPrefixObservations
 quarticPrefixTargets = {"O(1H)", "O_x", "O(-1H)"}
 quarticPrefixPrediction = H -> (
     checkFields(H, "quartic prediction", {
@@ -54,10 +55,11 @@ prefixResult = (valueData, prediction, agrees, strategy, evidence, outputs, seco
 
 prefixMukai = v -> {v#"rank", v#"divisor"#"coordinates", v#"eulerComponent"}
 
-quarticForwardOutputs = (K, realization, model) -> (
+quarticEvaluationOutputs = (K, realization, model) -> (
     u := realization#"chainMap";
     a := realization#"sourceAugmentation";
     hashTable {
+        "cone" => gradedComplexArtifact(K, realization#"complex", model),
         "evaluation_source" => gradedComplexArtifact(K, source u, model),
         "evaluation_target" => gradedComplexArtifact(K, target u, model),
         "augmentation_target" => gradedComplexArtifact(K, target a, model),
@@ -66,9 +68,9 @@ quarticForwardOutputs = (K, realization, model) -> (
         }
     )
 
-quarticInverseFromCheckpoint = (K, inputs, prefixData, model) -> (
+loadQuarticForwardCheckpoint = (K, inputs, prefixData, model) -> (
     required := {"evaluation_source", "evaluation_target", "augmentation_target", "evaluation", "augmentation"};
-    if not all(required, name -> inputs#?name) then error "inverse cancellation requires the saved forward maps";
+    if not all(required, name -> inputs#?name) then error "the continuation requires the saved forward maps";
     loadEndpoint := name -> (
         endpoint := inputs#name;
         (loadGradedComplex(K, endpoint#"data"), endpoint#"digest")
@@ -83,13 +85,33 @@ quarticInverseFromCheckpoint = (K, inputs, prefixData, model) -> (
     C := cone u;
     if gradedComplexArtifact(K, C, model) =!= prefixData then
         error "saved evaluation does not reconstruct the saved forward cone";
-    (B, coevaluation, comparison, pairingRank) := quarticInverseComparison(K, C, u, a, 0);
+    hashTable {"complex" => C, "chainMap" => u, "sourceAugmentation" => a}
+    )
+
+quarticInverseFromCheckpoint = (K, forward) -> (
+    (B, coevaluation, comparison, pairingRank) := quarticInverseComparison(
+        K, forward#"complex", forward#"chainMap", forward#"sourceAugmentation", 0);
     valueData := hashTable {"class" => prefixMukai mukaiClass catalogueObject(K, "O(-1H)"),
         "sheaf_quasi_isomorphism" => true, "serre_pairing_rank" => pairingRank};
     (valueData, hashTable {"sheaf_quasi_isomorphism" => true}, true,
         "quartic-degree-two-inverse-cancellation",
         hashTable {"comparison" => "sheaf quasi-isomorphism with O(-H)", "directions" => {1,-1}},
         hashTable {})
+    )
+
+quarticSecondForwardFromCheckpoint = (K, forward, model) -> (
+    L := catalogueObject(K, "O(-1H)");
+    forwardStep := twistStep(sphericalObject structureObject K, 1);
+    E := applyWord(twistWord {forwardStep, forwardStep}, L);
+    R := quarticSecondForwardEvaluation(E, L, 0, forward);
+    computedClass := prefixMukai mukaiClass R;
+    startingClass := prefixMukai mukaiClass L;
+    valueData := hashTable {"class" => computedClass,
+        "sheaf_homology" => R#"sheafHomologyTypes", "derived_hom_degrees" => R#"derivedHomDegrees"};
+    evidence := hashTable {"directions" => R#"directions", "hypotheses" => R#"hypotheses",
+        "convention" => "cohomological", "evaluation_class_rank" => R#"evaluationClassRank"};
+    (valueData, hashTable {"class" => startingClass}, computedClass === startingClass,
+        R#"strategy", evidence, quarticEvaluationOutputs(K, R, model))
     )
 
 runQuarticPrefix = t -> (
@@ -101,8 +123,9 @@ runQuarticPrefix = t -> (
         );
     if not t#?"inputs" or not t#"inputs"#?"surface" then error "quartic prefix requires the surface input";
     modelInput := t#"inputs"#"surface";
+    model := modelInput#"digest";
     (seconds, answer) := timed(() -> (
-        K := loadK3ModelArtifact(modelInput#"data", modelInput#"digest");
+        K := loadK3ModelArtifact(modelInput#"data", model);
         if action === "realize" then (
             targetName := opt(t, "target", "O(1H)");
             E := catalogueObject(K, targetName);
@@ -110,19 +133,21 @@ runQuarticPrefix = t -> (
             R := realizeTwistImage applyWord(W, E);
             if R#"status" =!= "realized" then return (null, null, null,
                 "quartic evaluation", hashTable {"reason" => R#"reason"}, hashTable {});
-            coneData := gradedComplexArtifact(K, R#"complex", modelInput#"digest");
             shift := opt(R, "shift", 1);
             coneEvidence := hashTable {"direction" => R#"direction", "hypotheses" => R#"hypotheses",
                 "homological_to_cohomological" => R#"homologicalToCohomological", "shift" => shift};
-            outputs := hashTable {"cone" => coneData};
-            if opt(t, "checkpoint_maps", false) then outputs = merge(outputs,
-                quarticForwardOutputs(K, R, modelInput#"digest"), (a,b) -> b);
+            outputs := if opt(t, "checkpoint_maps", false) then quarticEvaluationOutputs(K, R, model)
+                else hashTable {"cone" => gradedComplexArtifact(K, R#"complex", model)};
             return (hashTable {"class" => prefixMukai mukaiClass R, "shift" => shift}, null, null,
                 R#"strategy", coneEvidence, outputs)
             );
-        if not t#"inputs"#?"prefix" then error "quartic observation requires its prefix input";
+        if not t#"inputs"#?"prefix" then error "quartic task requires its prefix input";
         prefixData := t#"inputs"#"prefix"#"data";
-        if action === "inverse" then return quarticInverseFromCheckpoint(K, t#"inputs", prefixData, modelInput#"digest");
+        if member(action, quarticPrefixContinuations) then (
+            forward := loadQuarticForwardCheckpoint(K, t#"inputs", prefixData, model);
+            return if action === "inverse" then quarticInverseFromCheckpoint(K, forward)
+                else quarticSecondForwardFromCheckpoint(K, forward, model)
+            );
         C := loadGradedComplex(K, prefixData);
         O := if action === "hypercohomology" then hypercohomologyObservation(K, C) else (
             if concentration C =!= (0,1) or sheaf HH_0 C != 0 then error "expected a quartic evaluation cone";
