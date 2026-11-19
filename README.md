@@ -313,6 +313,14 @@ Ext dimensions, and pairing matrix. The cone has sheaf homology `O(-H)`
 in cohomological degree zero and `O^4` in degree one, giving Mukai class
 `(-3,-H,-1)`.
 
+For the signed word `{T_O, T_O^-1}` acting on `O(-H)`, call
+`realizeTwistImage(W, E)` with the word and starting object. It retains each
+step and builds the inverse coevaluation from the projection of the forward
+cone, followed by the augmentation to `O^4[-1]`. The dual-section rank of
+the projection is four, which verifies the four Serre functionals on
+degree-three hypercohomology. The resulting comparison from `O(-H)` to the
+shifted inverse cone is a quasi-isomorphism after sheafification.
+
 For a certified line bundle `S = O` or `O(H)`, `RHom(S,S)` is
 `RΓ(O)` with one-dimensional cohomology in degrees 0 and 2. Splitting
 a complex of vector spaces over the coefficient field gives summands

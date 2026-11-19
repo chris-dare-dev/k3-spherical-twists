@@ -65,8 +65,8 @@ inverseNeighbours = (a,b) -> (
         and (stepObject a)#(symbol objectIdentity) === (stepObject b)#(symbol objectIdentity)
     )
 
-extendTwistImage = (E, signedStep) -> (
-    if isSymbolicImage E and inverseNeighbours(E#"step", signedStep) then return E#"prefix";
+extendTwistImage = (E, signedStep, cancelInverses) -> (
+    if cancelInverses and isSymbolicImage E and inverseNeighbours(E#"step", signedStep) then return E#"prefix";
     K := E#"surface";
     S := stepObject signedStep;
     evidence := stepEvidence signedStep;
@@ -88,17 +88,17 @@ extendTwistImage = (E, signedStep) -> (
             ))
     )
 
-applyReferenceWord = (W, E, verified) -> (
+applyReferenceWord = (W, E, verified, cancelInverses) -> (
     if W#"surface" =!= null then requireObjectModel(W#"surface", E#"surface");
     if verified then requireVerifiedEvidence (E#"evidence" | apply(W#"steps", stepEvidence));
     current := E;
-    scan(W#"steps", signedStep -> current = extendTwistImage(current, signedStep));
+    scan(W#"steps", signedStep -> current = extendTwistImage(current, signedStep, cancelInverses));
     current
     )
 
 applyWord = method(Options => {VerifiedOnly => false})
 applyWord(SphericalTwistWord, K3ObjectReference) := K3ObjectReference => opts -> (W,E) ->
-    applyReferenceWord(W, E, opts.VerifiedOnly)
+    applyReferenceWord(W, E, opts.VerifiedOnly, true)
 
 net SphericalTwistStep := signedStep -> net (if signedStep#"direction" == 1 then "T" else "T^(-1)") | "_(" | net stepObject signedStep | ")"
 net SphericalTwistWord := W -> net ("twist word (" | toString #(W#"steps") | " steps)")

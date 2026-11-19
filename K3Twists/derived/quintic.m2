@@ -29,7 +29,7 @@ shiftObject(QuinticObjectReference, ZZ) := QuinticObjectReference => (E,n) -> sh
 shiftObject(ShiftedQuinticObject, ZZ) := QuinticObjectReference => (E,n) -> shiftObject(E#"object", E#"shift" + n)
 symbolicImageType QuinticObjectReference := E -> SymbolicQuinticTwistImage
 applyWord(SphericalTwistWord, QuinticObjectReference) := QuinticObjectReference => opts -> (W,E) ->
-    applyReferenceWord(W, E, opts.VerifiedOnly)
+    applyReferenceWord(W, E, opts.VerifiedOnly, true)
 
 quinticReferenceTerm = E -> (
     if instance(E, ShiftedQuinticObject) then return (E#"object", E#"shift");

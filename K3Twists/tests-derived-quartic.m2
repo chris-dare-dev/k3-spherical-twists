@@ -98,3 +98,32 @@ TEST ///
     assert(all(1..2, i -> ((shifted#"complex").dd)_i == -(C.dd)_(i-1)));
     assert(mukaiClass shifted === mukaiClass shiftObject(result#"representative", 1));
 ///
+
+TEST ///
+    needsPackage "Complexes";
+    K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+    S = sphericalObject structureObject K;
+    W = twistWord {twistStep(S, 1), twistStep(S, -1)};
+    Lref = catalogueObject(K, "O(-1H)");
+    assert(applyWord(W, Lref) === Lref);
+    scan({0,1}, shift -> (
+        input := shiftObject(Lref, shift);
+        result := realizeTwistImage(W, input);
+        assert(result#"status" === "realized" and result#"strategy" === "quartic-degree-two-inverse-cancellation");
+        assert(result#"directions" === {1,-1} and result#"shift" === shift);
+        assert(result#"serrePairingRank" === 4 and result#"derivedHomDegrees" === {{shift-1,4}});
+        forward := result#"forward";
+        assert(forward#"strategy" === "quartic-degree-two-evaluation");
+        assert(forward#"serrePairing" == id_((K#"field")^4));
+        p := result#"chainMap";
+        q := result#"comparison";
+        C := result#"complex";
+        assert(source p == forward#"complex" and concentration target p === (shift-1,shift-1));
+        assert(target q == C and concentration source q === (shift,shift));
+        assert(isComplexMorphism p and isComplexMorphism q and isWellDefined C);
+        assert(isIsomorphism sheaf homology(shift, q));
+        (lo, hi) := concentration C;
+        assert(all(lo..hi, i -> i == shift or sheaf HH_i C == 0));
+        assert(result#"representative" === input and mukaiClass result === mukaiClass input);
+        ));
+///

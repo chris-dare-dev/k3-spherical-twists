@@ -28,6 +28,9 @@ quarticEvaluationTarget = (E, K) -> (
     )
 
 realizeTwistImage = method()
+realizeTwistImage(SphericalTwistWord, K3ObjectReference) := TwistRealization => (W, E) ->
+    realizeTwistImage applyReferenceWord(W, E, false, false)
+
 realizeTwistImage K3ObjectReference := TwistRealization => E -> (
     if not instance(E, SymbolicTwistImage) then return unavailableTwist(E, "expected a symbolic twist image");
     K := E#"surface";
