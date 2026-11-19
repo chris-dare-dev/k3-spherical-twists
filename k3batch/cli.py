@@ -19,6 +19,7 @@ from uuid import uuid4
 
 from . import __version__, report
 from .artifacts import ArtifactStore, read_artifact_json
+from .bundle import export_run, verify_run
 from .config import BatchConfig, ConfigError, load_config
 from .execution import LocalBackend, RunDeadlineExpired
 from .identity import RECORD_SCHEMA
@@ -119,6 +120,16 @@ def _parser() -> argparse.ArgumentParser:
     export.add_argument("--method", help="match the recorded computation method")
     export.add_argument("--observation", metavar="ID", help="match a result record ID")
     export.add_argument("--commit", help="match the recorded code commit")
+    bundle = commands.add_parser("export-run", help="export a pinned run and its mathematical artifacts")
+    bundle.add_argument("run_dir", type=Path)
+    bundle.add_argument("destination", type=Path)
+    bundle.add_argument("--store", type=Path, required=True, metavar="DATABASE")
+    bundle.add_argument("--run", metavar="ID", help="select a run by ID (default: latest)")
+    verify = commands.add_parser("verify-run", help="verify an exported run offline and print its report")
+    verify.add_argument("directory", type=Path)
+    verify.add_argument(
+        "--full", action="store_true", help="list every computed value against its predicted value"
+    )
     publish = commands.add_parser("publish-artifact", help="register an immutable mathematical artifact")
     publish.add_argument("directory", type=Path)
     publish.add_argument("file", type=Path)
@@ -372,6 +383,16 @@ def _command_export(arguments: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _command_export_run(arguments: argparse.Namespace) -> int:
+    export_run(SQLiteStore(arguments.store), arguments.run_dir, arguments.destination, run_id=arguments.run)
+    return EXIT_OK
+
+
+def _command_verify_run(arguments: argparse.Namespace) -> int:
+    sys.stdout.write(verify_run(arguments.directory, full=arguments.full))
+    return EXIT_OK
+
+
 def _command_publish_artifact(arguments: argparse.Namespace) -> int:
     store = ArtifactStore(arguments.directory)
     print(store.publish(read_artifact_json(arguments.file.read_bytes()), producer=arguments.producer))
@@ -391,6 +412,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "report": _command_report,
         "import-jsonl": _command_import,
         "export-jsonl": _command_export,
+        "export-run": _command_export_run,
+        "verify-run": _command_verify_run,
         "publish-artifact": _command_publish_artifact,
         "read-artifact": _command_read_artifact,
     }

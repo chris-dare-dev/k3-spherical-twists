@@ -215,6 +215,17 @@ class ResumableQuartic(unittest.TestCase):
             self.assertEqual(invalid["status"], "mismatch")
             self.assertEqual(cli(*args), report)
 
+            if "mixed_point_inverse" in continuations:
+                bundle = root / "portable-copy"
+                checkpoint = root / "portable-checkpoint"
+                checkpoint_report = cli("report", str(output), *database, "--run", first_id, "--full")
+                cli("export-run", str(output), str(bundle), *database, "--run", second_id)
+                cli("export-run", str(output), str(checkpoint), *database, "--run", first_id)
+                ledger.rename(root / "original-ledger")
+                ledger.with_suffix(".sqlite.artifacts").rename(root / "original-artifacts")
+                self.assertEqual(cli("verify-run", str(bundle), "--full"), report)
+                self.assertEqual(cli("verify-run", str(checkpoint), "--full"), checkpoint_report)
+
     def check_inverse(self, record: dict) -> None:
         self.assertEqual(record["status"], "ok")
         self.assertTrue(record["agrees"])
