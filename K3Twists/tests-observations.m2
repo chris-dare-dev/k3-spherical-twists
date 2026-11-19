@@ -37,3 +37,17 @@ TEST ///
     selected = observationPrediction("one degree", "1", {}, ("cohomology", hashTable {-1 => 1}));
     assert((checkObservation(partial, selected))#"status" === "match");
 ///
+TEST ///
+    K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+    W = twistWord {twistStep(sphericalObject structureObject K, 1)};
+    A = realizeTwistImage applyWord(W, lineBundleObject(K, K#"polarization"));
+    C = A#"complex";
+    H = hypercohomologyObservation(K, C);
+    S = cohomologyObservation(realizedHomology(A, -1), 1);
+    assert(H#"complete" and H#"support" === {-1,2});
+    assert(all(-1..2, i -> observedDimension(H, i) === observedDimension(S, i)));
+    assert(degreeStatus(H, 3) === "zero");
+    selected = hypercohomologyObservation(K, C, Degrees => {1});
+    assert(not selected#"complete" and observedDimension(selected, 1) === 4);
+    assert(degreeStatus(selected, 0) === "uncomputed");
+///

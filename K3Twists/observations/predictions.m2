@@ -11,7 +11,7 @@ observationPrediction(String, String, List, Sequence) := ObservationPrediction =
     (quantity, expected) := comparison;
     if #name == 0 or #revision == 0 then error "prediction name and revision must be nonempty";
     if not all(hypotheses, h -> instance(h, String)) then error "prediction hypotheses must be strings";
-    if not member(quantity, {"cohomology", "ext"}) then error "unknown prediction quantity";
+    if not member(quantity, {"cohomology", "ext", "hypercohomology"}) then error "unknown prediction quantity";
     scope := if instance(expected, ZZ) then (
         if opts.Full then error "Full is only available for a degree table";
         "euler"

@@ -1,7 +1,8 @@
--- This study checkpoints one evaluation cone and measures its sheaf homology twice.
+-- Checkpoint a quartic evaluation cone and observe the reloaded complex.
 
-quarticPrefixActions = {"model", "realize", "cohomology", "ext"}
-quarticPrefixTargets = {"O(1H)", "O_x"}
+quarticPrefixObservations = {"cohomology", "ext", "hypercohomology"}
+quarticPrefixActions = {"model", "realize"} | quarticPrefixObservations
+quarticPrefixTargets = {"O(1H)", "O_x", "O(-1H)"}
 quarticPrefixPrediction = H -> (
     checkFields(H, "quartic prediction", {
         ("name", isString), ("version", isString), ("hypotheses", isStringList), ("dimensions", x -> instance(x, List))
@@ -16,8 +17,8 @@ quarticPrefixDefinition = t -> (
     action := t#"action";
     if not member(action, quarticPrefixActions) then error "unknown quartic prefix action";
     if t#?"target" and (action =!= "realize" or not member(t#"target", quarticPrefixTargets)) then
-        error "quartic realization target must be O(1H) or O_x";
-    if member(action, {"cohomology", "ext"}) then (
+        error "quartic realization target must be O(1H), O_x or O(-1H)";
+    if member(action, quarticPrefixObservations) then (
         if not t#?"prediction" then error "quartic observation requires a prediction";
         quarticPrefixPrediction t#"prediction"
         )
@@ -66,28 +67,31 @@ runQuarticPrefix = t -> (
             W := twistWord {twistStep(sphericalObject structureObject K, 1)};
             R := realizeTwistImage applyWord(W, E);
             if R#"status" =!= "realized" then return (null, null, null,
-                "quartic-degree-zero-evaluation", hashTable {"reason" => R#"reason"}, hashTable {});
+                "quartic evaluation", hashTable {"reason" => R#"reason"}, hashTable {});
             coneData := gradedComplexArtifact(K, R#"complex", modelInput#"digest");
+            shift := opt(R, "shift", 1);
             coneEvidence := hashTable {"direction" => R#"direction", "hypotheses" => R#"hypotheses",
-                "homological_to_cohomological" => R#"homologicalToCohomological", "shift" => 1};
-            return (hashTable {"class" => prefixMukai mukaiClass R, "shift" => 1}, null, null,
+                "homological_to_cohomological" => R#"homologicalToCohomological", "shift" => shift};
+            return (hashTable {"class" => prefixMukai mukaiClass R, "shift" => shift}, null, null,
                 R#"strategy", coneEvidence, hashTable {"cone" => coneData})
             );
         if not t#"inputs"#?"prefix" then error "quartic observation requires its prefix input";
         C := loadGradedComplex(K, t#"inputs"#"prefix"#"data");
-        if concentration C =!= (0,1) or sheaf HH_0 C != 0 then error "expected a quartic evaluation cone";
-        F := sheaf HH_1 C;
-        X := K#"variety";
-        O := if action === "cohomology" then cohomologyObservation(F, 1)
-            else extObservation(F, OO_X^1, 1, 0);
+        O := if action === "hypercohomology" then hypercohomologyObservation(K, C) else (
+            if concentration C =!= (0,1) or sheaf HH_0 C != 0 then error "expected a quartic evaluation cone";
+            F := sheaf HH_1 C;
+            X := K#"variety";
+            if action === "cohomology" then cohomologyObservation(F, 1)
+            else extObservation(F, OO_X^1, 1, 0)
+            );
         p := t#"prediction";
         expected := hashTable apply(p#"dimensions", row -> row#0 => row#1);
         P := observationPrediction(p#"name", p#"version", p#"hypotheses", (action, expected), Full => true);
         decision := checkObservation(O, P);
         if not member(decision#"status", {"match", "mismatch"}) then error "quartic observation is incomplete";
         values := apply(sort keys O#"dimensions", i -> {i, observedDimension(O, i)});
-        evidence := hashTable {"convention" => O#"convention", "support" => O#"support",
-            "complete" => O#"complete", "shift" => 1};
+        evidence := hashTable ({"convention" => O#"convention", "support" => O#"support",
+            "complete" => O#"complete"} | if action === "hypercohomology" then {} else {"shift" => 1});
         (hashTable {"dimensions" => values, "nonzero_dimensions" => nonzeroDegreePairs values}, t#"predicted", decision#"status" === "match",
             O#"method", evidence, hashTable {})
         ));

@@ -472,6 +472,13 @@ commands and a fresh ledger to study the marked point. Its realization selects
 presented module term. The cohomology of `I_x[1]` is `(0,0,1)` in degrees −1
 through 1, and Ext to `O` is `(1,0,0)` in degrees 1 through 3.
 
+Use `batches/resumable-quartic-hypercohomology.toml` to observe the entire
+reloaded `T_O(O(-H))` cone. The batch computes derived global sections using
+the differentials and compares the hypercohomology with the evaluation triangle.
+Only degree 3 is nonzero, of dimension four. From M2, use
+`hypercohomologyObservation(K, C)` on a graded complex over the quartic model
+`K`. The observed degrees are cohomological.
+
 ### Resource history and bounded retries
 
 Add a `[resources]` table to opt in to history-based admission. The usual
