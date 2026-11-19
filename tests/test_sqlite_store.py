@@ -100,7 +100,14 @@ class TransactionalStore(unittest.TestCase):
             self.store.start_attempt("initial", MEMBER, "attempt", "start", "logs/attempt.log")
             self.store.append(
                 RESULT
-                | {"detail": {"artifact_outputs": {"map": {"kind": "graded-chain-map", "digest": chain_map}}}}
+                | {
+                    "agrees": True,
+                    "wall_seconds": 1.0,
+                    "peak_rss_mb": 10.0,
+                    "detail": {
+                        "artifact_outputs": {"map": {"kind": "graded-chain-map", "digest": chain_map}}
+                    },
+                }
             )
         bundle = self.root / "bundle"
 
@@ -133,6 +140,112 @@ class TransactionalStore(unittest.TestCase):
         self.assertEqual(refused.returncode, 2, refused.stderr)
         self.assertIn("failed digest verification", refused.stderr)
         self.assertFalse(failed.exists())
+
+    def test_verify_run_rejects_missing_corrupt_and_misbound_artifacts(self) -> None:
+        bundle = self.root / "bundle"
+        objects = bundle / "objects"
+        objects.mkdir(parents=True)
+
+        def put(data: dict) -> str:
+            blob = (json.dumps(data, sort_keys=True) + "\n").encode()
+            digest = sha256(blob).hexdigest()
+            (objects / f"{digest}.json").write_bytes(blob)
+            return digest
+
+        model_data = {
+            "version": 1,
+            "kind": "k3-model",
+            "payload": {"parameters": {}, "coordinates": [], "grading": [], "equations": [], "markings": {}},
+        }
+        model = put(model_data)
+        complex_data = {
+            "version": 1,
+            "kind": "graded-complex",
+            "payload": {"model_digest": model, "base": 0, "terms": [[0]], "differentials": []},
+        }
+        endpoint = put(complex_data)
+        arrow = {
+            "version": 1,
+            "kind": "graded-chain-map",
+            "payload": {
+                "model_digest": model,
+                "source_digest": endpoint,
+                "target_digest": endpoint,
+                "components": [],
+            },
+        }
+        manifest = json.dumps(MANIFEST | {"run_state": "completed"}).encode()
+        (bundle / "manifest.json").write_bytes(manifest)
+
+        def pin(digest: str, *, record_id: str = "observation") -> None:
+            record = RESULT | {
+                "task": MEMBER,
+                "record_id": record_id,
+                "agrees": True,
+                "wall_seconds": 1.0,
+                "peak_rss_mb": 10.0,
+                "detail": {"artifact_outputs": {"map": {"kind": "graded-chain-map", "digest": digest}}},
+            }
+            records = (json.dumps(record) + "\n").encode()
+            (bundle / "results.jsonl").write_bytes(records)
+            index = {
+                "version": 1,
+                "title": "original-run",
+                "unreadable_lines": 0,
+                "files": {
+                    "manifest.json": sha256(manifest).hexdigest(),
+                    "results.jsonl": sha256(records).hexdigest(),
+                },
+            }
+            (bundle / "bundle.json").write_text(json.dumps(index), encoding="utf-8")
+
+        def verify() -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [sys.executable, "-m", "k3batch", "verify-run", str(bundle), "--full"],
+                cwd=REPOSITORY, capture_output=True, text=True, timeout=15,
+            )  # fmt: skip
+
+        def expect_failure(message: str) -> None:
+            done = verify()
+            self.assertEqual(done.returncode, 2, done.stderr)
+            self.assertEqual(done.stdout, "")
+            self.assertIn(message, done.stderr)
+
+        digest = put(arrow)
+        pin(digest)
+        verified = verify()
+        self.assertEqual(verified.returncode, 0, verified.stderr)
+        self.assertTrue(verified.stdout.startswith("# Results in original-run"))
+        self.assertIn(digest, verified.stdout)
+
+        endpoint_file = objects / f"{endpoint}.json"
+        correct_endpoint = endpoint_file.read_bytes()
+        endpoint_file.unlink()
+        expect_failure(f"missing bundle file {endpoint}.json")
+        endpoint_file.write_bytes(b"corrupt")
+        expect_failure(f"{endpoint}.json failed digest verification")
+        endpoint_file.write_bytes(correct_endpoint)
+
+        for filename in ("manifest.json", "results.jsonl"):
+            with self.subTest(filename=filename):
+                path = bundle / filename
+                saved = path.read_bytes()
+                path.write_bytes(saved + b"\n")
+                expect_failure(f"{filename} failed digest verification")
+                path.write_bytes(saved)
+
+        pin(digest, record_id="unrelated-record")
+        expect_failure("does not match a unique pinned manifest member")
+
+        other_model = put(model_data | {"payload": model_data["payload"] | {"coordinates": ["x"]}})
+        foreign_endpoint = put(
+            complex_data | {"payload": complex_data["payload"] | {"model_digest": other_model}}
+        )
+        for endpoint_ref in (model, foreign_endpoint):
+            with self.subTest(endpoint=endpoint_ref):
+                # Give the modified map valid bytes and checksums to exercise endpoint checks.
+                pin(put(arrow | {"payload": arrow["payload"] | {"target_digest": endpoint_ref}}))
+                expect_failure("chain map target_digest must name a graded complex over its model")
 
     def test_observation_finish_is_atomic_and_checked_against_the_active_attempt(self) -> None:
         with self.store, self.store.run(self.run_dir, MANIFEST, {}):

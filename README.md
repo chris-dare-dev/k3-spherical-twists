@@ -302,7 +302,14 @@ both complex endpoints and their model with them.
 
 ```bash
 python3 -m k3batch export-run results/quartic-sample exported-run --store results/study.sqlite --run RUN_ID
+python3 -m k3batch verify-run exported-run --full
 ```
+
+After copying the bundle to another machine, run `verify-run` there. It checks
+the manifest and record digests, the pinned results and their producer
+references, and every referenced artifact. Both endpoints of a chain map
+must be graded complexes over its model. On success the command prints the
+pinned report using the original run title.
 
 ### Marked quintic threefold
 

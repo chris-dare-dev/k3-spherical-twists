@@ -7,7 +7,7 @@ import os
 import re
 import sqlite3
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from hashlib import sha256
 from pathlib import Path
@@ -19,6 +19,7 @@ MODEL = "k3-model"
 COMPLEX = "graded-complex"
 CHAIN_MAP = "graded-chain-map"
 ENDPOINTS = ("source_digest", "target_digest")
+ArtifactReference = tuple[str, str, str, str | None]
 PAYLOAD_FIELDS = {
     MODEL: {"parameters", "coordinates", "grading", "equations", "markings"},
     "graded-presentation": {"model_digest", "source", "target", "matrix"},
@@ -31,7 +32,8 @@ class ArtifactError(ValueError):
     """Invalid, unavailable, or damaged artifact."""
 
 
-def _digest(value: object) -> str:
+def artifact_digest(value: object) -> str:
+    """Validate a content digest before using it as an object name."""
     if not isinstance(value, str) or not re.fullmatch("[0-9a-f]{64}", value):
         raise ArtifactError("expected a lowercase SHA-256 digest")
     return value
@@ -51,8 +53,8 @@ def _describe(data: Any) -> tuple[int, str, str | None]:
         raise ArtifactError(f"invalid {kind} payload fields")
     if kind == CHAIN_MAP:
         for endpoint in ENDPOINTS:
-            _digest(payload[endpoint])
-    return version, kind, None if kind == MODEL else _digest(payload["model_digest"])
+            artifact_digest(payload[endpoint])
+    return version, kind, None if kind == MODEL else artifact_digest(payload["model_digest"])
 
 
 def read_artifact_json(body: bytes) -> dict[str, Any]:
@@ -65,6 +67,28 @@ def read_artifact_json(body: bytes) -> dict[str, Any]:
 def model_digest(data: dict[str, Any]) -> str | None:
     """The model an artifact is bound to; None for a model, which is bound to nothing."""
     return _describe(data)[2]
+
+
+def artifact_references(data: dict[str, Any]) -> Iterator[ArtifactReference]:
+    """Yield the field, digest, kind, and model required for each direct reference."""
+    model = model_digest(data)
+    if model is not None:
+        yield "model_digest", model, MODEL, None
+    if data["kind"] == CHAIN_MAP:
+        for key in ENDPOINTS:
+            yield key, data["payload"][key], COMPLEX, model
+
+
+def check_artifact_references(
+    references: Iterable[ArtifactReference],
+    identify: Callable[[str], tuple[str, str | None]],
+) -> None:
+    """Check reference kinds and model binding against a registry or an offline reader."""
+    for field, digest, kind, model in references:
+        if identify(digest) != (kind, model):
+            if field == "model_digest":
+                raise ArtifactError(f"artifact {digest} is not a K3 model")
+            raise ArtifactError(f"chain map {field} must name a graded complex over its model")
 
 
 def _canonical(data: dict[str, Any]) -> bytes:
@@ -113,7 +137,7 @@ class ArtifactStore:
         body = _canonical(data)
         digest = sha256(body).hexdigest()
         with self._connect() as connection:
-            self._require_references(connection, data, model)
+            self._require_references(connection, data)
             self._publish_file(digest, body)
             connection.execute(
                 "INSERT INTO artifact VALUES (?, ?, ?, ?, ?) ON CONFLICT(digest) DO NOTHING",
@@ -168,19 +192,12 @@ class ArtifactStore:
             raise ArtifactError(f"artifact {digest} disagrees with its registry metadata")
         return body, data, model
 
-    def _require_references(
-        self, connection: sqlite3.Connection, data: dict[str, Any], model: str | None
-    ) -> None:
-        if model is not None:
-            _, parent, _ = self._read(connection, model)
-            if parent["kind"] != MODEL:
-                raise ArtifactError(f"artifact {model} is not a K3 model")
-        if data["kind"] == CHAIN_MAP:
-            for endpoint in ENDPOINTS:
-                digest = data["payload"][endpoint]
-                _, complex_data, parent_model = self._read(connection, digest)
-                if complex_data["kind"] != COMPLEX or parent_model != model:
-                    raise ArtifactError(f"chain map {endpoint} must name a graded complex over its model")
+    def _require_references(self, connection: sqlite3.Connection, data: dict[str, Any]) -> None:
+        def identify(digest: str) -> tuple[str, str | None]:
+            _, referenced, model = self._read(connection, digest)
+            return referenced["kind"], model
+
+        check_artifact_references(artifact_references(data), identify)
 
     def publish_outputs(
         self, staged: Any, declared: dict[str, str], producer: str
@@ -239,6 +256,6 @@ class ArtifactStore:
     def read(self, digest: str) -> bytes:
         """Verify the registered artifact and its references before returning canonical JSON."""
         with self._connect() as connection:
-            body, data, model = self._read(connection, _digest(digest))
-            self._require_references(connection, data, model)
+            body, data, _ = self._read(connection, artifact_digest(digest))
+            self._require_references(connection, data)
         return body
