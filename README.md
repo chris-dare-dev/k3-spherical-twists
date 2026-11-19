@@ -72,6 +72,25 @@ Use `quartic_with_conic` for the conic family. Both families have degree four an
 
 Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
 
+## Claims and records
+
+[CLAIMS.md](CLAIMS.md) lists what this page says the code computes, claim by claim, with what the committed records in [records/](records/) say about each: how many of its tasks were run, when, at which commit, and how they ended. [claims/RECORDS.md](claims/RECORDS.md) has one row per task.
+
+`make smoke` runs the batch [batches/invariants.toml](batches/invariants.toml): 45 tasks, about ten seconds on four processes. Each row below is one task of it: the predicted value, and what the task computed in its latest record in [records/](records/). `make smoke` ends by printing this table from its own fresh run, and fails if it is not the table printed here.
+
+<!-- BEGIN GENERATED headline: tools/claims.py tables -->
+| Quantity | Predicted | Computed | Status | Task |
+|---|---|---|---|---|
+| hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0) | (3, 0, 0) |  | not re-run | `invariant/d2-p32003-s1/h^i(I_x(H))` |
+| hⁱ(M_H(−H)) on the quartic: (0, 1, n² − 1) | (0, 1, 15) |  | not re-run | `invariant/d2-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) on the quartic: (0, 0, n² − n − 1) | (0, 0, 11) |  | not re-run | `invariant/d2-p32003-s1/h^i(M_x(-H))` |
+| hⁱ(Q) on the quartic: (n² − 1, 1, 0) | (15, 1, 0) |  | not re-run | `invariant/d2-p32003-s1/h^i(Q)` |
+| hⁱ(M_H(−H)) for d = 3 (n = 5) | (0, 1, 24) |  | not re-run | `invariant/d3-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) for d = 3 | (0, 0, 19) |  | not re-run | `invariant/d3-p32003-s1/h^i(M_x(-H))` |
+| hⁱ(M_H(−H)) for d = 4 (n = 6) | (0, 1, 35) |  | not re-run | `invariant/d4-p32003-s1/h^i(M_H(-H))` |
+| hⁱ(M_x(−H)) for d = 4 | (0, 0, 29) |  | not re-run | `invariant/d4-p32003-s1/h^i(M_x(-H))` |
+<!-- END GENERATED headline -->
+
 ## Apply a word in spherical twists
 
 A word lists its signed steps in application order. A sign of 1 applies a twist and -1 applies its inverse.
@@ -219,6 +238,22 @@ A record carries the task, its outcome and where it came from:
 `peak_rss_mb` is the largest resident size of the task's process, as the kernel reports it when the process ends. The watchdog measures `wall_seconds` through process exit. If the watchdog dies before reporting, the coordinator measures through collection. Records also include the requested and effective resource controls. In cgroup mode they include the cgroup memory peak and memory events. A signal alone is not evidence of a local memory kill. In polling mode the recorded RSS sample is separate from the leader's kernel RSS high-water mark. The output of an attempt that times out, exceeds its memory limit, errors or crashes is kept in `results/<name>/logs/`. Each attempt uses a distinct log filename so its record continues to point to the original output after a retry. Next to the records, `runs.jsonl` has one line per run with the configuration as it was resolved, the command line, the versions and the memory available at the start, and `manifest.json` lists the tasks of the latest run with their limits.
 
 `run` exits with status 0 when every task of the batch is `ok` or `unsupported`, 1 when a task is `mismatch`, `error` or `crashed`, 3 when nothing failed but tasks were stopped at a limit, and 2 when the batch cannot be run as asked.
+
+### Committed records
+
+A run writes to `results/<batch>/`, which is not in git. The records behind [CLAIMS.md](CLAIMS.md) are in [records/](records/), one directory per batch:
+
+```bash
+make record BATCH=batches/invariants.toml
+```
+
+```bash
+make tables
+```
+
+`make record` runs the batch and copies its records to `records/<batch>/`; for `batches/limits-demo.toml`, whose synthetic tasks are stopped on purpose, add `EXPECT=3`. `make adopt BATCHES="a b"` copies the records of runs that are already in `results/`. A record is copied only if it was computed from committed code with no uncommitted change in the working tree (an untracked file counts as one), and only if it names neither the machine nor a directory outside the repository; [tools/adopt.py](tools/adopt.py) has the rules. `make tables` then rewrites the generated tables, and `make check` fails when they are not what the registry, the batch files and the records give.
+
+In the tables a record counts for a task as long as the task is the same computation with the same predicted value, whatever has changed in the code since; the record names its commit. A record of a task that has changed reads `stale`. This is a rule of the tables only. When the scheduler decides whether to compute a task again it also compares the code, as described under [Reports](#reports).
 
 ### Reports
 
@@ -596,7 +631,9 @@ make test-slow
 
 `make test` runs the fast tests of the package (every test that is not slow, about twenty seconds; the test runner prints how many) and the tests of the scheduler (about two minutes; they include real Macaulay2 tasks stopped at a time limit and at a memory limit). `make test-slow` runs the slow package tests, which compute Ext groups and take under two minutes together; a test is slow when its first line is `-- slow`. `make test-all` runs both. In Macaulay2, `check "K3Twists"` runs every test of the package.
 
-`make lint` runs `ruff` and `mypy` on the scheduler; neither is needed to run it. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
+`make check` expands every batch file with Macaulay2 and fails if the claim registry does not fit the tasks or if a generated table is out of date. `make smoke` is described under [Claims and records](#claims-and-records).
+
+`make lint` runs `ruff` and `mypy` on the scheduler and the tools; neither is needed to run them. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
 
 ## Layout
 
@@ -608,8 +645,11 @@ make test-slow
 | `runners/run-tests.m2` | runs the fast or the slow tests of the package |
 | `k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
 | `batches/` | batch files |
-| `tests/` | tests of the scheduler, and the fake runner they use |
-| `results/` | records of runs; not in git |
+| `CLAIMS.md`, `claims/` | the claims with what the records say; `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |
+| `records/` | the records of the batches that were run for this repository |
+| `tools/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `records/` |
+| `tests/` | tests of the scheduler and the tools, and the fake runner they use |
+| `results/` | run directories; not in git |
 | `Dockerfile`, `Makefile`, `pyproject.toml`, `.github/workflows/` | container, targets, lint settings, continuous integration |
 
 ## What this does not show

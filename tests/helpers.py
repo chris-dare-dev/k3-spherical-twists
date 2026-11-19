@@ -11,6 +11,8 @@ from typing import Any
 
 from k3batch.config import BatchConfig, parse_config
 from k3batch.memory import MemoryGuard, PollingGuard
+from k3batch.model import Limits, Status, Task
+from k3batch.record import Record, build
 from k3batch.runner import expand
 from k3batch.scheduler import Scheduler
 from k3batch.store import ResultStore
@@ -47,6 +49,34 @@ def fake_config(
             "tasks": sets,
         }
     )
+
+
+def record(payload: dict[str, Any], status: str = "ok", **fields: Any) -> Record:
+    """The record the scheduler builds for an attempt of the task `payload`, for tests that read records.
+
+    `value`, `predicted` and `agrees` are what the runner reported; `code` is the stamp of the run; any
+    other field is an argument of `k3batch.record.build`.
+    """
+    result = {key: fields.pop(key) for key in ("value", "predicted", "agrees") if key in fields}
+    stamp = {"run_id": "run", "runner": {}, "code": fields.pop("code", {"commit": "0" * 40, "dirty": False})}
+    arguments: dict[str, Any] = {
+        "status": Status(status),
+        "result": result,
+        "error": None,
+        "attempt_id": "attempt",
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "log": None,
+        "exit_code": 0,
+        "wall_seconds": 1.0,
+        "measured": {},
+        "resource_controls": {},
+        "memory_guard": "poll",
+        "stamp": stamp,
+        "computation_id": "computation",
+        "check_id": "check",
+        "record_id": "record",
+    }
+    return build(Task.from_payload(payload), Limits(60, 500), **(arguments | fields))
 
 
 class Journal:

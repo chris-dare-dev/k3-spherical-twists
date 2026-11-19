@@ -1,0 +1,263 @@
+# The registry of claims: every row of the claim tables of CLAIMS.md.
+#
+# tools/claims.py writes the tables of CLAIMS.md, the file claims/RECORDS.md and the headline table of
+# README.md from this file, from the batch files (which tasks exist) and from the records in records/.
+# `make check` fails if the committed tables differ from what it writes.
+#
+# A table has a heading of CLAIMS.md and its columns.  A claim has an id, its table, the cells of its
+# row in the order of the columns (Markdown, as printed), and `tasks`: ids of the tasks that compute
+# it, where `*` stands for any run of characters.  A `*` may not follow a digit: `d2*` would also take
+# d = 20, so the ids of one parameter value are written out.  `batches`, when given, keeps the tasks of
+# those batches only: the dependent batches use the same ids for different objects.  A claim without
+# tasks says why in `no_task`.
+# Synthetic tasks (batches/limits-demo.toml) never count for a claim.
+
+[table.sheaves]
+heading = '''Cohomology of the sheaves of short words'''
+columns = ['''Claim''', '''Predicted, with n = d + 2''', '''Surfaces''']
+
+[[claim]]
+id = "line-bundles"
+table = "sheaves"
+cells = [
+  '''hⁱ(O), hⁱ(O(H)), hⁱ(O(−H))''',
+  '''(1, 0, 1), (n, 0, 0), (0, 0, n)''',
+  '''d = 2, 3, 4''',
+]
+tasks = ["invariant/d*-p32003-s1/h^i(O)", "invariant/d*-p32003-s1/h^i(O(H))", "invariant/d*-p32003-s1/h^i(O(-H))"]
+
+[[claim]]
+id = "ideal-of-the-point"
+table = "sheaves"
+cells = [
+  '''hⁱ(I_x), hⁱ(I_x(−H)), hⁱ(I_x(H)); the ideal of x has n − 1 generators''',
+  '''(0, 0, 1), (0, 1, n), (n − 1, 0, 0); n − 1''',
+  '''d = 2, 3, 4''',
+]
+tasks = [
+  "invariant/d*-p32003-s1/h^i(I_x)",
+  "invariant/d*-p32003-s1/h^i(I_x(-H))",
+  "invariant/d*-p32003-s1/h^i(I_x(H))",
+  "invariant/d*-p32003-s1/generators of I_x(H)",
+]
+
+[[claim]]
+id = "m-h"
+table = "sheaves"
+cells = [
+  '''rank M_H, hⁱ(M_H), hⁱ(M_H(−H))''',
+  '''n − 1, (0, 0, n), (0, 1, n² − 1)''',
+  '''d = 2, 3, 4''',
+]
+tasks = ["invariant/d*-p32003-s1/rank M_H", "invariant/d*-p32003-s1/h^i(M_H)", "invariant/d*-p32003-s1/h^i(M_H(-H))"]
+
+[[claim]]
+id = "m-x"
+table = "sheaves"
+cells = [
+  '''rank M_x, hⁱ(M_x), hⁱ(M_x(−H))''',
+  '''n − 2, (0, 0, n − 1), (0, 0, n² − n − 1)''',
+  '''d = 2, 3, 4''',
+]
+tasks = ["invariant/d*-p32003-s1/rank M_x", "invariant/d*-p32003-s1/h^i(M_x)", "invariant/d*-p32003-s1/h^i(M_x(-H))"]
+
+[[claim]]
+id = "q"
+table = "sheaves"
+cells = [
+  '''rank Q, hⁱ(Q)''',
+  '''n − 1, (n² − 1, 1, 0)''',
+  '''d = 2, 3, 4''',
+]
+tasks = ["invariant/d*-p32003-s1/rank Q", "invariant/d*-p32003-s1/h^i(Q)"]
+
+[[claim]]
+id = "again-as-ext"
+table = "sheaves"
+cells = [
+  '''Four of the above again, as Ext groups of sheaves: Extⁱ(O, O(H)), Extⁱ(O(H), O), Extⁱ(O(H), M_H), Extⁱ(M_x, O_x)''',
+  '''(n, 0, 0), (0, 0, n), (0, 1, n² − 1), (n − 2, 0, 0)''',
+  '''d = 2''',
+]
+tasks = [
+  "invariant/d2-p32003-s1/Ext^i(O, O(H))",
+  "invariant/d2-p32003-s1/Ext^i(O(H), O)",
+  "invariant/d2-p32003-s1/Ext^i(O(H), M_H)",
+  "invariant/d2-p32003-s1/Ext^i(M_x, O_x)",
+]
+
+[[claim]]
+id = "self-ext"
+table = "sheaves"
+cells = [
+  '''Extⁱ(F, F) for F = I_x(H), M_H, M_x''',
+  '''(1, 2, 1), (1, 0, 1), (1, 2, 1)''',
+  '''d = 2''',
+]
+tasks = [
+  "invariant/d2-p32003-s1/Ext^i(I_x(H), I_x(H))",
+  "invariant/d2-p32003-s1/Ext^i(M_H, M_H)",
+  "invariant/d2-p32003-s1/Ext^i(M_x, M_x)",
+]
+
+[table.pairs]
+heading = '''Euler characteristics of pairs'''
+columns = ['''Claim''', '''Surface''', '''Ordered pairs''']
+
+[[claim]]
+id = "pairs-d2"
+table = "pairs"
+cells = [
+  '''χ(E, F) = −⟨v(E), v(F)⟩ for the sheaves E, F of the catalogue''',
+  '''quartic, d = 2''',
+  '''22 × 22 = 484''',
+]
+tasks = ["ext_pair/d2-p32003-s1/*"]
+
+[[claim]]
+id = "pairs-d3"
+table = "pairs"
+cells = [
+  '''the same''',
+  '''quadric and cubic, d = 3''',
+  '''22 × 22 = 484''',
+]
+tasks = ["ext_pair/d3-p32003-s1/*"]
+
+[[claim]]
+id = "pairs-d3-special"
+table = "pairs"
+cells = [
+  '''the same, with the rank 2 bundle of class (2, 1, 2) and its twists in the catalogue''',
+  '''d = 3 with the quadric x₀x₁ + x₂x₃ + x₄²''',
+  '''26 × 26 = 676''',
+]
+tasks = ["ext_pair/d3q-p32003-s1/*"]
+
+[[claim]]
+id = "pairs-d4"
+table = "pairs"
+cells = [
+  '''the same''',
+  '''three quadrics, d = 4''',
+  '''22 × 22 = 484''',
+]
+tasks = ["ext_pair/d4-p32003-s1/*"]
+
+[table.marked]
+heading = '''The marked curve on a quartic'''
+columns = ['''Claim''', '''Predicted''', '''Surfaces''']
+
+[[claim]]
+id = "marked-curve"
+table = "marked"
+cells = [
+  '''hⁱ(O_C) and Extⁱ(O_C, O_C) for the marked curve C, with C² = −2''',
+  '''(1, 0, 0) and (1, 0, 1)''',
+  '''a quartic with a line, a quartic with a conic''',
+]
+tasks = ["invariant/quartic_with_line-d2-p32003-s1/*", "invariant/quartic_with_conic-d2-p32003-s1/*"]
+
+[table.twists]
+heading = '''Twists realized as complexes'''
+columns = ['''Claim''', '''Predicted''', '''Where''']
+
+[[claim]]
+id = "twist-of-the-hyperplane-bundle"
+table = "twists"
+cells = [
+  '''The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups to O''',
+  '''cohomology (0, 0, 4) in degrees −1 to 1; Ext to O (4, 0, 0) in degrees 1 to 3''',
+  '''the quartic with a line; `batches/resumable-quartic.toml`''',
+]
+tasks = ["quartic_prefix/*"]
+batches = ["resumable-quartic"]
+
+[[claim]]
+id = "twist-of-the-point"
+table = "twists"
+cells = [
+  '''The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups to O''',
+  '''cohomology (0, 0, 1) in degrees −1 to 1; Ext to O (1, 0, 0) in degrees 1 to 3''',
+  '''the quartic with a line; `batches/resumable-quartic-point.toml`''',
+]
+tasks = ["quartic_prefix/*"]
+batches = ["resumable-quartic-point"]
+
+[[claim]]
+id = "twist-of-the-dual-hyperplane-bundle"
+table = "twists"
+cells = [
+  '''The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only''',
+  '''dimension 4 in degree 3, zero in degrees −1 to 2''',
+  '''the quartic with a line; `batches/resumable-quartic-hypercohomology.toml`''',
+]
+tasks = ["quartic_prefix/*"]
+batches = ["resumable-quartic-hypercohomology"]
+
+[[claim]]
+id = "inverse-cancellation"
+table = "twists"
+cells = [
+  '''The word {T_O, T_O⁻¹} applied to O(−H) is realized, and the comparison with O(−H) is an isomorphism on sheaf homology''',
+  '''Serre pairing of rank 4''',
+  '''the quartic with a line''',
+]
+tasks = []
+no_task = '''a test of the package (`K3Twists/tests-derived-quartic.m2`, run by `make test`); it leaves no record'''
+
+[[claim]]
+id = "class-of-a-word"
+table = "twists"
+cells = [
+  '''The image of O_x under the word {T_O, T_{O(H)}⁻¹} has Mukai coordinates (2, 3, 9)''',
+  '''(2, 3, 9)''',
+  '''the quartic''',
+]
+tasks = []
+no_task = '''a test of the package (`K3Twists/tests-words.m2`, run by `make test`); it leaves no record'''
+
+[[claim]]
+id = "quintic-threefold"
+table = "twists"
+cells = [
+  '''On the Fermat quintic threefold over ZZ/101: hⁱ(O) = (1, 0, 0, 1), and the twist of the marked point about O is realized with numerical class (−1, 1)''',
+  '''(1, 0, 0, 1); (−1, 1)''',
+  '''the quintic threefold''',
+]
+tasks = []
+no_task = '''a test of the package (`K3Twists/tests-quintic.m2`, run by `make test`); it leaves no record'''
+
+# The headline table of README.md: tasks of batches/invariants.toml, which `make smoke` runs.
+
+[[headline]]
+label = '''hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0)'''
+task = "invariant/d2-p32003-s1/h^i(I_x(H))"
+
+[[headline]]
+label = '''hⁱ(M_H(−H)) on the quartic: (0, 1, n² − 1)'''
+task = "invariant/d2-p32003-s1/h^i(M_H(-H))"
+
+[[headline]]
+label = '''hⁱ(M_x(−H)) on the quartic: (0, 0, n² − n − 1)'''
+task = "invariant/d2-p32003-s1/h^i(M_x(-H))"
+
+[[headline]]
+label = '''hⁱ(Q) on the quartic: (n² − 1, 1, 0)'''
+task = "invariant/d2-p32003-s1/h^i(Q)"
+
+[[headline]]
+label = '''hⁱ(M_H(−H)) for d = 3 (n = 5)'''
+task = "invariant/d3-p32003-s1/h^i(M_H(-H))"
+
+[[headline]]
+label = '''hⁱ(M_x(−H)) for d = 3'''
+task = "invariant/d3-p32003-s1/h^i(M_x(-H))"
+
+[[headline]]
+label = '''hⁱ(M_H(−H)) for d = 4 (n = 6)'''
+task = "invariant/d4-p32003-s1/h^i(M_H(-H))"
+
+[[headline]]
+label = '''hⁱ(M_x(−H)) for d = 4'''
+task = "invariant/d4-p32003-s1/h^i(M_x(-H))"
