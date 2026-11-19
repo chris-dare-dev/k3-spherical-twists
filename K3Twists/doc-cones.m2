@@ -41,6 +41,14 @@ doc ///
             inverse coevaluation and a comparison from the original line bundle
             to the shifted cone of the coevaluation.
 
+            Two forward twists about O on O(-H) use the first explicit cone as
+            the target of a degree-three evaluation. The degree-zero Koszul Hom strand
+            supplies four evaluation classes modulo coboundaries. The second cone
+            has sheaf homology O(-H), O^4, and O^4 in cohomological degrees zero,
+            one, and two, respectively, and restores the initial Mukai class.
+            The result records the first realization, the second evaluation, and
+            the rank of the chosen classes.
+
             For a certified spherical line bundle O or O(H), the degree-zero identity in its
             self-evaluation splits off. The degree-two Serre trace then gives the surviving
             shift by minus one for a forward twist and plus one for an inverse twist.
