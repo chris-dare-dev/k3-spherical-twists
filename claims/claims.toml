@@ -210,12 +210,12 @@ batches = ["resumable-quartic-inverse"]
 id = "second-forward-twist"
 table = "twists"
 cells = [
-  '''The word {T_O, T_O} applied to O(−H) is realized as a second cone, with sheaf homology O(−H), O⁴, O⁴ in degrees 0, 1, 2 and the Mukai class of O(−H)''',
-  '''four evaluation classes in degree 3''',
-  '''the quartic with a line''',
+  '''The word {T_O, T_O} applied to O(−H) is realized from the same stored cone and maps, as a second cone with the Mukai class of O(−H)''',
+  '''sheaf homology O(−H), O⁴, O⁴ in degrees 0, 1, 2''',
+  '''the quartic with a line; `batches/resumable-quartic-second-forward.toml`''',
 ]
-tasks = []
-no_task = '''a test of the package (`K3Twists/tests-derived-quartic.m2`, run by `make test`); it leaves no record'''
+tasks = ["quartic_prefix/model", "quartic_prefix/realize", "quartic_prefix/second_forward"]
+batches = ["resumable-quartic-second-forward"]
 
 [[claim]]
 id = "class-of-a-word"
