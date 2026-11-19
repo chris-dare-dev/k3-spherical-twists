@@ -328,10 +328,13 @@ in 0.053 s after the quartic was available. The complete process took
 ## Mathematical artifacts
 
 Macaulay2 functions encode a K3 model, a graded module presentation, or a bounded
-complex of finite free modules as versioned data. The data preserves the equations,
-markings, basis degrees, and differentials. Complex degrees are homological. The
-Macaulay2 loader reconstructs the objects, checks their grading and parent model,
-and checks that consecutive differentials compose to zero.
+complex of finitely presented modules as versioned data. The data preserves the
+equations, markings, basis degrees, module relations, and differentials. Complex
+degrees are homological. Free complexes use version 1. A complex with a presented
+term uses version 2 and records a graded presentation for each term. The
+Macaulay2 loader reads both versions and checks the parent model, internal
+grading, compatibility of each differential with the module relations, and
+composition of consecutive differentials.
 
 To save a model from Macaulay2, load `JSON` and write
 `"model.json" << toJSON k3ModelArtifact K << close`. Publish the JSON to get the

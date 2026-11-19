@@ -10,6 +10,7 @@ artifactFree = (R, basis) -> (
 artifactMatrixData = (K, f) -> (
     R := K#"ring";
     if ring f =!= R then error "matrix belongs to a different model ring";
+    if f.?RingMap then error "matrix must be linear over the model ring";
     if not isHomogeneous f then error "matrix must be homogeneous";
     A := ring first K#"equations";
     sd := artifactBasis source f;
@@ -41,23 +42,39 @@ requireArtifactRing = (K, M, digest) -> (
     artifactParent(K, digest);
     )
 
+artifactPresentationFields = {"source", "target", "matrix"}
+
+artifactPresentationData = (K, M) -> (
+    f := presentation M;
+    hashTable {"source" => artifactBasis source f,
+        "target" => artifactBasis target f, "matrix" => artifactMatrixData(K, f)
+        }
+    )
+
+artifactPresentedModule = (K, info) -> (
+    R := K#"ring";
+    F := artifactFree(R, info#"source");
+    G := artifactFree(R, info#"target");
+    coker artifactMatrix(K, F, G, info#"matrix")
+    )
+
 gradedPresentationArtifact = method()
 gradedPresentationArtifact(K3Surface, Module, String) := HashTable => (K, M, digest) -> (
     requireArtifactRing(K, M, digest);
-    f := presentation M;
-    artifactEnvelope("graded-presentation", hashTable {
-        "model_digest" => digest, "source" => artifactBasis source f,
-        "target" => artifactBasis target f, "matrix" => artifactMatrixData(K, f)
-        })
+    info := append(pairs artifactPresentationData(K, M), "model_digest" => digest);
+    artifactEnvelope(1, "graded-presentation", hashTable info)
     )
 
 loadGradedPresentation = method()
 loadGradedPresentation(K3Surface, HashTable) := Module => (K, data) -> (
-    info := artifactPayload(data, "graded-presentation", {"model_digest", "source", "target", "matrix"});
-    R := artifactParent(K, info#"model_digest");
-    F := artifactFree(R, info#"source");
-    G := artifactFree(R, info#"target");
-    coker artifactMatrix(K, F, G, info#"matrix")
+    info := artifactPayload(data, "graded-presentation", prepend("model_digest", artifactPresentationFields), {1});
+    artifactParent(K, info#"model_digest");
+    artifactPresentedModule(K, info)
+    )
+
+requireArtifactDifferential = f -> (
+    if not isWellDefined f then error "differential must descend through the module relations";
+    f
     )
 
 gradedComplexArtifact = method()
@@ -65,26 +82,31 @@ gradedComplexArtifact(K3Surface, Complex, String) := HashTable => (K, C, digest)
     requireArtifactRing(K, C, digest);
     (lo, hi) := concentration C;
     if not instance(lo, ZZ) or not instance(hi, ZZ) or lo > hi then error "expected a nonempty bounded complex";
-    indices := toList(lo..hi);
-    if not all(indices, i -> isFreeModule C_i) then error "version 1 requires free complex terms";
     if not isWellDefined C then error "complex differentials must compose to zero";
-    artifactEnvelope("graded-complex", hashTable {
-        "model_digest" => digest, "base" => lo, "terms" => apply(indices, i -> artifactBasis C_i),
-        "differentials" => apply(toList(lo+1..hi), i -> artifactMatrixData(K, (C.dd)_i))
+    modules := apply(toList(lo..hi), i -> C_i);
+    free := all(modules, isFreeModule);
+    terms := if free then apply(modules, artifactBasis) else apply(modules, M -> artifactPresentationData(K, M));
+    diffs := apply(toList(lo+1..hi), i -> (
+        f := requireArtifactDifferential ((C.dd)_i);
+        artifactMatrixData(K, f)
+        ));
+    artifactEnvelope(if free then 1 else 2, "graded-complex", hashTable {
+        "model_digest" => digest, "base" => lo, "terms" => terms, "differentials" => diffs
         })
     )
 
 loadGradedComplex = method()
 loadGradedComplex(K3Surface, HashTable) := Complex => (K, data) -> (
-    info := artifactPayload(data, "graded-complex", {"model_digest", "base", "terms", "differentials"});
+    info := artifactPayload(data, "graded-complex", {"model_digest", "base", "terms", "differentials"}, {1, 2});
     R := artifactParent(K, info#"model_digest");
     lo := info#"base";
     if not instance(lo, ZZ) or not instance(info#"terms", List) or #info#"terms" == 0 then
         error "expected nonempty complex terms and integer base degree";
-    modules := apply(info#"terms", basis -> artifactFree(R, basis));
+    modules := if data#"version" === 1 then apply(info#"terms", basis -> artifactFree(R, basis))
+        else apply(info#"terms", term -> artifactPresentedModule(K, artifactFields(term, artifactPresentationFields)));
     diffs := info#"differentials";
     if not instance(diffs, List) or #diffs != #modules - 1 then error "wrong number of differentials";
-    maps := apply(#diffs, i -> artifactMatrix(K, modules#(i+1), modules#i, diffs#i));
+    maps := apply(#diffs, i -> requireArtifactDifferential artifactMatrix(K, modules#(i+1), modules#i, diffs#i));
     C := complex(if #maps == 0 then modules else maps, Base => lo);
     if not isWellDefined C then error "complex differentials must compose to zero";
     C

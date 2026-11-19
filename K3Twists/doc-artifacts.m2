@@ -18,12 +18,14 @@ doc ///
         encode and reconstruct exact mathematical data
     Description
         Text
-            Encode a model, graded presentation, or bounded complex of finite free modules as
+            Encode a model, graded presentation, or bounded complex of finitely presented modules as
             a versioned hash table. The JSON package can read and write these tables.
-            Version one uses exact prime-field coefficients and standard ordered coordinates.
-            It supports the K3 complete intersections and marked quartics of this package.
-            Complex indices are homological and all maps preserve the internal grading.
-            A complex currently requires free terms.
+            The data uses exact prime-field coefficients and standard ordered coordinates
+            for the K3 complete intersections and marked quartics of this package.
+            Free complexes use version 1. A complex with a presented term uses version 2
+            and stores a graded presentation for every term.
+            Complex indices are homological. The loader checks that differentials preserve
+            the internal grading, descend through the module relations, and compose to zero.
             Pass the verified SHA-256 digest of the stored model to @TO loadK3ModelArtifact@.
             The loaded model records this digest and supplies the same quotient ring for all
             reconstructed modules and complexes. The artifact store supplies and verifies the digest.
