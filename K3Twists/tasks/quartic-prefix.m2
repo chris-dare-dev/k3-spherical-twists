@@ -117,9 +117,9 @@ quarticSecondForwardFromCheckpoint = (K, forward, model) -> (
 runQuarticPrefix = t -> (
     action := t#"action";
     if action === "model" then (
-        (modelSeconds, model) := timed(() -> k3ModelArtifact surfaceFromSpec t#"surface");
-        return prefixResult(hashTable {"family" => model#"payload"#"parameters"#"family"}, null, null,
-            "validated marked quartic", hashTable {}, hashTable {"model" => model}, modelSeconds)
+        (modelSeconds, modelData) := timed(() -> k3ModelArtifact surfaceFromSpec t#"surface");
+        return prefixResult(hashTable {"family" => modelData#"payload"#"parameters"#"family"}, null, null,
+            "validated marked quartic", hashTable {}, hashTable {"model" => modelData}, modelSeconds)
         );
     if not t#?"inputs" or not t#"inputs"#?"surface" then error "quartic prefix requires the surface input";
     modelInput := t#"inputs"#"surface";
