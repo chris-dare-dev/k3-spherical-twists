@@ -10,6 +10,8 @@ task, and its keys say how the task behaves:
     signal       end by this signal instead of printing a result
     silent       exit with status 0 without printing a result
     value, predicted   reported in the result; "mismatch" when both are given and differ
+    read_source  read K3Twists.m2 relative to this script and the working directory
+    edit_source  replace K3Twists.m2 in the named checkout; commit when commit_source is set
 
 With `--journal FILE` every run appends "start <pid> <time> <id>" and "end <pid> <time> <id>" lines.
 """
@@ -19,8 +21,10 @@ from __future__ import annotations
 import json
 import os
 import signal
+import subprocess
 import sys
 import time
+from pathlib import Path
 
 
 def expand(description: dict) -> None:
@@ -60,6 +64,19 @@ def run(task: dict, journal: str | None) -> None:
     if task.get("silent"):
         return
     value = task.get("value", len(held))
+    if task.get("read_source"):
+        value = [
+            (Path(__file__).resolve().parents[1] / "K3Twists.m2").read_text(),
+            Path("K3Twists.m2").read_text(),
+        ]
+    if "edit_source" in task:
+        checkout = Path(task["edit_source"])
+        (checkout / "K3Twists.m2").write_text("after capture\n")
+        if task.get("commit_source"):
+            subprocess.run(
+                ["git", "-C", str(checkout), "commit", "-am", "change the source during a run"],
+                check=True,
+            )
     predicted = task.get("predicted")
     agrees = None if predicted is None else value == predicted
     if task.get("unsupported"):
