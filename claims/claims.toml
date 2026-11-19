@@ -199,8 +199,19 @@ batches = ["resumable-quartic-hypercohomology"]
 id = "inverse-cancellation"
 table = "twists"
 cells = [
-  '''The word {T_O, T_O⁻¹} applied to O(−H) is realized, and the comparison with O(−H) is an isomorphism on sheaf homology''',
-  '''Serre pairing of rank 4''',
+  '''The word {T_O, T_O⁻¹} applied to O(−H) is realized from the stored cone of T_O(O(−H)) and its two stored maps, and the result is quasi-isomorphic to O(−H) as a complex of sheaves''',
+  '''a quasi-isomorphism of sheaves; the Serre pairing has rank 4''',
+  '''the quartic with a line; `batches/resumable-quartic-inverse.toml`''',
+]
+tasks = ["quartic_prefix/model", "quartic_prefix/realize", "quartic_prefix/inverse"]
+batches = ["resumable-quartic-inverse"]
+
+[[claim]]
+id = "second-forward-twist"
+table = "twists"
+cells = [
+  '''The word {T_O, T_O} applied to O(−H) is realized as a second cone, with sheaf homology O(−H), O⁴, O⁴ in degrees 0, 1, 2 and the Mukai class of O(−H)''',
+  '''four evaluation classes in degree 3''',
   '''the quartic with a line''',
 ]
 tasks = []

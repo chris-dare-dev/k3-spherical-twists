@@ -2306,7 +2306,7 @@ The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups
 |---|---|---|---|---|
 | `quartic_prefix/cohomology` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.03 s | dimensions ((-1, 0), (0, 0), (1, 4)), nonzero_dimensions ((1, 4)) |
 | `quartic_prefix/ext` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.412 s | dimensions ((1, 4), (2, 0), (3, 0)), nonzero_dimensions ((1, 4)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic |  | ok, 2026-11-19, `8014a21`, 0.708 s | class (-3, (1, 0), -1), shift 1 |
 
 <a name="claim-twist-of-the-point"></a>
@@ -2319,7 +2319,7 @@ The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups 
 |---|---|---|---|---|
 | `quartic_prefix/cohomology` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.031 s | dimensions ((-1, 0), (0, 0), (1, 1)), nonzero_dimensions ((1, 1)) |
 | `quartic_prefix/ext` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.111 s | dimensions ((1, 1), (2, 0), (3, 0)), nonzero_dimensions ((1, 1)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |
 
 <a name="claim-twist-of-the-dual-hyperplane-bundle"></a>
@@ -2330,6 +2330,18 @@ The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/hypercohomology` | resumable-quartic-hypercohomology | nonzero_dimensions ((3, 4)) | ok, 2026-11-19, `8014a21`, 1.715 s | dimensions ((-1, 0), (0, 0), (1, 0), (2, 0), (3, 4)), nonzero_dimensions ((3, 4)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/hypercohomology` | resumable-quartic-hypercohomology, resumable-quartic-inverse | nonzero_dimensions ((3, 4)) | ok, 2026-11-19, `8014a21`, 1.715 s | dimensions ((-1, 0), (0, 0), (1, 0), (2, 0), (3, 4)), nonzero_dimensions ((3, 4)) |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-hypercohomology |  | ok, 2026-11-19, `8014a21`, 0.749 s | class (-3, (-1, 0), -1), shift 0 |
+
+<a name="claim-inverse-cancellation"></a>
+
+## inverse-cancellation
+
+The word {T_O, T_O⁻¹} applied to O(−H) is realized from the stored cone of T_O(O(−H)) and its two stored maps, and the result is quasi-isomorphic to O(−H) as a complex of sheaves
+
+| Task | Batches | Predicted | Record | Computed |
+|---|---|---|---|---|
+| `quartic_prefix/inverse` | resumable-quartic-inverse |  | not re-run |  |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 1.413 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic-inverse |  | not re-run |  |

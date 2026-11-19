@@ -139,14 +139,14 @@ quarticHigherEvaluation = (E, input, shift) -> (
             "sourceAugmentation" => augmentation, "traceCocycle" => homomorphism map(source next, source trace, ambient trace)})
     )
 
-quarticInverseCancellation = (E, input, shift) -> (
-    K := E#"surface";
+quarticInverseComparison = (K, C, u, aug, shift) -> (
     R := K#"ring";
-    forward := realizeTwistImage E#"prefix";
-    u := forward#"chainMap";
-    C := if shift == 0 then forward#"complex" else cone u;
     D := source u;
-    aug := forward#"sourceAugmentation";
+    (dlo, dhi) := concentration D;
+    if target u != complex R^{-1} or source aug != D or target aug != complex(R^4, Base => -2)
+        or not isComplexMorphism aug or not isIsomorphism sheaf homology(-2, aug)
+        or not all(dlo..dhi, i -> i == -2 or sheaf HH_i D == 0) then
+        error "inverse cancellation requires the quartic evaluation and its sheaf quasi-isomorphic augmentation";
     coevaluation := (aug[-1] * canonicalMap(D[-1], C))[-shift];
     inclusion := (canonicalMap(C, target u))[-shift];
     if not isComplexMorphism coevaluation or coevaluation * inclusion != 0 then
@@ -162,16 +162,88 @@ quarticInverseCancellation = (E, input, shift) -> (
     B := (cone coevaluation)[1];
     L := source inclusion;
     comparison := map(B, L, hashTable {shift => map(B_shift, L_shift, inclusion_shift)}, Degree => 0);
-    if not isComplexMorphism comparison then error "invalid comparison with the line bundle";
+    (lo, hi) := concentration B;
+    if not isComplexMorphism comparison or not isIsomorphism sheaf homology(shift, comparison)
+        or not all(lo..hi, i -> i == shift or sheaf HH_i B == 0) then
+        error "the inverse comparison must be a sheaf quasi-isomorphism with the line bundle";
+    (B, coevaluation, comparison, pairingRank)
+    )
 
-    -- The cone projection has L as its termwise kernel. Composing it with
-    -- the validated sheaf quasi-isomorphism aug preserves its homotopy fiber.
+quarticInverseCancellation = (E, input, shift) -> (
+    forward := realizeTwistImage E#"prefix";
+    u := forward#"chainMap";
+    C := if shift == 0 then forward#"complex" else cone u;
+    (B, coevaluation, comparison, pairingRank) :=
+        quarticInverseComparison(E#"surface", C, u, forward#"sourceAugmentation", shift);
     realizedDerived(E, shiftObject(input, shift), B, "quartic-degree-two-inverse-cancellation",
         {"certified O generator", "rank-four Serre pairing for the coevaluation",
             "termwise cone projection and sheaf-quasi-isomorphic augmentation"},
         hashTable {"directions" => {1,-1}, "shift" => shift, "chainMap" => coevaluation,
             "comparison" => comparison, "serrePairingRank" => pairingRank, "forward" => forward,
             "derivedHomDegrees" => {{shift - 1,4}}})
+    )
+
+quarticSecondForwardEvaluation = (E, input, shift) -> (
+    K := E#"surface";
+    R := K#"ring";
+    forward := realizeTwistImage E#"prefix";
+    firstEvaluation := forward#"chainMap";
+    C := if shift == 0 then forward#"complex" else cone firstEvaluation;
+
+    -- The same acyclic Koszul cover used for derived global sections also
+    -- represents O after sheafification. Lift a basis modulo coboundaries
+    -- from its degree-zero Hom strand to graded maps of complexes.
+    (cover, augmentationMatrix) := quarticSectionsCover(K, C);
+    H := Hom(cover, C);
+    (sections, strands) := quarticSectionStrands H;
+    (slo, shi) := concentration sections;
+    dimensions := select(apply(toList(slo..shi),
+        i -> {-i, rank HH_i sections}), row -> row#1 != 0);
+    if dimensions =!= {{3,4}} then error "expected four classes in hypercohomological degree three";
+    classes := HH_(-3) sections;
+    basisModule := prune classes;
+    frame := ambient basisModule.cache.pruningMap;
+    basisRank := numColumns frame;
+    if basisRank != 4 then error "expected a basis modulo the coboundaries";
+    cochains := strands#(-3) * sub(frame, R);
+    if (H.dd)_(-3) * cochains != 0 then error "the evaluation classes must be cocycles";
+    shiftedCover := cover[3];
+    components' := apply(4, j -> (
+        f := homomorphism(-3, cochains_{j}, H);
+        map(C, shiftedCover, i -> f_(i+3))
+        ));
+    D := directSum toList(4 : shiftedCover);
+    u := map(C, D, {components'});
+    if not isComplexMorphism u or not isHomogeneous u then error "invalid degree-three evaluation";
+    scan(4, j -> (
+        component := u * D_[j];
+        f := map(C, cover, i -> component_(i-3), Degree => -3);
+        if (homomorphism' f)_0 != cochains_{j} then error "the evaluation must represent the chosen cocycles"
+        ));
+
+    aug := map(complex(R^1, Base => -3), shiftedCover, hashTable {-3 => augmentationMatrix});
+    sourceAugmentation := directSum toList(4 : aug);
+    B := cone u;
+    (lo, hi) := concentration B;
+    fromLine := canonicalMap(B, C) * canonicalMap(C, target firstEvaluation);
+    firstProjection := (forward#"sourceAugmentation")[-1] * canonicalMap((source firstEvaluation)[-1], C);
+    secondProjection := sourceAugmentation[-1] * canonicalMap((source u)[-1], B);
+    if not isIsomorphism sheaf homology(0, fromLine)
+        or not isIsomorphism sheaf homology(-1, firstProjection)
+        or not isIsomorphism sheaf homology(-1, canonicalMap(B, C))
+        or not isIsomorphism sheaf homology(-2, secondProjection)
+        or not all(lo..hi, i -> member(i, {-2,-1,0}) or sheaf HH_i B == 0) then
+        error "unexpected sheaf homology of the second twist";
+    (dlo, dhi) := concentration source u;
+    if not isIsomorphism sheaf homology(-3, sourceAugmentation)
+        or not all(dlo..dhi, i -> i == -3 or sheaf HH_i (source u) == 0) then
+        error "the Koszul cover must resolve O in degree three on the quartic";
+
+    realizedDerived(E, shiftObject(input, shift), B[-shift], "quartic-degree-three-evaluation",
+        {"certified O generator", "degree-zero Koszul Hom strand", "four degree-three cocycles modulo coboundaries"},
+        hashTable {"directions" => {1,1}, "shift" => shift, "chainMap" => u, "forward" => forward,
+            "derivedHomDegrees" => dimensions, "sourceAugmentation" => sourceAugmentation,
+            "evaluationClassRank" => basisRank})
     )
 
 -- Split the identity summand in the derived category. This comparison is independent of a lift
@@ -215,10 +287,11 @@ realizeQuarticDerived = E -> (
     D := lineCoordinates input;
     zero := apply(H, i -> 0);
     negativeHyperplane := apply(H, h -> -h);
-    if E#"length" == 2 and signedStep#"direction" == -1 and generator === zero and D === negativeHyperplane then (
+    if E#"length" == 2 and generator === zero and D === negativeHyperplane then (
         firstStep := E#"prefix"#"step";
         if firstStep#"direction" == 1 and certifiedStep firstStep and lineCoordinates stepObject firstStep === zero
-            then return quarticInverseCancellation(E, input, shift);
+            then return (if signedStep#"direction" == 1 then quarticSecondForwardEvaluation(E, input, shift)
+                else quarticInverseCancellation(E, input, shift));
         );
     if E#"length" != 1 then return null;
     if signedStep#"direction" == 1 and generator === zero and D === negativeHyperplane then

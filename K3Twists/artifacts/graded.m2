@@ -111,3 +111,64 @@ loadGradedComplex(K3Surface, HashTable) := Complex => (K, data) -> (
     if not isWellDefined C then error "complex differentials must compose to zero";
     C
     )
+
+artifactChainMapFields = {"model_digest", "source_digest", "target_digest", "components"}
+
+artifactMapIndices = (D, E) -> (
+    (dlo, dhi) := concentration D;
+    (elo, ehi) := concentration E;
+    if not all({dlo, dhi, elo, ehi}, i -> instance(i, ZZ)) or dlo > dhi or elo > ehi then
+        error "chain map endpoints must be nonempty bounded complexes";
+    -- Outside the intersection at least one term is zero.
+    lo := max(dlo, elo);
+    hi := min(dhi, ehi);
+    if lo > hi then {} else toList(lo..hi)
+    )
+
+requireArtifactChainMap = u -> (
+    if not isWellDefined u or not isComplexMorphism u then
+        error "expected a well-defined degree-zero chain map";
+    u
+    )
+
+artifactChainMapData = (K, u, model) -> (
+    D := source u;
+    E := target u;
+    requireArtifactRing(K, D, model);
+    requireArtifactRing(K, E, model);
+    requireArtifactChainMap u;
+    indices := artifactMapIndices(D, E);
+    {"model_digest" => model,
+        "components" => apply(indices, i -> artifactMatrixData(K, requireArtifactDifferential u_i))}
+    )
+
+gradedChainMapArtifact = method()
+gradedChainMapArtifact(K3Surface, ComplexMap, String, Sequence) := HashTable => (K, u, model, endpoints) -> (
+    (src, dst) := endpoints;
+    artifactDigest src;
+    artifactDigest dst;
+    artifactEnvelope(1, "graded-chain-map", hashTable (artifactChainMapData(K, u, model) |
+        {"source_digest" => src, "target_digest" => dst}))
+    )
+
+-- A task can refer to sibling outputs before the artifact store assigns their digests.
+stagedGradedChainMap = (K, u, model, src, dst) ->
+    artifactEnvelope(1, "graded-chain-map", hashTable (artifactChainMapData(K, u, model) |
+        {"source_output" => src, "target_output" => dst}))
+
+loadGradedChainMap = method()
+loadGradedChainMap(K3Surface, HashTable, Sequence, Sequence) := ComplexMap => (K, data, src, dst) -> (
+    info := artifactPayload(data, "graded-chain-map", artifactChainMapFields, {1});
+    (D, sourceDigest) := src;
+    (E, targetDigest) := dst;
+    if artifactDigest sourceDigest =!= info#"source_digest" or artifactDigest targetDigest =!= info#"target_digest" then
+        error "chain map endpoint digest mismatch";
+    model := info#"model_digest";
+    requireArtifactRing(K, D, model);
+    requireArtifactRing(K, E, model);
+    indices := artifactMapIndices(D, E);
+    matrices := info#"components";
+    if not instance(matrices, List) or #matrices != #indices then error "wrong number of chain map components";
+    maps := hashTable apply(indices, matrices, (i, rows) -> i => requireArtifactDifferential artifactMatrix(K, D_i, E_i, rows));
+    requireArtifactChainMap map(E, D, maps, Degree => 0)
+    )

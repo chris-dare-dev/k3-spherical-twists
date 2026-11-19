@@ -83,10 +83,10 @@ class Registry(unittest.TestCase):
 
     def test_the_dependent_batches_share_ids_and_not_computations(self) -> None:
         tasks = [task for task in claims.batch_tasks() if task["id"] == "quartic_prefix/realize"]
-        self.assertEqual(len(tasks), 3)
-        self.assertEqual(sorted(len(task["batches"]) for task in tasks), [1, 1, 1])
+        self.assertGreater(len(tasks), 1)
+        self.assertEqual({len(task["batches"]) for task in tasks}, {1})
         (model,) = [task for task in claims.batch_tasks() if task["id"] == "quartic_prefix/model"]
-        self.assertEqual(len(model["batches"]), 3)
+        self.assertEqual(sorted(model["batches"]), sorted(task["batches"][0] for task in tasks))
 
     def test_the_committed_tables_are_what_the_generator_writes(self) -> None:
         stale = [

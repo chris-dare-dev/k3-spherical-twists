@@ -127,3 +127,36 @@ TEST ///
         assert(result#"representative" === input and mukaiClass result === mukaiClass input);
         ));
 ///
+
+TEST ///
+    needsPackage "Complexes";
+    K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+    S = sphericalObject structureObject K;
+    W = twistWord {twistStep(S, 1), twistStep(S, 1)};
+    Lref = catalogueObject(K, "O(-1H)");
+    scan({0,1}, shift -> (
+        input := shiftObject(Lref, shift);
+        result := realizeTwistImage(W, input);
+        assert(result#"status" === "realized" and result#"strategy" === "quartic-degree-three-evaluation");
+        assert(result#"directions" === {1,1} and result#"shift" === shift);
+        assert(result#"forward"#"strategy" === "quartic-degree-two-evaluation");
+        assert(result#"derivedHomDegrees" === {{3,4}} and result#"evaluationClassRank" === 4);
+        u := result#"chainMap";
+        assert(isComplexMorphism u and isHomogeneous u and isWellDefined u);
+        assert(isComplexMorphism result#"sourceAugmentation");
+        C := result#"complex";
+        assert(concentration C === (shift-2,shift+1) and isWellDefined C);
+        O := OO_(K#"variety")^1;
+        assert(realizedHomology(result, -shift) == O(-1));
+        firstCone := target u;
+        firstEval := result#"forward"#"chainMap";
+        firstAug := result#"forward"#"sourceAugmentation";
+        secondAug := result#"sourceAugmentation";
+        assert(sheaf (target firstAug)_(-2) == O^4 and sheaf (target secondAug)_(-3) == O^4);
+        assert(isIsomorphism sheaf homology(-1, firstAug[-1] * canonicalMap((source firstEval)[-1], firstCone)));
+        assert(isIsomorphism sheaf homology(-1, canonicalMap(cone u, firstCone)));
+        assert(isIsomorphism sheaf homology(-2, secondAug[-1] * canonicalMap((source u)[-1], cone u)));
+        assert(realizedHomology(result, -1-shift) == 0);
+        assert(result#"representative" === input and mukaiClass result === mukaiClass input);
+        ));
+///

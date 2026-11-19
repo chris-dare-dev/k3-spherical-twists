@@ -2,7 +2,7 @@
 -- forms have no common zero on Proj, so the augmented resolution is locally
 -- split. A positive power beyond the term bounds makes each twist acyclic
 -- and identifies its global sections with the corresponding graded piece.
-quarticSectionsComplex = (K, C) -> (
+quarticSectionsCover = (K, C) -> (
     R := K#"ring";
     P := ring first K#"equations";
     quotientMap := map(R, P, gens R);
@@ -17,21 +17,26 @@ quarticSectionsComplex = (K, C) -> (
     n := 1 + max prepend(0, bounds);
     forms := quarticCoverForms K;
     powers := map(R^1, R^{#forms : -n}, {apply(forms, x -> x^n)});
-    cover := naiveTruncation(koszulComplex powers, 1, #forms)[1];
-    D := Hom(cover, C);
+    koszul := koszulComplex powers;
+    cover := naiveTruncation(koszul, 1, #forms)[1];
+    (cover, (koszul.dd)_1)
+    )
+
+quarticSectionStrands = D -> (
     (a, b) := concentration D;
-    kk := K#"field";
-    strands := apply(toList(a..b), i -> basis(0, D_i));
-    complex hashTable for i from a+1 to b list (
+    kk := coefficientRing ring D;
+    strands := hashTable apply(toList(a..b), i -> i => basis(0, D_i));
+    sections := complex hashTable for i from a+1 to b list (
         f := (D.dd)_i;
-        left := strands#(i-a-1);
-        right := strands#(i-a);
+        left := strands#(i-1);
+        right := strands#i;
         linear := if f == 0 then map(kk^(numColumns left), kk^(numColumns right), 0)
             else if isFreeModule target f and isFreeModule source f then
                 sub(last coefficients(matrix(f * right), Monomials => matrix left), kk)
             else part(0, f);
         i => linear
-        )
+        );
+    (sections, strands)
     )
 
 hypercohomologyObservation = method(Options => {Degrees => null})
@@ -46,7 +51,8 @@ hypercohomologyObservation(K3Surface, Complex) := DegreeObservation => opts -> (
         f := (C.dd)_i;
         isHomogeneous f and degree f === {0} and isWellDefined f
         )) then error "expected degree-zero differentials respecting the module relations";
-    G := quarticSectionsComplex(K, C);
+    cover := first quarticSectionsCover(K, C);
+    G := first quarticSectionStrands Hom(cover, C);
     -- Keep the sparse homology calculation in M2. Degree i is homological -i.
     measureDegrees("hypercohomology", {C}, "degree-zero Koszul total complex", {-hi, 2 - lo},
         opts.Degrees, i -> rank HH_(-i) G)

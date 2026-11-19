@@ -60,7 +60,7 @@ Batch: `marked-quartics`.
 
 ## Twists realized as complexes
 
-Each of the first three rows is one dependent batch: a task builds the marked quartic, a task realizes the cone and stores it, and the remaining tasks load both and compute. The predicted dimensions are written in the batch file with the hypotheses they rest on. The three batches use the same task ids for different objects; [claims/RECORDS.md](claims/RECORDS.md) names the batch of each row.
+Each of the first four rows is one dependent batch: a task builds the marked quartic, a task realizes the cone and stores it, and the remaining tasks load both and compute. The predicted dimensions are written in the batch file with the hypotheses they rest on. The fourth batch also stores the two maps of the cone, and its last task rebuilds the cone from them before it applies the inverse twist. The four batches use the same task ids for different objects; [claims/RECORDS.md](claims/RECORDS.md) names the batch of each row.
 
 <!-- BEGIN GENERATED twists: tools/claims.py tables -->
 | Claim | Predicted | Where | Run under the scheduler |
@@ -68,7 +68,8 @@ Each of the first three rows is one dependent batch: a task builds the marked qu
 | The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups to O | cohomology (0, 0, 4) in degrees −1 to 1; Ext to O (4, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic.toml` | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-hyperplane-bundle) |
 | The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups to O | cohomology (0, 0, 1) in degrees −1 to 1; Ext to O (1, 0, 0) in degrees 1 to 3 | the quartic with a line; `batches/resumable-quartic-point.toml` | all 4 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-point) |
 | The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only | dimension 4 in degree 3, zero in degrees −1 to 2 | the quartic with a line; `batches/resumable-quartic-hypercohomology.toml` | all 3 tasks **ok**; 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-twist-of-the-dual-hyperplane-bundle) |
-| The word {T_O, T_O⁻¹} applied to O(−H) is realized, and the comparison with O(−H) is an isomorphism on sheaf homology | Serre pairing of rank 4 | the quartic with a line | no task: a test of the package (`K3Twists/tests-derived-quartic.m2`, run by `make test`); it leaves no record |
+| The word {T_O, T_O⁻¹} applied to O(−H) is realized from the stored cone of T_O(O(−H)) and its two stored maps, and the result is quasi-isomorphic to O(−H) as a complex of sheaves | a quasi-isomorphism of sheaves; the Serre pairing has rank 4 | the quartic with a line; `batches/resumable-quartic-inverse.toml` | tasks: ok 1; not re-run 2 (of 3); 2026-11-19, `8014a21`; [tasks](claims/RECORDS.md#claim-inverse-cancellation) |
+| The word {T_O, T_O} applied to O(−H) is realized as a second cone, with sheaf homology O(−H), O⁴, O⁴ in degrees 0, 1, 2 and the Mukai class of O(−H) | four evaluation classes in degree 3 | the quartic with a line | no task: a test of the package (`K3Twists/tests-derived-quartic.m2`, run by `make test`); it leaves no record |
 | The image of O_x under the word {T_O, T_{O(H)}⁻¹} has Mukai coordinates (2, 3, 9) | (2, 3, 9) | the quartic | no task: a test of the package (`K3Twists/tests-words.m2`, run by `make test`); it leaves no record |
 | On the Fermat quintic threefold over ZZ/101: hⁱ(O) = (1, 0, 0, 1), and the twist of the marked point about O is realized with numerical class (−1, 1) | (1, 0, 0, 1); (−1, 1) | the quintic threefold | no task: a test of the package (`K3Twists/tests-quintic.m2`, run by `make test`); it leaves no record |
 <!-- END GENERATED twists -->
@@ -79,6 +80,6 @@ Each of the first three rows is one dependent batch: a task builds the marked qu
 - **Other fields, other seeds.** Every task of the batch files uses the field with 32003 elements and seed 1. The Picard rank of the surfaces is not determined; the numbers compared do not depend on it.
 - **The dimensions of Ext for a pair.** Only the Euler characteristic of a pair is predicted.
 - **Pairs of large rank.** The time of a pair grows quickly with the ranks of the two sheaves; `batches/ext-table.toml` gives a pair between a quarter of an hour and four hours, by the rank of the sheaf Hom(E, F), and a pair that needs more ends `timeout`. The table of pairs says how many of its tasks have a record.
-- **Longer words.** The realized complexes are the three twists above and the word {T_O, T_O⁻¹}. Images of longer words are computed as Mukai classes only.
+- **Longer words.** The realized complexes are the three twists above and the words {T_O, T_O⁻¹} and {T_O, T_O} on O(−H). Images of longer words are computed as Mukai classes only.
 - **The last three rows of the table of twists.** They are tests of the package, run by `make test`; a test passes or fails and leaves no record.
 - **The synthetic tasks.** `batches/limits-demo.toml` has two tasks that are stopped on purpose, one at its time limit and one at its memory limit. They show what such records look like, and they count for no claim.

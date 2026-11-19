@@ -135,6 +135,55 @@ class ArtifactRegistry(unittest.TestCase):
             with self.subTest(problem=problem), self.assertRaisesRegex(ArtifactError, problem):
                 self.store.output(reference, "surface", kind)
 
+    def test_chain_map_requires_verified_complex_endpoints_over_the_same_model(self) -> None:
+        model = self.store.publish(MODEL, "model")
+        other = self.store.publish(MODEL | {"payload": MODEL["payload"] | {"coordinates": ["x"]}}, "model")
+        complex_data = {
+            "version": 1,
+            "kind": "graded-complex",
+            "payload": {"model_digest": model, "base": 0, "terms": [[0]], "differentials": []},
+        }
+        source = self.store.publish(complex_data, "source")
+        target = self.store.publish(
+            complex_data | {"payload": complex_data["payload"] | {"base": 1}}, "target"
+        )
+        wrong_model = self.store.publish(
+            complex_data | {"payload": complex_data["payload"] | {"model_digest": other}}, "target"
+        )
+        info = {"model_digest": model, "source_digest": source, "target_digest": target, "components": []}
+        chain_map = {"version": 1, "kind": "graded-chain-map", "payload": info}
+        digest = self.store.publish(chain_map, "map")
+        self.assertEqual(self.store.read(digest), body(chain_map))
+        for bad, message in [
+            ("", "expected a lowercase SHA-256 digest"),
+            ("f" * 64, "not registered"),
+            (model, "must name a graded complex"),
+            (wrong_model, "must name a graded complex"),
+        ]:
+            with self.subTest(endpoint=bad), self.assertRaisesRegex(ArtifactError, message):
+                self.store.publish(chain_map | {"payload": info | {"target_digest": bad}}, "invalid")
+        staged = chain_map | {
+            "payload": {
+                "model_digest": model,
+                "source_output": "src",
+                "target_output": "dst",
+                "components": [],
+            }
+        }
+        declared = {"arrow": "graded-chain-map", "src": "graded-complex", "dst": "graded-complex"}
+        outputs = {
+            "arrow": staged,
+            "src": complex_data,
+            "dst": complex_data | {"payload": complex_data["payload"] | {"base": 1}},
+        }
+        self.assertEqual(self.store.publish_outputs(outputs, declared, "staged")["arrow"]["digest"], digest)
+        wrong = staged | {"payload": staged["payload"] | {"target_output": "arrow"}}
+        with self.assertRaisesRegex(ArtifactError, "must name a graded-complex sibling output"):
+            self.store.publish_outputs(outputs | {"arrow": wrong}, declared, "invalid")
+        (self.store.objects / f"{source}.json").write_bytes(b"damaged")
+        with self.assertRaisesRegex(ArtifactError, "failed digest verification"):
+            self.store.read(digest)
+
     def test_cli_publishes_and_reads_canonical_bytes(self) -> None:
         directory = self.store.database.parent
         raw = directory / "model.json"
@@ -161,28 +210,33 @@ class ArtifactRegistry(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("M2"), "Macaulay2 is not installed")
 class Macaulay2ArtifactRoundTrip(unittest.TestCase):
-    def test_marked_model_kernel_bundle_and_cones(self) -> None:
+    def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        directory = Path(temporary.name)
-        store = ArtifactStore(directory / "store")
+        self.directory = Path(temporary.name)
+        self.store = ArtifactStore(self.directory / "store")
 
-        def run_m2(name: str, code: str) -> None:
-            script = directory / f"{name}.m2"
-            script.write_text(
-                'path = prepend("./", path); needsPackage "K3Twists"; needsPackage "JSON"; '
-                'needsPackage "Complexes";\n'
-                f"outDir = {json.dumps(str(directory) + '/')};\n"
-                'emitData = (name, D) -> (outDir | name | ".json") << toJSON D << close;\n'
-                'readData = name -> fromJSON get(outDir | name | ".json");\n' + code,
-                encoding="utf-8",
-            )
-            finished = subprocess.run(
-                ["M2", "--script", str(script)], capture_output=True, text=True, timeout=40
-            )
-            self.assertEqual(finished.returncode, 0, finished.stdout + finished.stderr)
+    def run_m2(self, name: str, code: str) -> None:
+        script = self.directory / f"{name}.m2"
+        script.write_text(
+            'path = prepend("./", path); needsPackage "K3Twists"; needsPackage "JSON"; '
+            'needsPackage "Complexes";\n'
+            f"outDir = {json.dumps(str(self.directory) + '/')};\n"
+            'emitData = (name, D) -> (outDir | name | ".json") << toJSON D << close;\n'
+            'readData = name -> fromJSON get(outDir | name | ".json");\n' + code,
+            encoding="utf-8",
+        )
+        finished = subprocess.run(["M2", "--script", str(script)], capture_output=True, text=True, timeout=40)
+        self.assertEqual(finished.returncode, 0, finished.stdout + finished.stderr)
 
-        run_m2(
+    def register(self, name: str) -> str:
+        data = read_artifact_json((self.directory / f"raw-{name}.json").read_bytes())
+        digest = self.store.publish(data, f"compute-{name}")
+        (self.directory / f"{name}.json").write_bytes(self.store.read(digest))
+        return digest
+
+    def test_marked_model_kernel_bundle_and_cones(self) -> None:
+        self.run_m2(
             "write-model",
             """
             K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_conic"};
@@ -190,14 +244,8 @@ class Macaulay2ArtifactRoundTrip(unittest.TestCase):
             """,
         )
 
-        def register(name: str) -> str:
-            data = read_artifact_json((directory / f"raw-{name}.json").read_bytes())
-            digest = store.publish(data, f"compute-{name}")
-            (directory / f"{name}.json").write_bytes(store.read(digest))
-            return digest
-
-        model = register("model")
-        run_m2(
+        model = self.register("model")
+        self.run_m2(
             "write-presentation-and-complex",
             f"""
             portable = readData "model";
@@ -218,11 +266,11 @@ class Macaulay2ArtifactRoundTrip(unittest.TestCase):
             emitData("raw-point-cone", gradedComplexArtifact(K, P#"complex", "{model}"));
             """,
         )
-        register("presentation")
-        register("complex")
-        register("three-term")
-        register("point-cone")
-        run_m2(
+        self.register("presentation")
+        self.register("complex")
+        self.register("three-term")
+        self.register("point-cone")
+        self.run_m2(
             "reload",
             f"""
             K = loadK3ModelArtifact(readData "model", "{model}");
@@ -289,5 +337,97 @@ class Macaulay2ArtifactRoundTrip(unittest.TestCase):
             badDescent = editPayload(data, "terms", {{first termData, x0Term, last termData}});
             scan({{badDegree, badSquare, badDescent}}, bad ->
                 assert(try (loadGradedComplex(K, bad); false) else true));
+            """,
+        )
+
+    def test_quartic_evaluation_and_augmentation_round_trip(self) -> None:
+        self.run_m2(
+            "write-quartic",
+            """
+            K = realizeK3Surface k3Recipe hashTable {"family" => "quartic_with_line"};
+            emitData("raw-model", k3ModelArtifact K);
+            """,
+        )
+        model = self.register("model")
+        self.run_m2(
+            "write-endpoints",
+            f"""
+            K = loadK3ModelArtifact(readData "model", "{model}");
+            W = twistWord {{twistStep(sphericalObject structureObject K, 1)}};
+            F = realizeTwistImage(W, catalogueObject(K, "O(-1H)"));
+            u = F#"chainMap";
+            a = F#"sourceAugmentation";
+            assert(source u == source a);
+            emitData("raw-source", gradedComplexArtifact(K, source u, "{model}"));
+            emitData("raw-line", gradedComplexArtifact(K, target u, "{model}"));
+            emitData("raw-structure", gradedComplexArtifact(K, target a, "{model}"));
+            """,
+        )
+        src, line, structure = (self.register(name) for name in ("source", "line", "structure"))
+        self.run_m2(
+            "write-maps",
+            f"""
+            K = loadK3ModelArtifact(readData "model", "{model}");
+            W = twistWord {{twistStep(sphericalObject structureObject K, 1)}};
+            F = realizeTwistImage(W, catalogueObject(K, "O(-1H)"));
+            emitData("raw-evaluation", gradedChainMapArtifact(K, F#"chainMap",
+                "{model}", ("{src}", "{line}")));
+            emitData("raw-augmentation", gradedChainMapArtifact(K, F#"sourceAugmentation",
+                "{model}", ("{src}", "{structure}")));
+            """,
+        )
+        self.register("evaluation")
+        self.register("augmentation")
+        self.run_m2(
+            "reload-maps",
+            f"""
+            K = loadK3ModelArtifact(readData "model", "{model}");
+            D = loadGradedComplex(K, readData "source");
+            L = loadGradedComplex(K, readData "line");
+            O = loadGradedComplex(K, readData "structure");
+            U = readData "evaluation";
+            A = readData "augmentation";
+            u = loadGradedChainMap(K, U, (D, "{src}"), (L, "{line}"));
+            a = loadGradedChainMap(K, A, (D, "{src}"), (O, "{structure}"));
+            assert(source u === D and source a === D);
+            assert(target u === L and target a === O);
+            assert(all({{u,a}}, f -> isComplexMorphism f and isWellDefined f and isHomogeneous f));
+            assert(gradedChainMapArtifact(K, u, "{model}", ("{src}", "{line}")) === U);
+            assert(gradedChainMapArtifact(K, a, "{model}", ("{src}", "{structure}")) === A);
+            assert(concentration O === (-2,-2));
+            assert(isIsomorphism sheaf homology(-2, a));
+            assert(all({{-1,0}}, i -> sheaf HH_i D == 0));
+            C = cone u;
+            assert(isIsomorphism sheaf homology(0, canonicalMap(C, L)));
+            assert(isIsomorphism sheaf homology(-1, a[-1] * canonicalMap(D[-1], C)));
+            assert(try (loadGradedChainMap(K, U, (D, "{src}"), (O, "{structure}")); false) else true);
+            assert(try (loadGradedChainMap(K, U, (D, "{line}"), (L, "{line}")); false) else true);
+            editPayload = (envelope, key, item) -> merge(envelope, hashTable {{
+                "payload" => merge(envelope#"payload", hashTable {{key => item}}, (a,b) -> b)
+                }}, (a,b) -> b);
+            assert(try (loadGradedChainMap(K, editPayload(U, "components", {{}}),
+                (D, "{src}"), (L, "{line}")); false) else true);
+            assert(try (loadGradedChainMap(K, editPayload(U, "model_digest", "{line}"),
+                (D, "{src}"), (L, "{line}")); false) else true);
+
+            R = K#"ring";
+            P = complex module pointSheaf K;
+            G = complex R^1;
+            pointMap = map(P, G, hashTable {{0 => map(P_0, G_0, 1)}});
+            P = loadGradedComplex(K, gradedComplexArtifact(K, P, "{model}"));
+            assert(not isFreeModule P_0);
+            Q = gradedChainMapArtifact(K, pointMap, "{model}", ("{line}", "{structure}"));
+            q = loadGradedChainMap(K, Q, (G, "{line}"), (P, "{structure}"));
+            assert(isWellDefined q_0 and isComplexMorphism q and q_0_(0,0) == 1_R);
+            backwards = editPayload(editPayload(Q, "source_digest", "{structure}"),
+                "target_digest", "{line}");
+            assert(try (loadGradedChainMap(K, backwards, (P, "{structure}"), (G, "{line}")); false)
+                else true);
+
+            F = complex {{id_(R^1)}};
+            I = gradedChainMapArtifact(K, map(F, F, 1), "{model}", ("{line}", "{line}"));
+            matrices = I#"payload"#"components";
+            broken = editPayload(I, "components", {{{{{{{{}}}}}}, matrices#1}});
+            assert(try (loadGradedChainMap(K, broken, (F, "{line}"), (F, "{line}")); false) else true);
             """,
         )
