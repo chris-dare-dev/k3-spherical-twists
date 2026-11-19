@@ -1,0 +1,82 @@
+name = "resumable-quartic-mixed-point"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1800
+
+[limits]
+time_seconds = 100
+memory_mb = 800
+
+[[surfaces]]
+family = "quartic_with_line"
+seed = 1
+characteristic = 32003
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "model"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "realize"
+target = "O_x"
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "cohomology"
+[tasks.prediction]
+name = "point twist cohomology"
+version = "1"
+hypotheses = ["smooth quartic", "surjective point evaluation", "I_x[1]"]
+dimensions = [[-1, 0], [0, 0], [1, 1]]
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "ext"
+[tasks.prediction]
+name = "point twist Ext to O"
+version = "1"
+hypotheses = ["smooth quartic", "K3 Serre duality", "I_x[1]"]
+dimensions = [[1, 1], [2, 0], [3, 0]]
+
+[[tasks]]
+kind = "quartic_prefix"
+action = "mixed_point_inverse"
+
+[graph]
+version = 1
+
+[[graph.nodes]]
+id = "quartic_prefix/model"
+outputs = { model = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/realize"
+outputs = { cone = "graded-complex" }
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+
+[[graph.nodes]]
+id = "quartic_prefix/cohomology"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+
+[[graph.nodes]]
+id = "quartic_prefix/ext"
+inputs.surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+inputs.prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }
+
+[[graph.nodes]]
+id = "quartic_prefix/mixed_point_inverse"
+
+[graph.nodes.outputs]
+cone = "graded-complex"
+evaluation = "graded-chain-map"
+augmentation = "graded-chain-map"
+evaluation_source = "graded-complex"
+evaluation_target = "graded-complex"
+augmentation_target = "graded-complex"
+
+[graph.nodes.inputs]
+surface = { producer = "quartic_prefix/model", output = "model", kind = "k3-model" }
+prefix = { producer = "quartic_prefix/realize", output = "cone", kind = "graded-complex", model_input = "surface" }

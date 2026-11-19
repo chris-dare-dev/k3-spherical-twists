@@ -2306,7 +2306,7 @@ The cone that realizes T_O(O(H)) has the cohomology of M_H[1] and its Ext groups
 |---|---|---|---|---|
 | `quartic_prefix/cohomology` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.03 s | dimensions ((-1, 0), (0, 0), (1, 4)), nonzero_dimensions ((1, 4)) |
 | `quartic_prefix/ext` | resumable-quartic | nonzero_dimensions ((1, 4)) | ok, 2026-11-19, `8014a21`, 1.412 s | dimensions ((1, 4), (2, 0), (3, 0)), nonzero_dimensions ((1, 4)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic |  | ok, 2026-11-19, `8014a21`, 0.708 s | class (-3, (1, 0), -1), shift 1 |
 
 <a name="claim-twist-of-the-point"></a>
@@ -2317,10 +2317,10 @@ The cone that realizes T_O(O_x) has the cohomology of I_x[1] and its Ext groups 
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/cohomology` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.031 s | dimensions ((-1, 0), (0, 0), (1, 1)), nonzero_dimensions ((1, 1)) |
-| `quartic_prefix/ext` | resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.111 s | dimensions ((1, 1), (2, 0), (3, 0)), nonzero_dimensions ((1, 1)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
-| `quartic_prefix/realize` | resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |
+| `quartic_prefix/cohomology` | resumable-quartic-mixed-point, resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.031 s | dimensions ((-1, 0), (0, 0), (1, 1)), nonzero_dimensions ((1, 1)) |
+| `quartic_prefix/ext` | resumable-quartic-mixed-point, resumable-quartic-point | nonzero_dimensions ((1, 1)) | ok, 2026-11-19, `8014a21`, 1.111 s | dimensions ((1, 1), (2, 0), (3, 0)), nonzero_dimensions ((1, 1)) |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic-mixed-point, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |
 
 <a name="claim-twist-of-the-dual-hyperplane-bundle"></a>
 
@@ -2331,7 +2331,7 @@ The cone that realizes T_O(O(−H)) has hypercohomology in degree 3 only
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
 | `quartic_prefix/hypercohomology` | resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-second-forward | nonzero_dimensions ((3, 4)) | ok, 2026-11-19, `43ee811`, 2.319 s | dimensions ((-1, 0), (0, 0), (1, 0), (2, 0), (3, 4)), nonzero_dimensions ((3, 4)) |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-hypercohomology |  | ok, 2026-11-19, `8014a21`, 0.749 s | class (-3, (-1, 0), -1), shift 0 |
 
 <a name="claim-inverse-cancellation"></a>
@@ -2343,7 +2343,7 @@ The word {T_O, T_O⁻¹} applied to O(−H) is realized from the stored cone of 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
 | `quartic_prefix/inverse` | resumable-quartic-inverse, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 2.038 s | class (1, (-1, 0), 3), serre_pairing_rank 4, sheaf_quasi_isomorphism yes |
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-inverse, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 0.814 s | class (-3, (-1, 0), -1), shift 0 |
 
 <a name="claim-second-forward-twist"></a>
@@ -2354,6 +2354,18 @@ The word {T_O, T_O} applied to O(−H) is realized from the same stored cone and
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-inverse, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 0.814 s | class (-3, (-1, 0), -1), shift 0 |
 | `quartic_prefix/second_forward` | resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 2.202 s | class (1, (-1, 0), 3), derived_hom_degrees ((3, 4)), sheaf_homology ((0, O(-H)), (1, O^4), (2, O^4)) |
+
+<a name="claim-class-of-a-word"></a>
+
+## class-of-a-word
+
+The word {T_O, T_{O(H)}⁻¹} on O_x is realized from the stored point cone, via the comparison with I_x[1]
+
+| Task | Batches | Predicted | Record | Computed |
+|---|---|---|---|---|
+| `quartic_prefix/mixed_point_inverse` | resumable-quartic-mixed-point |  | not re-run |  |
+| `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
+| `quartic_prefix/realize` | resumable-quartic-mixed-point, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |

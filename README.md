@@ -356,6 +356,13 @@ the projection is four, which verifies the four Serre functionals on
 degree-three hypercohomology. The resulting comparison from `O(-H)` to the
 shifted inverse cone is a quasi-isomorphism after sheafification.
 
+The mixed word `{T_O, T_{O(H)}^-1}` on `O_x` uses the comparison from
+`I_x[1]` to the point evaluation cone. The coevaluation on a finite model
+of the point ideal uses four coordinate sections in degree zero and a
+nonzero Ext class in degree one. Explicit homology maps identify the
+mixed cone's sheaf homology with `O(H)` in degree −1 and
+`coker(I_x → O(H)^4)` in degree 0. Its Mukai class is `(2,3H,9)`.
+
 For a certified line bundle `S = O` or `O(H)`, `RHom(S,S)` is
 `RΓ(O)` with one-dimensional cohomology in degrees 0 and 2. Splitting
 a complex of vector spaces over the coefficient field gives summands
@@ -514,6 +521,11 @@ commands and a fresh ledger to study the marked point. Its realization selects
 `target = "O_x"` and publishes a version 2 cone because the point sheaf has a
 presented module term. The cohomology of `I_x[1]` is `(0,0,1)` in degrees −1
 through 1, and Ext to `O` is `(1,0,0)` in degrees 1 through 3.
+
+Use `batches/resumable-quartic-mixed-point.toml` to resume the mixed word
+from that same version 2 checkpoint. The inverse worker checks the comparison
+to `I_x[1]` and publishes the mixed cone, the coevaluation, and the
+comparison from its finite source back to the saved cone.
 
 Use `batches/resumable-quartic-hypercohomology.toml` to observe the entire
 reloaded `T_O(O(-H))` cone. The batch computes derived global sections using

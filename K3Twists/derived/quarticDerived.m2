@@ -254,6 +254,90 @@ quarticSecondForwardEvaluation = (E, input, shift, forward) -> (
             "sheafHomologyTypes" => {{-shift,"O(-H)"},{1-shift,"O^4"},{2-shift,"O^4"}}})
     )
 
+quarticMixedPointInverse = (E, C) -> (
+    K := E#"surface";
+    R := K#"ring";
+    H := R^{1};
+    G := R^{4:1};
+    Iref := catalogueObject(K, "I_x");
+    Href := lineBundleObject(K, K#"polarization");
+    if ring C =!= R or concentration C =!= (0,1) or C_1 != R^1
+        or C_0 != module pointSheaf K or not isWellDefined C or sheaf HH_0 C != 0 then
+        error "expected the marked point evaluation cone";
+    I := kernel (C.dd)_1;
+    if I != module pointIdealSheaf K then error "point cone has the wrong evaluation kernel";
+    pointComparison := map(C, complex(I, Base => 1), hashTable {1 => inducedMap(C_1, I)});
+    if not isComplexMorphism pointComparison or not isIsomorphism sheaf homology(1, pointComparison) then
+        error "the point ideal in degree -1 must resolve the saved cone after sheafification";
+
+    dimensions := extDims(sheaf I, sheaf H);
+    if dimensions =!= {4,1,0} then error "unexpected derived Hom from the point ideal to O(H)";
+    resolution := resolutionMap(complex I, LengthLimit => 2);
+    F := source resolution;
+    -- Hom into O(H) sends these free terms to positive twists, which
+    -- have no higher cohomology on the quartic. Their degree-zero Hom
+    -- strand therefore computes the sheaf Ext classes in degrees 0 and 1.
+    if not all(0..2, i -> isFreeModule F_i and all(degrees F_i, d -> first d >= 0)) then
+        error "expected acyclic Hom terms for the point ideal resolution";
+    -- Retain the first syzygies modulo the incoming boundaries so the
+    -- degree-one coevaluation descends on a bounded model of I.
+    D := complex(canonicalTruncation(F, 0, 1), Base => 0);
+    eps := map(complex I, D, hashTable {0 => resolution_0});
+    if not isComplexMorphism eps or not isIsomorphism sheaf homology(0, eps) or HH_1 D != 0 then
+        error "invalid finite model of the point ideal";
+
+    toRing := inducedMap(R^1, I);
+    coordinateCoevaluation := map(G, R^1, transpose vars R) * toRing;
+    previous := Hom(F.dd_1, H);
+    next := Hom(F.dd_2, H);
+    coordinates := fold((a,b) -> a | b, apply(gens R, x ->
+        homomorphism' map(H, F_0, x * toRing * resolution_0)));
+    if previous * coordinates != 0 or numColumns basis(0, image coordinates) != dimensions#0 then
+        error "the coordinate coevaluation does not give a basis in degree zero";
+    frame := basis(0, kernel next / image previous);
+    if numColumns frame != dimensions#1 then error "expected one degree-one class modulo coboundaries";
+    lift' := map(source next, source frame, ambient frame);
+    higher := map(H, D_1, homomorphism lift'_0);
+    cocycle := homomorphism' map(H, F_1, higher);
+    if not isHomogeneous higher or not isWellDefined higher or next * cocycle != 0
+        or previous * (cocycle // previous) == cocycle then
+        error "the degree-one coevaluation must descend and represent a nonzero Ext class";
+
+    u0 := map(complex G, D, hashTable {0 => coordinateCoevaluation * resolution_0});
+    u1 := map(complex(H, Base => 1), D, hashTable {1 => higher});
+    unshifted := u0 || u1;
+    u := unshifted[-1];
+    if not isComplexMorphism u or not isHomogeneous u then error "invalid shifted coevaluation";
+    sourceComparison := map(C, source u, hashTable {1 => pointComparison_1 * eps_0});
+    if not isComplexMorphism sourceComparison or not isIsomorphism sheaf homology(1, sourceComparison) then
+        error "invalid comparison to the forward cone";
+
+    -- The inverse takes the cone of the coevaluation and shifts it by [-1]
+    -- cohomologically, cancelling the shift of I_x[1].
+    inverseCone := cone u;
+    B := inverseCone[1];
+    includeH := (canonicalMap(inverseCone, target u) * (((target unshifted)_[1])[-1]))[1];
+    Q := coker coordinateCoevaluation;
+    projectQ := map(complex Q, B, hashTable {0 => map(Q, B_0, inducedMap(Q, G))});
+    if concentration B =!= (0,2) or not isComplexMorphism projectQ or not isComplexMorphism includeH
+        or not isIsomorphism sheaf homology(0, projectQ) or not isIsomorphism sheaf homology(1, includeH)
+        or sheaf HH_2 B != 0 then error "unexpected sheaf homology of the mixed point twist";
+
+    -- The two homology sheaves give [Q] - [O(H)] = 3[O(H)] - [I_x].
+    (hr, hc, hs) := classCoordinates mukaiClass Href;
+    (ir, ic, is') := classCoordinates mukaiClass Iref;
+    v := mukaiClass(3*hr-ir, divisorClass(K#"lattice", apply(hc, ic, (h,i) -> 3*h-i)), 3*hs-is');
+    representative := objectReference(K, "T_{O(H)}^-1(T_O(O_x))", v);
+    realizedDerived(E, representative, B, "quartic-point-inverse-coevaluation",
+        {"smooth quartic K3", "point evaluation with kernel I_x",
+            "coordinate sections and the nonzero degree-one Ext class modulo coboundaries"},
+        hashTable {"directions" => {1,-1}, "forwardShift" => 1, "chainMap" => u,
+            "sourceAugmentation" => sourceComparison, "pointComparison" => pointComparison,
+            "inclusion" => includeH, "projection" => projectQ,
+            "derivedHomDegrees" => {{0,4},{1,1}},
+            "sheafHomologyTypes" => {{-1,"O(H)"},{0,"coker(I_x -> O(H)^4)"}}})
+    )
+
 -- Split the identity summand in the derived category. This comparison is independent of a lift
 -- of the degree-two class. The surviving one-term complex represents the actual cone.
 quarticSelfEvaluation = E -> (
@@ -295,12 +379,17 @@ realizeQuarticDerived = E -> (
     D := lineCoordinates input;
     zero := apply(H, i -> 0);
     negativeHyperplane := apply(H, h -> -h);
-    if E#"length" == 2 and generator === zero and D === negativeHyperplane then (
+    if E#"length" == 2 then (
         firstStep := E#"prefix"#"step";
-        if firstStep#"direction" == 1 and certifiedStep firstStep and lineCoordinates stepObject firstStep === zero
-            then return (if signedStep#"direction" == 1 then
-                quarticSecondForwardEvaluation(E, input, shift, realizeTwistImage E#"prefix")
-                else quarticInverseCancellation(E, input, shift));
+        if firstStep#"direction" == 1 and certifiedStep firstStep and lineCoordinates stepObject firstStep === zero then (
+            if generator === zero and D === negativeHyperplane then
+                return (if signedStep#"direction" == 1 then
+                    quarticSecondForwardEvaluation(E, input, shift, realizeTwistImage E#"prefix")
+                    else quarticInverseCancellation(E, input, shift));
+            if signedStep#"direction" == -1 and generator === H and shift == 0
+                and input === catalogueObject(K, "O_x") then
+                return quarticMixedPointInverse(E, (realizeTwistImage E#"prefix")#"complex");
+            );
         );
     if E#"length" != 1 then return null;
     if signedStep#"direction" == 1 and generator === zero and D === negativeHyperplane then
