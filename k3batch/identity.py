@@ -30,43 +30,63 @@ def fingerprint(value: Any) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
-def implementation_fingerprint(
-    runner: tuple[str, ...], versions: dict[str, Any], repository: Path = REPOSITORY
-) -> str:
-    """Fingerprint the local implementations used to expand and execute tasks."""
+def implementation_files(
+    runner: tuple[str, ...], repository: Path
+) -> tuple[Path, dict[str, dict[str, Path]]]:
+    """Find the local source and runner files. Keys describe their original locations."""
     sources = [
         repository / "K3Twists.m2",
         *(repository / "K3Twists").rglob("*.m2"),
         *(repository / "runners").rglob("*.m2"),
         *(repository / "k3batch").rglob("*.py"),
     ]
+    if not runner:
+        raise RunnerError("the runner command is empty")
     executable = shutil.which(runner[0])
     if executable is None:
         raise RunnerError(f"cannot start the runner: {runner[0]} not found")
-    launcher = Path(executable).resolve()
-    runtime_files = [launcher]
+    launcher = Path(executable).absolute()
+    resolved = launcher.resolve()
+    runtime_files = {str(resolved): launcher}
     # The installed M2 command can be a launcher for the adjacent M2-binary executable.
-    companion = launcher.with_name(f"{launcher.name}-binary")
+    companion = resolved.with_name(f"{resolved.name}-binary")
     if companion.is_file():
-        runtime_files.append(companion)
+        runtime_files[str(companion)] = companion
     for arg in runner[1:]:
         path = repository / arg
         if path.suffix in {".m2", ".py", ".sh"} and path.is_file():
-            runtime_files.append(path)
+            runtime_files[str(path)] = path
+    return launcher, {
+        "sources": {path.relative_to(repository).as_posix(): path for path in sources},
+        "runner_files": runtime_files,
+    }
 
-    def digest(path: Path) -> str:
-        try:
-            with path.open("rb") as handle:
-                return hashlib.file_digest(handle, "sha256").hexdigest()
-        except OSError as exc:
-            raise RunnerError(f"cannot fingerprint implementation file {path}: {exc}") from exc
 
+def file_digest(path: Path) -> str:
+    try:
+        with path.open("rb") as handle:
+            return hashlib.file_digest(handle, "sha256").hexdigest()
+    except OSError as exc:
+        raise RunnerError(f"cannot fingerprint implementation file {path}: {exc}") from exc
+
+
+def implementation_fingerprint(
+    runner: tuple[str, ...],
+    versions: dict[str, Any],
+    repository: Path = REPOSITORY,
+    *,
+    files: dict[str, dict[str, Path]] | None = None,
+) -> str:
+    """Fingerprint the local implementations used to expand and execute tasks."""
+    if files is None:
+        _, files = implementation_files(runner, repository)
     return fingerprint(
         {
             "version": IDENTITY_VERSION,
-            "sources": {path.relative_to(repository).as_posix(): digest(path) for path in sources},
+            **{
+                kind: {key: file_digest(path) for key, path in paths.items()} for kind, paths in files.items()
+            },
             "runner": runner,
-            "runner_files": {str(path): digest(path) for path in runtime_files},
             "versions": versions,
             "python": sys.version,
             "system": [platform.system(), platform.machine()],

@@ -14,7 +14,8 @@ from . import wire
 from .model import Task
 
 REPOSITORY = Path(__file__).resolve().parent.parent
-DEFAULT_RUNNER = ("M2", "--script", str(REPOSITORY / "runners" / "task-runner.m2"))
+RUNNER_SCRIPT = Path("runners/task-runner.m2")
+DEFAULT_RUNNER = ("M2", "--script", str(REPOSITORY / RUNNER_SCRIPT))
 
 TASK_MARK = "@task "
 META_MARK = "@meta "
@@ -32,16 +33,21 @@ class RunnerInvocation:
 
     @classmethod
     def prepare(
-        cls, runner: tuple[str, ...], operation: str, payload: dict[str, Any], directory: Path
+        cls,
+        runner: tuple[str, ...],
+        operation: str,
+        payload: dict[str, Any],
+        directory: Path,
+        *,
+        repository: Path = REPOSITORY,
     ) -> RunnerInvocation:
-        if runner[-2:-1] == ("--script",):
-            script = (REPOSITORY / runner[-1]).resolve()
-            if script == Path(DEFAULT_RUNNER[-1]).resolve():
-                try:
-                    request = wire.FileRequest.create(directory, operation, payload)
-                except (ValueError, TypeError) as problem:
-                    raise RunnerError(f"cannot encode request JSON: {problem}") from problem
-                return cls([*runner[:-1], str(script), *request.args], request)
+        script = bundled_script(runner, repository)
+        if script is not None:
+            try:
+                request = wire.FileRequest.create(directory, operation, payload)
+            except (ValueError, TypeError) as problem:
+                raise RunnerError(f"cannot encode request JSON: {problem}") from problem
+            return cls([*runner[:-1], str(script), *request.args], request)
         return cls([*runner, operation, json.dumps(payload)], None)
 
     def cleanup(self) -> None:
@@ -58,6 +64,14 @@ class RunnerInvocation:
             raise RunnerError(str(problem)) from problem
 
 
+def bundled_script(runner: tuple[str, ...], repository: Path) -> Path | None:
+    if runner[-2:-1] == ("--script",):
+        script = (repository / runner[-1]).resolve()
+        if script == (repository / RUNNER_SCRIPT).resolve():
+            return script
+    return None
+
+
 def error_lines(output: str, limit: int = 5) -> str:
     """The lines of a runner's output that say what went wrong, without Macaulay2's backtrace."""
     lines = [line.strip() for line in output.splitlines()]
@@ -71,12 +85,15 @@ def expand(
     description: dict[str, Any],
     *,
     timeout: float = 600,
+    repository: Path = REPOSITORY,
     scratch_root: Path | None = None,
     execute: Callable[[list[str], float], subprocess.CompletedProcess[str]] | None = None,
 ) -> tuple[list[Task], dict[str, Any]]:
     """Asks the runner for the tasks of a batch description and for its versions."""
     with tempfile.TemporaryDirectory(prefix="k3batch-", dir=scratch_root) as scratch:
-        invocation = RunnerInvocation.prepare(runner, "expand", description, Path(scratch))
+        invocation = RunnerInvocation.prepare(
+            runner, "expand", description, Path(scratch), repository=repository
+        )
         try:
             return _expand(invocation, timeout, execute)
         finally:

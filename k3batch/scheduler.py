@@ -19,13 +19,14 @@ from uuid import uuid4
 
 from .artifacts import ArtifactError, ArtifactStore, read_artifact_json
 from .config import BatchConfig, ConfigError
-from .execution import JobResult, LocalBackend, LocalJob, read_output
+from .execution import WATCHDOG, JobResult, LocalBackend, LocalJob, read_output
 from .graph import Graph
 from .identity import RECORD_SCHEMA, fingerprint, implementation_fingerprint, recheck, task_identities
 from .memory import MemoryGuard
 from .model import RUNNER_STATUSES, Limits, Status, Task
 from .resources import HISTORY_WINDOW, estimate, grow_limits, resource_context
 from .runner import REPOSITORY, RunnerError, RunnerInvocation, error_lines
+from .source import SourceSnapshot
 from .sqlite_store import SQLiteStore
 from .store import ResultStore
 
@@ -81,6 +82,7 @@ class Scheduler:
         runner: tuple[str, ...],
         guard: MemoryGuard,
         backend: LocalBackend | None = None,
+        source: SourceSnapshot | None = None,
         stamp: dict[str, Any] | None = None,
         retry: Collection[str] = (),
         progress: Progress | None = None,
@@ -99,6 +101,7 @@ class Scheduler:
         )
         self.run_dir = run_dir
         self.runner = runner
+        self.source = source
         self.guard = guard
         self.backend = backend or LocalBackend(
             guard,
@@ -119,7 +122,9 @@ class Scheduler:
 
     def plan(self) -> list[PlannedTask]:
         """Select existing attempts and reserve identifiers for work this run will start."""
-        implementation = implementation_fingerprint(self.runner, self.stamp.get("runner", {}))
+        implementation = implementation_fingerprint(
+            self.runner, self.stamp.get("runner", {}), files=self.source.files if self.source else None
+        )
         tasks = {task.id: task for task in self.tasks}
         policy = self.config.resources
         window = HISTORY_WINDOW if policy else 1
@@ -441,9 +446,14 @@ class Scheduler:
             self._claim(task, attempt_id, started_at, log, inputs)
         payload = task.payload | ({"inputs": inputs} if inputs else {})
         request_root = self.backend.workspace or self.run_dir
-        invocation = RunnerInvocation.prepare(self.runner, "run", payload, request_root / "requests")
+        repository = self.source.root if self.source else REPOSITORY
+        command = self.source.command if self.source else self.runner
+        watchdog = self.source.watchdog if self.source else WATCHDOG
+        invocation = RunnerInvocation.prepare(
+            command, "run", payload, request_root / "requests", repository=repository
+        )
         try:
-            job = self.backend.start(invocation.command, limits, log, cwd=REPOSITORY)
+            job = self.backend.start(invocation.command, limits, log, cwd=repository, watchdog=watchdog)
         except BaseException:
             invocation.cleanup()
             raise

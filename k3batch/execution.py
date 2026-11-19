@@ -160,6 +160,7 @@ class LocalBackend:
         log: Path,
         *,
         cwd: Path | None = None,
+        watchdog: Path = WATCHDOG,
         stderr: Path | None = None,
         scratch_root: Path | None = None,
     ) -> LocalJob:
@@ -217,7 +218,7 @@ class LocalBackend:
                     raise RuntimeError("the job slice is outside the configured run boundary")
                 spec["group"] = str(group)
                 command = self.guard.wrap(command, tag, job_slice, limits.time_seconds)
-            launch = [sys.executable, str(WATCHDOG), json.dumps(spec), *command]
+            launch = [sys.executable, str(watchdog), json.dumps(spec), *command]
             with contextlib.ExitStack() as stack:
                 output = stack.enter_context(log.open("xb"))
                 errors = subprocess.STDOUT if stderr is None else stack.enter_context(stderr.open("xb"))
@@ -277,11 +278,15 @@ class LocalBackend:
             self._release(job.scope, job.slice_name)
             job.cleanup()
 
-    def execute(self, command: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
+    def execute(
+        self, command: list[str], timeout: float, *, cwd: Path | None = None, watchdog: Path = WATCHDOG
+    ) -> subprocess.CompletedProcess[str]:
         """Execute an expansion with separate, bounded output and error streams."""
         with tempfile.TemporaryDirectory(prefix="k3batch-plan-", dir=self.workspace) as folder:
             stdout, stderr = (Path(folder) / name for name in ("stdout", "stderr"))
-            job = self.start(command, Limits(timeout, self.memory_mb), stdout, stderr=stderr)
+            job = self.start(
+                command, Limits(timeout, self.memory_mb), stdout, cwd=cwd, watchdog=watchdog, stderr=stderr
+            )
             try:
                 while (result := self.observe(job)) is None:
                     time.sleep(0.02)

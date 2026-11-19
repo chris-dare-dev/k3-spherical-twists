@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -148,6 +149,78 @@ class CommandLine(unittest.TestCase):
             self.assertEqual(record["code"], runs[0]["code"])
         manifest = json.loads((self.run_dir / "manifest.json").read_text())
         self.assertEqual([task["id"] for task in manifest["tasks"]], ["fake/a", "fake/b"])
+
+    def test_tasks_keep_using_the_captured_source_after_a_commit_or_edit(self) -> None:
+        for sqlite in (False, True):
+            for commit in (False, True):
+                with self.subTest(sqlite=sqlite, commit=commit):
+                    self._assert_run_uses_snapshot(sqlite=sqlite, commit=commit)
+
+    def _assert_run_uses_snapshot(self, *, sqlite: bool, commit: bool) -> None:
+        checkout = self.scratch / f"checkout-{sqlite}-{commit}"
+        shutil.copytree(
+            REPOSITORY / "k3batch",
+            checkout / "k3batch",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
+        (checkout / "runners").mkdir()
+        shutil.copy2(FAKE_RUNNER, checkout / "runners")
+        self.run_dir = checkout / "results"
+        database = self.run_dir / "ledger.sqlite"
+        source = checkout / "K3Twists.m2"
+        source.write_text("before capture\n")
+
+        def git(*args: str) -> str:
+            return subprocess.check_output(["git", *args], cwd=checkout, text=True).strip()
+
+        git("init", "-q")
+        git("config", "user.name", "k3batch test")
+        git("config", "user.email", "k3batch@example.invalid")
+        (checkout / ".gitignore").write_text("__pycache__/\nresults/\n")
+        git("add", ".")
+        git("commit", "-qm", "initial source")
+        before = git("rev-parse", "HEAD")
+        journal = Journal(checkout.parent / f"{checkout.name}.journal")
+        self.runner = shlex.join([sys.executable, "runners/fake_runner.py", "--journal", str(journal.path)])
+        mutate = (
+            '{ name = "first", read_source = true, '
+            f"edit_source = {json.dumps(str(checkout))}, commit_source = {str(commit).lower()} }}"
+        )
+        observe = '{ name = "second", cost = 1, read_source = true }'
+        options = ("--store", database) if sqlite else ()
+
+        def run(*entries: str) -> None:
+            done = subprocess.run(
+                self.command("run", self.batch(items(*entries)), "--workers", 1,
+                             "--memory-guard", "poll", *options),
+                cwd=checkout, capture_output=True, text=True, timeout=30,
+            )  # fmt: skip
+            self.assertEqual(done.returncode, EXIT_OK, done.stderr)
+
+        def records() -> list[dict]:
+            if sqlite:
+                store = SQLiteStore(database)
+                manifest = store.manifest(self.run_dir)
+                return store.query(run_id=manifest["run_id"])
+            return self.records()
+
+        run(mutate, observe)
+        self.assertEqual(journal.started(), ["fake/first", "fake/second"])
+        self.assertEqual(source.read_text(), "after capture\n")
+        after = git("rev-parse", "HEAD")
+        self.assertEqual(after != before, commit)
+        first_records = records()
+        self.assertCountEqual([r["task_id"] for r in first_records], ["fake/first", "fake/second"])
+        for record in first_records:
+            self.assertEqual(record["value"], ["before capture\n"] * 2)
+            self.assertEqual(record["code"], {"commit": before, "dirty": False})
+
+        run(observe)
+        later = records()[-1]
+        self.assertEqual(later["value"], ["after capture\n"] * 2)
+        self.assertEqual(later["code"], {"commit": after, "dirty": not commit})
+        prior = next(r for r in first_records if r["task_id"] == later["task_id"])
+        self.assertNotEqual(later["computation_id"], prior["computation_id"])
 
     def test_exit_status_tells_failures_from_limits(self) -> None:
         stopped = self.k3batch("run", self.batch(AGREEING, SLEEPING))

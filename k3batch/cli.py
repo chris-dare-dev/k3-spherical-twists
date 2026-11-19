@@ -26,8 +26,9 @@ from .identity import RECORD_SCHEMA
 from .memory import MemoryGuard, available_mb, choose_guard
 from .model import COMPLETED_STATUSES, Limits, Status, Task
 from .resources import ResourcePolicy
-from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError, code_version, expand
+from .runner import DEFAULT_RUNNER, REPOSITORY, RunnerError
 from .scheduler import PlannedTask, Scheduler
+from .source import source_snapshot
 from .sqlite_store import SQLiteStore
 from .store import ResultStore, StoreLocked
 
@@ -174,17 +175,18 @@ def _plan_lines(
 def _command_plan(arguments: argparse.Namespace) -> int:
     config, runner, run_dir, retry = _prepare(arguments)
     guard = choose_guard(arguments.memory_guard)
-    with LocalBackend(guard, config.memory_budget_mb, config.workers) as backend:
-        tasks, runner_versions = expand(
-            runner, config.description, execute=backend.execute, scratch_root=backend.workspace
-        )
-    scheduler = Scheduler(
-        config=config, tasks=tasks, store=_result_store(run_dir, arguments.store),
-        run_dir=run_dir, runner=runner, guard=guard, retry=retry,
-        stamp={"runner": runner_versions},
-    )  # fmt: skip
-    plan = scheduler.plan()
-    pending = scheduler.pending(plan)
+    with (
+        source_snapshot(runner, REPOSITORY) as source,
+        LocalBackend(guard, config.memory_budget_mb, config.workers) as backend,
+    ):
+        tasks, runner_versions = source.expand(config.description, backend)
+        scheduler = Scheduler(
+            config=config, tasks=tasks, store=_result_store(run_dir, arguments.store),
+            run_dir=run_dir, runner=runner, guard=guard, retry=retry, source=source,
+            stamp={"runner": runner_versions},
+        )  # fmt: skip
+        plan = scheduler.plan()
+        pending = scheduler.pending(plan)
     print("\n".join(_plan_lines(config, plan, pending)))
     estimates = {entry.task.id: entry.resources for entry in plan}
     for task, limits in pending:
@@ -218,12 +220,10 @@ def _command_run(arguments: argparse.Namespace) -> int:
         )
     started_at = datetime.now(UTC)
     run_id = uuid4().hex
-    code = code_version()
     store = _result_store(run_dir, arguments.store)
-    with store, backend:
-        tasks, runner_versions = expand(
-            runner, config.description, execute=backend.execute, scratch_root=backend.workspace
-        )
+    with source_snapshot(runner, REPOSITORY) as source, store, backend:
+        code = source.code
+        tasks, runner_versions = source.expand(config.description, backend)
         checkpoint = arguments.checkpoint_after
         if checkpoint and not any(task.id == checkpoint for task in tasks):
             raise ConfigError(f"unknown checkpoint task {checkpoint!r}")
@@ -237,7 +237,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
 
         scheduler = Scheduler(
             config=config, tasks=tasks, store=store, run_dir=run_dir, runner=runner, guard=guard,
-            backend=backend,
+            backend=backend, source=source,
             stamp={"run_id": run_id, "runner": runner_versions, "code": code},
             retry=retry, progress=progress,
         )  # fmt: skip
