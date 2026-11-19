@@ -49,6 +49,8 @@ export {
     "loadGradedPresentation",
     "gradedComplexArtifact",
     "loadGradedComplex",
+    "gradedChainMapArtifact",
+    "loadGradedChainMap",
     -- classes
     "MarkedDivisorLattice",
     "markedDivisorLattice",
