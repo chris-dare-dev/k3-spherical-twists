@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """claims.py -- the claim tables, written from the registry, the batch files and the records.
 
-Usage:  python3 tools/claims.py tables              write the generated parts of CLAIMS.md and README.md,
+Usage:  python3 tools/claims.py tables              write the generated parts of CLAIMS.md and GUIDE.md,
                                                      and claims/RECORDS.md
         python3 tools/claims.py check               fail if they are not what `tables` writes, or if the
                                                      registry and the batch files do not fit together
         python3 tools/claims.py headline RUN_DIR    print the headline table from the records of one run
                                                      directory (for example results/smoke), and fail if
-                                                     it is not the one in README.md
+                                                     it is not the one in GUIDE.md
         python3 tools/claims.py adopt RUN_DIR ...   copy the records of finished runs (results/<batch>)
                                                      into records/<batch>
 
@@ -371,7 +371,7 @@ def blocks(
         REPOSITORY / "CLAIMS.md": {
             slug: claims_table(slug, registry, tasks, records) for slug in registry["table"]
         },
-        REPOSITORY / "README.md": {"headline": headline(registry, tasks, records)},
+        REPOSITORY / "GUIDE.md": {"headline": headline(registry, tasks, records)},
     }
 
 
@@ -428,11 +428,11 @@ def command_headline(run_dir: Path) -> int:
     registry, tasks = load_registry(), batch_tasks()
     lines = headline(registry, tasks, run_records([run_dir]))
     print("\n".join(lines))
-    readme = (REPOSITORY / "README.md").read_text(encoding="utf-8")
-    if splice(readme, "headline", lines, REPOSITORY / "README.md") != readme:
-        print("\nthis is NOT the headline table of README.md", file=sys.stderr)
+    readme = (REPOSITORY / "GUIDE.md").read_text(encoding="utf-8")
+    if splice(readme, "headline", lines, REPOSITORY / "GUIDE.md") != readme:
+        print("\nthis is NOT the headline table of GUIDE.md", file=sys.stderr)
         return 1
-    print("\nthis is the headline table of README.md")
+    print("\nthis is the headline table of GUIDE.md")
     return 0
 
 

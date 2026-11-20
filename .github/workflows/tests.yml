@@ -32,7 +32,7 @@ jobs:
       - run: make test
       - name: The generated claim tables are up to date
         run: make check
-      - name: The invariants batch, and the headline table of the README from it
+      - name: The invariants batch, and the headline table of the guide from it
         run: make smoke
 
   # The package tests that compute Ext groups: under two minutes on a desktop, 0.5 GB at most.

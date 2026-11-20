@@ -1,6 +1,6 @@
 # Claims and records
 
-This page lists what the [README](README.md) says the code computes, claim by claim, and, in the last column of each table, what the records of the scheduler in [records/](records/) say about it.
+This page lists what the [guide](GUIDE.md) says the code computes, claim by claim, and, in the last column of each table, what the records of the scheduler in [records/](records/) say about it.
 
 Contents: [Tasks and records](#tasks-and-records) · [Cohomology of the sheaves of short words](#cohomology-of-the-sheaves-of-short-words) · [Euler characteristics of pairs](#euler-characteristics-of-pairs) · [The marked curve on a quartic](#the-marked-curve-on-a-quartic) · [Twists realized as complexes](#twists-realized-as-complexes) · [What the tasks do not cover](#what-the-tasks-do-not-cover)
 
@@ -8,7 +8,7 @@ Contents: [Tasks and records](#tasks-and-records) · [Cohomology of the sheaves 
 
 The tables below are generated: their rows are in [claims/claims.toml](claims/claims.toml), and `make tables` writes them here. Every column but the last is the row as it was written by hand.
 
-The last column, *Run under the scheduler*, is computed from the records in [records/](records/). A claim that a program can check has tasks: computations with one answer each, defined by the batch files in [batches/](batches/) and run by the scheduler under time and memory limits ([README.md](README.md#running-a-batch)). The column reads:
+The last column, *Run under the scheduler*, is computed from the records in [records/](records/). A claim that a program can check has tasks: computations with one answer each, defined by the batch files in [batches/](batches/) and run by the scheduler under time and memory limits ([GUIDE.md](GUIDE.md#running-a-batch)). The column reads:
 
 - **all N tasks ok**, when every task of the claim has a record and each computed value agrees with the predicted one, with the day and the commit of the records;
 - the count of tasks by status otherwise: `ok`, `mismatch`, `unsupported` (there is no method for the task), `timeout`, `memory`, `blocked` (a task it depends on gave no output), `error`, `crashed`, `stale` for a record of a task that has changed since it was computed (another surface, another object, another predicted value; such a record supports nothing), and `not re-run` for tasks without a record;
@@ -21,7 +21,7 @@ A record in [records/](records/) was computed by this repository at the commit i
 
 ## Cohomology of the sheaves of short words
 
-The sheaves are those of the table at the top of the [README](README.md#what-this-is-about). The surface for d = 2, 3, 4 is a quartic, the intersection of a quadric and a cubic, and the intersection of three quadrics. Batches: `invariants` (the first five rows), `invariants-slow` (the last two).
+The sheaves are those of the table at the top of the [guide](GUIDE.md#what-this-is-about). The surface for d = 2, 3, 4 is a quartic, the intersection of a quadric and a cubic, and the intersection of three quadrics. Batches: `invariants` (the first five rows), `invariants-slow` (the last two).
 
 <!-- BEGIN GENERATED sheaves: tools/claims.py tables -->
 | Claim | Predicted, with n = d + 2 | Surfaces | Run under the scheduler |

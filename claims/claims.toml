@@ -1,7 +1,7 @@
 # The registry of claims: every row of the claim tables of CLAIMS.md.
 #
 # tools/claims.py writes the tables of CLAIMS.md, the file claims/RECORDS.md and the headline table of
-# README.md from this file, from the batch files (which tasks exist) and from the records in records/.
+# GUIDE.md from this file, from the batch files (which tasks exist) and from the records in records/.
 # `make check` fails if the committed tables differ from what it writes.
 #
 # A table has a heading of CLAIMS.md and its columns.  A claim has an id, its table, the cells of its
@@ -239,7 +239,7 @@ cells = [
 tasks = []
 no_task = '''a test of the package (`K3Twists/tests-quintic.m2`, run by `make test`); it leaves no record'''
 
-# The headline table of README.md: tasks of batches/invariants.toml, which `make smoke` runs.
+# The headline table of GUIDE.md: tasks of batches/invariants.toml, which `make smoke` runs.
 
 [[headline]]
 label = '''hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0)'''

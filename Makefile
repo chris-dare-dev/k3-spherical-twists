@@ -5,8 +5,8 @@
 #   make report BATCH=batches/invariants.toml REPORT_ARGS=--full
 #   make record BATCH=batches/invariants.toml   run, then copy the records into records/ (committed code only)
 #   make adopt BATCHES="invariants limits-demo" copy the records of runs that are already in results/
-#   make smoke       the invariants batch, computed afresh, and the headline table of README.md from it
-#   make tables      write the generated tables of CLAIMS.md, README.md and claims/RECORDS.md
+#   make smoke       the invariants batch, computed afresh, and the headline table of GUIDE.md from it
+#   make tables      write the generated tables of CLAIMS.md, GUIDE.md and claims/RECORDS.md
 #   make check       fail if those tables are not what the registry and the records give
 # ARGS is passed to k3batch, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
