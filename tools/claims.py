@@ -159,13 +159,18 @@ def _natural(text: str) -> list[Any]:
     return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", text)]
 
 
+def counts_for_claim(task: Listed) -> bool:
+    """Whether a task can support a claim."""
+    return task["payload"].get("kind") != "synthetic" and not task["id"].endswith("!control")
+
+
 def claim_tasks(claim: Mapping[str, Any], tasks: Sequence[Listed]) -> list[Listed]:
     """The tasks of a claim: those an id pattern takes, in the batches the claim names if it names any."""
     batches = claim.get("batches")
     chosen = [
         task
         for task in tasks
-        if task["payload"].get("kind") != "synthetic"
+        if counts_for_claim(task)
         and any(fnmatch.fnmatchcase(task["id"], pattern) for pattern in claim["tasks"])
         and (batches is None or set(batches) & set(task["batches"]))
     ]
@@ -198,10 +203,7 @@ def validate(registry: Mapping[str, Any], tasks: Sequence[Listed]) -> None:
                 problems.append(f"{claim['id']}: no task of its batches matches {pattern!r}")
         claimed.update((task["id"], essential(task["payload"])) for task in claim_tasks(claim, tasks))
     for task in tasks:
-        if (
-            task["payload"].get("kind") != "synthetic"
-            and (task["id"], essential(task["payload"])) not in claimed
-        ):
+        if counts_for_claim(task) and (task["id"], essential(task["payload"])) not in claimed:
             problems.append(f"the task {task['id']} ({', '.join(task['batches'])}) belongs to no claim")
     for row in registry["headline"]:
         if len(headline_tasks(row, tasks)) != 1:

@@ -137,9 +137,12 @@ class Validation(unittest.TestCase):
         registry["claim"][0]["tasks"] = ["invariant/d2/*", "invariant/d3/*"]
         claims.validate(registry, TASKS)
 
-    def test_synthetic_tasks_never_count_for_a_claim(self) -> None:
+    def test_claim_patterns_skip_synthetic_tasks_and_negative_controls(self) -> None:
         everything = {"id": "c", "table": "t", "cells": ["x"], "tasks": ["*"]}
-        self.assertNotIn(SYNTHETIC, claims.claim_tasks(everything, TASKS))
+        control = listed("invariant/d2/rank M_H!control", "negative-control", predicted=0)
+        counted = claims.claim_tasks(everything, [*TASKS, control])
+        self.assertNotIn(SYNTHETIC, counted)
+        self.assertNotIn(control, counted)
 
     def test_a_claim_that_names_batches_takes_their_tasks_only(self) -> None:
         self.assertEqual(claims.claim_tasks(POINT_CLAIM, TASKS), [SHARED, POINT])
