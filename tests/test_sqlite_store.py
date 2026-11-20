@@ -267,6 +267,8 @@ class TransactionalStore(unittest.TestCase):
         self.assertEqual(self.store.latest_by_computation(["operation"]), {"operation": raw[0]})
 
     def test_existing_membership_and_checks_remain_selectable_after_a_later_attempt(self) -> None:
+        first_start = "2026-01-01T00:00:01+00:00"
+        later_start = "2026-01-01T00:00:02+00:00"
         newer = MEMBER | {
             "record_id": "later-observation",
             "check_id": "later-check",
@@ -276,12 +278,12 @@ class TransactionalStore(unittest.TestCase):
         revised = MANIFEST | {"run_id": "recheck", "tasks": [reused]}
         with self.store:
             with self.store.run(self.run_dir, MANIFEST, {}):
-                self.store.start_attempt("initial", MEMBER, "attempt", "start", "log")
-                self.store.append(RESULT)
+                self.store.start_attempt("initial", MEMBER, "attempt", first_start, "log")
+                self.store.append(RESULT | {"started_at": first_start})
             with self.store.run(self.root / "another", revised, {}):
                 pass
             with self.store.run(self.run_dir, later, {}):
-                self.store.start_attempt("later", newer, "retry", "start", "log")
+                self.store.start_attempt("later", newer, "retry", later_start, "log")
                 self.store.append(
                     RESULT
                     | {
@@ -289,6 +291,7 @@ class TransactionalStore(unittest.TestCase):
                         "attempt_id": "retry",
                         "record_id": "later-observation",
                         "check_id": "later-check",
+                        "started_at": later_start,
                         "value": 2,
                     }
                 )

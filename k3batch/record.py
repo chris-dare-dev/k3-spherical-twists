@@ -7,6 +7,7 @@ the stores keep them as JSON objects without looking inside, except for the fiel
 from __future__ import annotations
 
 import signal
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Required, TypedDict
 
@@ -128,6 +129,29 @@ def build(
         }
     )
     return record
+
+
+def _utc_start(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    try:
+        start = datetime.fromisoformat(value)
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=UTC)
+        return start.astimezone(UTC).isoformat(timespec="microseconds")
+    except (ValueError, OverflowError):
+        return ""
+
+
+def attempt_started_at(record: Record) -> str:
+    """A sortable UTC timestamp for the first trial, or an empty string if unavailable."""
+    # The top-level timestamp is the terminal trial's start on a retried attempt.
+    trials = record.get("resource_attempts")
+    if isinstance(trials, list) and trials and isinstance(trials[0], dict):
+        first_start = _utc_start(trials[0].get("started_at"))
+        if first_start:
+            return first_start
+    return _utc_start(record.get("started_at"))
 
 
 def surface(record: Record) -> Any:
