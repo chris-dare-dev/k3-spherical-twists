@@ -10,7 +10,7 @@
 # d = 20, so the ids of one parameter value are written out.  `batches`, when given, keeps the tasks of
 # those batches only: the dependent batches use the same ids for different objects.  A claim without
 # tasks says why in `no_task`.
-# Synthetic tasks (batches/limits-demo.toml) never count for a claim.
+# Synthetic tasks and tasks with IDs ending in !control are excluded from claims.
 
 [table.sheaves]
 heading = '''Cohomology of the sheaves of short words'''

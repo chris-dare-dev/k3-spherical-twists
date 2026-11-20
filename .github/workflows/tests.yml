@@ -34,6 +34,21 @@ jobs:
         run: make check
       - name: The invariants batch, and the headline table of the README from it
         run: make smoke
+      - name: The negative control ends as three mismatches, with status 1
+        run: |
+          status=0
+          python3 -m k3batch run batches/negative-control.toml --memory-guard poll || status=$?
+          test "$status" -eq 1
+          python3 - <<'PY'
+          from pathlib import Path
+
+          from k3batch.store import ResultStore
+
+          store = ResultStore(Path("results/negative-control/results.jsonl"))
+          statuses = [record["status"] for record in store.records()]
+          if statuses != ["mismatch"] * 3:
+              raise SystemExit(f"Expected three mismatches, got {statuses}")
+          PY
 
   # The package tests that compute Ext groups: under two minutes on a desktop, 0.5 GB at most.
   slow-tests:

@@ -15,14 +15,16 @@ expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
             else (
                 scan(want, name -> if not member(name, every) then error("no invariant named " | name));
                 want);
+        control := opt(set, "control", hashTable {});
+        scan(keys control, name -> if not member(name, names) then error("control names an unselected invariant: " | name));
         apply(names, name -> new HashTable from {
-                "id" => concatenate("invariant/", label, "/", name),
+                "id" => concatenate("invariant/", label, "/", name, if control#?name then "!control" else ""),
                 "kind" => "invariant",
                 "comparison" => "equals",
                 "set" => i,
                 "group" => "invariant " | label,
                 "cost" => if member(name, fast) then 1 else 50,
-                "predicted" => predicted#name,
+                "predicted" => opt(control, name, predicted#name),
                 "surface" => s,
                 "name" => name
                 })
@@ -31,10 +33,11 @@ expandInvariants = (i, set, surfaces) -> flatten apply(surfaces, s -> (
 runInvariant = task -> (
     (setup, K) := timed(() -> surfaceFromSpec checkSurfaceSpec task#"surface");
     (compute, row) := timed(() -> sheafInvariant(K, task#"name"));
+    predicted := opt(task, "predicted", row#2);
     new HashTable from {
         "value" => row#1,
-        "predicted" => row#2,
-        "agrees" => row#1 === row#2,
+        "predicted" => predicted,
+        "agrees" => row#1 === predicted,
         "method" => "direct",
         "setup_seconds" => setup,
         "compute_seconds" => compute
@@ -47,7 +50,10 @@ invariantValue = x -> isNonnegativeInteger x or (instance(x, List) and all(x, is
 registerTaskKind("invariant", hashTable {
     "version" => 1,
     "requirements" => {"smooth-complete-intersection"},
-    "validate_set" => (s -> checkFields(s, "invariant set", taskKindField, {("names", nullable invariantSelector)})),
+    "validate_set" => (s -> checkFields(s, "invariant set", taskKindField, {
+                ("names", nullable invariantSelector),
+                ("control", c -> instance(c, HashTable) and all(values c, invariantValue))
+                })),
     "validate_task" => (t -> checkTaskFields(t, {
                 ("surface", x -> instance(x, HashTable)), ("name", isString)
                 }, {})),
