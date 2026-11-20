@@ -10,11 +10,12 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Iterator, Sequence
 from contextlib import AbstractContextManager, contextmanager
+from heapq import nlargest
 from pathlib import Path
 from typing import Any, ClassVar, cast
 
 from .identity import RECORD_SCHEMA
-from .record import Record
+from .record import Record, attempt_started_at
 
 
 class StoreLocked(RuntimeError):
@@ -37,9 +38,10 @@ def lock_writer(path: Path) -> int:
 class RunHistory(ABC):
     """What the scheduler, the reports and the command line ask of the results of earlier runs.
 
-    A record is the JSON object of one attempt that ended. A history lists records newest first, in
-    the order in which the store came to know of the attempts. `ResultStore` keeps the records of one
-    run directory in a file of lines; `SQLiteStore` keeps those of many in one database.
+    A record is the JSON object of one attempt that ended. Computation history sorts by attempt
+    start time (the first trial's start for a retried attempt), newest first. Ties sort by descending
+    record ID. Unknown start times sort after known times. `ResultStore` keeps the records of one run
+    directory in a file of lines; `SQLiteStore` keeps those of many in one database.
     """
 
     # Whether a run with a dependency graph can be kept: its attempts are claimed with their
@@ -175,6 +177,8 @@ class ResultStore(RunHistory):
         return self.path.parent
 
     def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[Record]]:
+        if limit <= 0:
+            return {}
         wanted = set(identities)
         history: dict[str, list[Record]] = {}
         for record in self.records():
@@ -185,10 +189,13 @@ class ResultStore(RunHistory):
                 and identity in wanted
                 and all(isinstance(record.get(key), str) for key in ("check_id", "record_id"))
             ):
-                rows = history.setdefault(identity, [])
-                rows.insert(0, record)
-                del rows[limit:]
-        return history
+                history.setdefault(identity, []).append(record)
+        return {
+            identity: nlargest(
+                limit, rows, key=lambda record: (attempt_started_at(record), record["record_id"])
+            )
+            for identity, rows in history.items()
+        }
 
     def by_record_id(self, identities: Sequence[str]) -> dict[str, Record]:
         wanted = set(identities)

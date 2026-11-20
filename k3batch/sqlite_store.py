@@ -11,11 +11,11 @@ from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .execution import RunDeadlineExpired
 from .identity import RECORD_SCHEMA
-from .record import Record, commit, method, surface
+from .record import Record, attempt_started_at, commit, method, surface
 from .store import ResultStore, RunHistory, lock_writer
 
 _APPLICATION_ID = 0x4B334254  # K3BT
@@ -349,15 +349,25 @@ class SQLiteStore(RunHistory):
 
     def recent_by_computation(self, identities: Sequence[str], limit: int) -> dict[str, list[Record]]:
         """Find the latest eligible results for each requested computation through the index."""
+        if limit <= 0:
+            return {}
         history: dict[str, list[Record]] = {}
         with self._read() as db:
             if db is None:
                 return history
+            # Use the recorded trials for both native attempts and imported JSONL results.
+            db.create_function(
+                "attempt_start",
+                1,
+                lambda result: attempt_started_at(cast(Record, _decode(result))),
+                deterministic=True,
+            )
             for chunk in _chunks(tuple(dict.fromkeys(identities))):
                 rows = db.execute(
                     "SELECT computation_id, result, log_directory FROM ("
                     " SELECT computation_id, result, log_directory,"
-                    " ROW_NUMBER() OVER (PARTITION BY computation_id ORDER BY started_at DESC, seq DESC) rank"
+                    " ROW_NUMBER() OVER (PARTITION BY computation_id"
+                    " ORDER BY attempt_start(result) DESC, record_id DESC) rank"
                     " FROM attempts WHERE result IS NOT NULL AND record_id IS NOT NULL"
                     f" AND check_id IS NOT NULL AND computation_id IN ({_placeholders(len(chunk))})"
                     ") WHERE rank <= ? ORDER BY computation_id, rank",
