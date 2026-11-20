@@ -129,6 +129,30 @@ class Contract:
         self.assertEqual(self.store.latest_by_computation(["operation"])["operation"]["record_id"], "third")
         self.assertEqual(self.store.latest_by_computation(["unknown"]), {})
 
+    def test_overlapping_attempts_sort_by_first_start_and_break_ties_by_record_id(self: Any) -> None:
+        run_id = uuid4().hex
+        older, high, low = [member(name) | {"id": name} for name in ("older", "z", "a")]
+        manifest = {"run_id": run_id, "schema_version": 1, "batch": "contract", "tasks": [older, high, low]}
+        older_start = "2026-01-01T00:00:01+00:00"
+        tied_start = "2026-01-01T00:00:02+00:00"
+        same_instant = "2026-01-01T01:00:02+01:00"
+        retry_start = "2026-01-01T00:00:05+00:00"
+        with self.store, self.store.run(self.run_dir, manifest, {"started_at": older_start}):
+            self.store.start_attempt(run_id, older, "attempt-older", older_start, None)
+            self.store.start_attempt(run_id, high, "attempt-z", tied_start, None)
+            self.store.start_attempt(run_id, low, "attempt-a", same_instant, None)
+            self.store.append(result(run_id, high, tied_start, 2))
+            self.store.append(result(run_id, low, same_instant, 3))
+            self.store.append(
+                result(run_id, older, retry_start, 1)
+                | {"resource_attempts": [{"started_at": older_start}, {"started_at": retry_start}]}
+            )
+
+        rows = self.store.recent_by_computation(["operation"], 3)["operation"]
+        self.assertEqual([row["record_id"] for row in rows], ["z", "a", "older"])
+        self.assertEqual(self.store.latest_by_computation(["operation"])["operation"]["record_id"], "z")
+        self.assertEqual(self.store.recent_by_computation(["operation"], 0), {})
+
     def test_records_from_before_versioned_runs_are_found_by_their_task(self: Any) -> None:
         old = [
             {"task_id": "pair", "task": {"group": "pairs"}, "status": "error", "value": None},

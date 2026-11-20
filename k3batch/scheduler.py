@@ -277,7 +277,7 @@ class Scheduler:
     def _block(self, task: Task, limits: Limits, error: str) -> Record:
         earlier = self.planner.attempt_of(task.id)
         attempt_id = earlier or uuid4().hex
-        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+        started_at = datetime.now(UTC).isoformat(timespec="microseconds")
         if earlier is None:
             self._claim(task, attempt_id, started_at, None, {})
         return self._result_record(
@@ -297,7 +297,7 @@ class Scheduler:
         earlier = self.planner.attempt_of(task.id)
         attempt_id = earlier or trial_id
         log = self.run_dir / "logs" / f"{_slug(task.id)}-{trial_id}.log"
-        started_at = datetime.now(UTC).isoformat(timespec="seconds")
+        started_at = datetime.now(UTC).isoformat(timespec="microseconds")
         if earlier is None:
             self._claim(task, attempt_id, started_at, log, inputs)
         payload = task.payload | ({"inputs": inputs} if inputs else {})

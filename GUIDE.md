@@ -200,7 +200,7 @@ The batches in `batches/`:
 - **Run and job memory budgets.** With `--memory-guard cgroup`, a transient cgroup v2 slice caps total runner memory and CPU across the run. Each job has its own memory cap and runtime limit under the run slice. Both slices disable swap. The run CPU quota defaults to the number of worker slots, and a single job may use available cores under that quota.
 - **Coordinator headroom.** The initial memory check accounts for the run budget plus 64 MiB for the coordinator and 16 MiB per worker watchdog. These allowances are estimates outside the runner slice. Concurrent runs have separate limits and share the host's available memory. `--overcommit` opts out of the initial memory preflight.
 - **One record per finished attempt.** With the default JSONL store the scheduler appends and syncs each result before counting it as recorded. Reports count unreadable lines. The next writer starts on a new line after any interrupted write. With the SQLite store the result and the attempt’s terminal state commit in one transaction.
-- **Exact resumption.** A rerun can reuse the latest record with the same computation fingerprint. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
+- **Exact resumption.** A rerun can reuse the record of the most recently started attempt with the same computation fingerprint. Both stores use the first trial's start for retried attempts and break ties by descending record ID. Labels identify tasks in a report. Changing the operation, inputs, implementation or runtime fingerprint causes recomputation. Increasing the relevant limit retries a timeout or memory stop. `--retry timeout,memory` explicitly retries those statuses. A task without a completed record after interruption stays eligible to run.
 - **Job cleanup.** The watchdog cancels and reaps its job on coordinator death or interruption. The cgroup backend also has systemd scope deadlines. Two runs cannot write to the same results.
 
 The default `--memory-guard auto` uses cgroup v2 when the systemd user manager can enforce the required controllers. Explicit `--memory-guard cgroup` requires those controllers. `--memory-guard poll` samples the job's process tree RSS and has no kernel memory, swap, or CPU quota. Samples can overshoot and can count shared pages more than once.
@@ -297,6 +297,22 @@ python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinn
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
 
+Use `export-run` to copy a pinned SQLite run and its registered mathematical
+artifacts to a new directory. The bundle contains the selected manifest and
+records, file digests, and content-addressed artifact files. Chain maps bring
+both complex endpoints and their model with them.
+
+```bash
+python3 -m k3batch export-run results/quartic-sample exported-run --store results/study.sqlite --run RUN_ID
+python3 -m k3batch verify-run exported-run --full
+```
+
+After copying the bundle to another machine, run `verify-run` there. It checks
+the manifest and record digests, the pinned results and their producer
+references, and every referenced artifact. Both endpoints of a chain map
+must be graded complexes over its model. On success the command prints the
+pinned report using the original run title.
+
 ### Marked quintic threefold
 
 The same object and signed-word API can run on a smooth Fermat quintic over
@@ -357,6 +373,13 @@ cone, followed by the augmentation to `O^4[-1]`. The dual-section rank of
 the projection is four, which verifies the four Serre functionals on
 degree-three hypercohomology. The resulting comparison from `O(-H)` to the
 shifted inverse cone is a quasi-isomorphism after sheafification.
+
+The mixed word `{T_O, T_{O(H)}^-1}` on `O_x` uses the comparison from
+`I_x[1]` to the point evaluation cone. The coevaluation on a finite model
+of the point ideal uses four coordinate sections in degree zero and a
+nonzero Ext class in degree one. Explicit homology maps identify the
+mixed cone's sheaf homology with `O(H)` in degree −1 and
+`coker(I_x → O(H)^4)` in degree 0. Its Mukai class is `(2,3H,9)`.
 
 For a certified line bundle `S = O` or `O(H)`, `RHom(S,S)` is
 `RΓ(O)` with one-dimensional cohomology in degrees 0 and 2. Splitting
@@ -516,6 +539,11 @@ commands and a fresh ledger to study the marked point. Its realization selects
 `target = "O_x"` and publishes a version 2 cone because the point sheaf has a
 presented module term. The cohomology of `I_x[1]` is `(0,0,1)` in degrees −1
 through 1, and Ext to `O` is `(1,0,0)` in degrees 1 through 3.
+
+Use `batches/resumable-quartic-mixed-point.toml` to resume the mixed word
+from that same version 2 checkpoint. The inverse worker checks the comparison
+to `I_x[1]` and publishes the mixed cone, the coevaluation, and the
+comparison from its finite source back to the saved cone.
 
 Use `batches/resumable-quartic-hypercohomology.toml` to observe the entire
 reloaded `T_O(O(-H))` cone. The batch computes derived global sections using

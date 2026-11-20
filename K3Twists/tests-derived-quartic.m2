@@ -160,3 +160,27 @@ TEST ///
         assert(result#"representative" === input and mukaiClass result === mukaiClass input);
         ));
 ///
+
+TEST ///
+    needsPackage "Complexes";
+    K = k3Surface 2;
+    P = catalogueObject(K, "O_x");
+    S = sphericalObject structureObject K;
+    H = sphericalObject lineBundleObject(K, K#"polarization");
+    W = twistWord {twistStep(S, 1), twistStep(H, -1)};
+    result = realizeTwistImage(W, P);
+    assert(result#"status" === "realized" and result#"strategy" === "quartic-point-inverse-coevaluation");
+    assert(result#"directions" === {1,-1} and result#"forwardShift" === 1);
+    assert(result#"derivedHomDegrees" === {{0,4},{1,1}});
+    u = result#"chainMap";
+    a = result#"sourceAugmentation";
+    assert(isComplexMorphism u and isWellDefined u and isHomogeneous u);
+    assert(source a === source u and not isFreeModule (source u)_2);
+    assert(isIsomorphism sheaf homology(1, result#"pointComparison"));
+    assert(isIsomorphism sheaf homology(1, a));
+    assert(isIsomorphism sheaf homology(1, result#"inclusion"));
+    assert(isIsomorphism sheaf homology(0, result#"projection"));
+    assert(realizedHomology(result, -2) == 0);
+    v = mukaiClass result;
+    assert({v#"rank", v#"divisor"#"coordinates", v#"eulerComponent"} === {2,{3},9});
+///

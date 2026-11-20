@@ -1,0 +1,23 @@
+# Three quartic invariants with deliberately wrong predictions. Each must end as a mismatch.
+
+name = "negative-control"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1200
+
+[limits]
+time_seconds = 120
+memory_mb = 600
+
+[[surfaces]]
+d = 2
+
+[[tasks]]
+kind = "invariant"
+names = ["h^i(O)", "h^i(O(H))", "h^i(O(-H))"]
+
+[tasks.control]
+"h^i(O)" = [0, 0, 0]
+"h^i(O(H))" = [0, 0, 0]
+"h^i(O(-H))" = [0, 0, 0]

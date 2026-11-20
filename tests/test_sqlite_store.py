@@ -8,8 +8,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from hashlib import sha256
 from pathlib import Path
 
+from k3batch.artifacts import ArtifactStore
 from k3batch.report import selected_results
 from k3batch.runner import REPOSITORY
 from k3batch.sqlite_store import SQLiteStore
@@ -54,6 +56,197 @@ class TransactionalStore(unittest.TestCase):
         self.run_dir.mkdir()
         self.store = SQLiteStore(self.root / "results.sqlite")
 
+    def test_export_run_copies_the_pinned_records_and_transitive_artifacts(self) -> None:
+        artifacts = ArtifactStore(self.root / "results.sqlite.artifacts")
+        model = artifacts.publish(
+            {
+                "version": 1,
+                "kind": "k3-model",
+                "payload": {
+                    "parameters": {},
+                    "coordinates": [],
+                    "grading": [],
+                    "equations": [],
+                    "markings": {},
+                },
+            },
+            "attempt",
+        )
+        endpoints = [
+            artifacts.publish(
+                {
+                    "version": 1,
+                    "kind": "graded-complex",
+                    "payload": {"model_digest": model, "base": degree, "terms": [[0]], "differentials": []},
+                },
+                "attempt",
+            )
+            for degree in (0, 1)
+        ]
+        chain_map = artifacts.publish(
+            {
+                "version": 1,
+                "kind": "graded-chain-map",
+                "payload": {
+                    "model_digest": model,
+                    "source_digest": endpoints[0],
+                    "target_digest": endpoints[1],
+                    "components": [],
+                },
+            },
+            "attempt",
+        )
+        with self.store, self.store.run(self.run_dir, MANIFEST, {}):
+            self.store.start_attempt("initial", MEMBER, "attempt", "start", "logs/attempt.log")
+            self.store.append(
+                RESULT
+                | {
+                    "agrees": True,
+                    "wall_seconds": 1.0,
+                    "peak_rss_mb": 10.0,
+                    "detail": {
+                        "artifact_outputs": {"map": {"kind": "graded-chain-map", "digest": chain_map}}
+                    },
+                }
+            )
+        bundle = self.root / "bundle"
+
+        def export(destination: Path) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [sys.executable, "-m", "k3batch", "export-run", str(self.run_dir), str(destination),
+                 "--store", str(self.store.path), "--run", "initial"],
+                cwd=REPOSITORY, capture_output=True, text=True, timeout=15,
+            )  # fmt: skip
+
+        result = export(bundle)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = self.store.manifest(self.run_dir, "initial")
+        self.assertEqual(json.loads((bundle / "manifest.json").read_bytes()), manifest)
+        records = list(map(json.loads, (bundle / "results.jsonl").read_text(encoding="utf-8").splitlines()))
+        self.assertEqual(records, list(selected_results(self.store, manifest).values()))
+        index = json.loads((bundle / "bundle.json").read_bytes())
+        self.assertEqual(index["version"], 1)
+        self.assertEqual(index["title"], self.run_dir.name)
+        for name, digest in index["files"].items():
+            self.assertEqual(digest, sha256((bundle / name).read_bytes()).hexdigest())
+        objects = bundle / "objects"
+        self.assertEqual({file.stem for file in objects.iterdir()}, {model, *endpoints, chain_map})
+        for digest in (model, *endpoints, chain_map):
+            self.assertEqual((objects / f"{digest}.json").read_bytes(), artifacts.read(digest))
+        self.assertIn("already exists", export(bundle).stderr)
+        (artifacts.objects / f"{endpoints[0]}.json").write_bytes(b"corrupt")
+        failed = self.root / "failed"
+        refused = export(failed)
+        self.assertEqual(refused.returncode, 2, refused.stderr)
+        self.assertIn("failed digest verification", refused.stderr)
+        self.assertFalse(failed.exists())
+
+    def test_verify_run_rejects_missing_corrupt_and_misbound_artifacts(self) -> None:
+        bundle = self.root / "bundle"
+        objects = bundle / "objects"
+        objects.mkdir(parents=True)
+
+        def put(data: dict) -> str:
+            blob = (json.dumps(data, sort_keys=True) + "\n").encode()
+            digest = sha256(blob).hexdigest()
+            (objects / f"{digest}.json").write_bytes(blob)
+            return digest
+
+        model_data = {
+            "version": 1,
+            "kind": "k3-model",
+            "payload": {"parameters": {}, "coordinates": [], "grading": [], "equations": [], "markings": {}},
+        }
+        model = put(model_data)
+        complex_data = {
+            "version": 1,
+            "kind": "graded-complex",
+            "payload": {"model_digest": model, "base": 0, "terms": [[0]], "differentials": []},
+        }
+        endpoint = put(complex_data)
+        arrow = {
+            "version": 1,
+            "kind": "graded-chain-map",
+            "payload": {
+                "model_digest": model,
+                "source_digest": endpoint,
+                "target_digest": endpoint,
+                "components": [],
+            },
+        }
+        manifest = json.dumps(MANIFEST | {"run_state": "completed"}).encode()
+        (bundle / "manifest.json").write_bytes(manifest)
+
+        def pin(digest: str, *, record_id: str = "observation") -> None:
+            record = RESULT | {
+                "task": MEMBER,
+                "record_id": record_id,
+                "agrees": True,
+                "wall_seconds": 1.0,
+                "peak_rss_mb": 10.0,
+                "detail": {"artifact_outputs": {"map": {"kind": "graded-chain-map", "digest": digest}}},
+            }
+            records = (json.dumps(record) + "\n").encode()
+            (bundle / "results.jsonl").write_bytes(records)
+            index = {
+                "version": 1,
+                "title": "original-run",
+                "unreadable_lines": 0,
+                "files": {
+                    "manifest.json": sha256(manifest).hexdigest(),
+                    "results.jsonl": sha256(records).hexdigest(),
+                },
+            }
+            (bundle / "bundle.json").write_text(json.dumps(index), encoding="utf-8")
+
+        def verify() -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [sys.executable, "-m", "k3batch", "verify-run", str(bundle), "--full"],
+                cwd=REPOSITORY, capture_output=True, text=True, timeout=15,
+            )  # fmt: skip
+
+        def expect_failure(message: str) -> None:
+            done = verify()
+            self.assertEqual(done.returncode, 2, done.stderr)
+            self.assertEqual(done.stdout, "")
+            self.assertIn(message, done.stderr)
+
+        digest = put(arrow)
+        pin(digest)
+        verified = verify()
+        self.assertEqual(verified.returncode, 0, verified.stderr)
+        self.assertTrue(verified.stdout.startswith("# Results in original-run"))
+        self.assertIn(digest, verified.stdout)
+
+        endpoint_file = objects / f"{endpoint}.json"
+        correct_endpoint = endpoint_file.read_bytes()
+        endpoint_file.unlink()
+        expect_failure(f"missing bundle file {endpoint}.json")
+        endpoint_file.write_bytes(b"corrupt")
+        expect_failure(f"{endpoint}.json failed digest verification")
+        endpoint_file.write_bytes(correct_endpoint)
+
+        for filename in ("manifest.json", "results.jsonl"):
+            with self.subTest(filename=filename):
+                path = bundle / filename
+                saved = path.read_bytes()
+                path.write_bytes(saved + b"\n")
+                expect_failure(f"{filename} failed digest verification")
+                path.write_bytes(saved)
+
+        pin(digest, record_id="unrelated-record")
+        expect_failure("does not match a unique pinned manifest member")
+
+        other_model = put(model_data | {"payload": model_data["payload"] | {"coordinates": ["x"]}})
+        foreign_endpoint = put(
+            complex_data | {"payload": complex_data["payload"] | {"model_digest": other_model}}
+        )
+        for endpoint_ref in (model, foreign_endpoint):
+            with self.subTest(endpoint=endpoint_ref):
+                # Give the modified map valid bytes and checksums to exercise endpoint checks.
+                pin(put(arrow | {"payload": arrow["payload"] | {"target_digest": endpoint_ref}}))
+                expect_failure("chain map target_digest must name a graded complex over its model")
+
     def test_observation_finish_is_atomic_and_checked_against_the_active_attempt(self) -> None:
         with self.store, self.store.run(self.run_dir, MANIFEST, {}):
             self.store.start_attempt("initial", MEMBER, "attempt", "start", "logs/attempt.log")
@@ -74,6 +267,8 @@ class TransactionalStore(unittest.TestCase):
         self.assertEqual(self.store.latest_by_computation(["operation"]), {"operation": raw[0]})
 
     def test_existing_membership_and_checks_remain_selectable_after_a_later_attempt(self) -> None:
+        first_start = "2026-01-01T00:00:01+00:00"
+        later_start = "2026-01-01T00:00:02+00:00"
         newer = MEMBER | {
             "record_id": "later-observation",
             "check_id": "later-check",
@@ -83,12 +278,12 @@ class TransactionalStore(unittest.TestCase):
         revised = MANIFEST | {"run_id": "recheck", "tasks": [reused]}
         with self.store:
             with self.store.run(self.run_dir, MANIFEST, {}):
-                self.store.start_attempt("initial", MEMBER, "attempt", "start", "log")
-                self.store.append(RESULT)
+                self.store.start_attempt("initial", MEMBER, "attempt", first_start, "log")
+                self.store.append(RESULT | {"started_at": first_start})
             with self.store.run(self.root / "another", revised, {}):
                 pass
             with self.store.run(self.run_dir, later, {}):
-                self.store.start_attempt("later", newer, "retry", "start", "log")
+                self.store.start_attempt("later", newer, "retry", later_start, "log")
                 self.store.append(
                     RESULT
                     | {
@@ -96,6 +291,7 @@ class TransactionalStore(unittest.TestCase):
                         "attempt_id": "retry",
                         "record_id": "later-observation",
                         "check_id": "later-check",
+                        "started_at": later_start,
                         "value": 2,
                     }
                 )
@@ -121,6 +317,7 @@ class TransactionalStore(unittest.TestCase):
 import json
 import os
 import sys
+from hashlib import sha256
 from pathlib import Path
 from k3batch.sqlite_store import SQLiteStore
 store = SQLiteStore(Path(sys.argv[1]))

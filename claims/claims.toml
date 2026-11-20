@@ -10,7 +10,7 @@
 # d = 20, so the ids of one parameter value are written out.  `batches`, when given, keeps the tasks of
 # those batches only: the dependent batches use the same ids for different objects.  A claim without
 # tasks says why in `no_task`.
-# Synthetic tasks (batches/limits-demo.toml) never count for a claim.
+# Synthetic tasks and tasks with IDs ending in !control are excluded from claims.
 
 [table.sheaves]
 heading = '''Cohomology of the sheaves of short words'''
@@ -221,12 +221,12 @@ batches = ["resumable-quartic-second-forward"]
 id = "class-of-a-word"
 table = "twists"
 cells = [
-  '''The image of O_x under the word {T_O, T_{O(H)}⁻¹} has Mukai coordinates (2, 3, 9)''',
-  '''(2, 3, 9)''',
-  '''the quartic''',
+  '''The word {T_O, T_{O(H)}⁻¹} on O_x is realized from the stored point cone, via the comparison with I_x[1]''',
+  '''Mukai class (2,3H,9); sheaf homology O(H) and coker(I_x → O(H)⁴) in degrees −1 and 0''',
+  '''the quartic with a line; `batches/resumable-quartic-mixed-point.toml`''',
 ]
-tasks = []
-no_task = '''a test of the package (`K3Twists/tests-words.m2`, run by `make test`); it leaves no record'''
+tasks = ["quartic_prefix/model", "quartic_prefix/realize", "quartic_prefix/mixed_point_inverse"]
+batches = ["resumable-quartic-mixed-point"]
 
 [[claim]]
 id = "quintic-threefold"
