@@ -1,0 +1,51 @@
+# Surfaces of your own, as a batch: copy this file, change the surfaces and the tasks, and run it.
+#
+#     python3 -m k3batch run examples/own-surfaces.toml        (or: make run BATCH=examples/own-surfaces.toml)
+#     python3 -m k3batch report results/own-surfaces
+#
+# The committed records of this repository all use one seed and one prime (seed 1, p = 32003).  The
+# predictions are formulas in n = d + 2, so on any other seed or prime every task below should end "ok".
+# The tasks of this file belong to no claim, and its records are not kept in git.
+
+name = "own-surfaces"
+
+[scheduler]
+workers = 4
+memory_budget_mb = 4000
+
+[limits]
+time_seconds = 120
+memory_mb = 1000
+
+# d is 2, 3 or 4; the characteristic is any prime; another seed gives another surface of the family
+[[surfaces]]
+d = 2
+seed = 2
+characteristic = 101
+
+[[surfaces]]
+d = 2
+seed = 3
+characteristic = 10007
+
+[[surfaces]]
+d = 3
+seed = 5
+characteristic = 101
+
+[[surfaces]]
+d = 4
+seed = 4
+characteristic = 10007
+
+# every table of tasks is expanded on every surface
+[[tasks]]
+kind = "invariant"
+names = "fast"
+
+# Ext groups between sheaves of the catalogue.  These pairs take a second or two each.  A pair among
+# M_H and M_x takes up to twenty seconds on the quartic, and for d = 3 and 4 it reaches these limits.
+[[tasks]]
+kind = "ext_pair"
+sources = ["O", "O(1H)"]
+targets = ["M_H", "M_x", "O_x"]

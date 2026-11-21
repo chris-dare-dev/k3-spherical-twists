@@ -112,6 +112,36 @@ This gives the symbolic image of the point sheaf and its Mukai coordinates `{2, 
 
 Use `applyWordToClass` to evaluate a long word using only integer lattice arithmetic. `shiftObject` records a cohomological shift, so even shifts can give distinct objects with equal Mukai classes. Realizing the symbolic image as a complex is a separate operation.
 
+## Examples to start from
+
+Each file of [examples/](examples/) is a short computation to copy and change. A script is run from the repository root, or its expressions are pasted at the Macaulay2 prompt; it ends in assertions, so a run that ends without an error agreed with what it expected.
+
+```bash
+M2 --script examples/own-surface.m2
+```
+
+| File | What it shows | Here |
+|---|---|---|
+| `examples/own-surface.m2` | a surface of another degree, prime and seed (d = 3, p = 101, seed 7), and its fifteen fast invariants against their predictions | 1 s |
+| `examples/own-word.m2` | a word of three signed twists applied to the point sheaf: the class of the image, a word of forty steps on classes alone, and the answer `unsupported` where the image cannot be built as a complex | under 1 s |
+| `examples/own-pair.m2` | the Ext groups between sheaves of the catalogue chosen by name, with the Euler characteristic predicted from their classes | 2 s |
+| `examples/own-surfaces.toml` | a batch file: the fast invariants and six pairs on four surfaces with other seeds and primes, 84 tasks | 20 s |
+| `examples/resumable-quartic.m2` | a marked quartic, a twist realized as a complex, and its cohomology ([below](#resumable-marked-quartic-study)) | 1 s |
+
+What can be changed: `d` is 2, 3 or 4, the characteristic is any prime, and another seed gives another surface of the same family. A value outside these ends with one line, for example `expected d = 2, 3 or 4`. The predictions are formulas in n = d + 2, so they hold for every prime and seed; the committed records all use seed 1 and p = 32003, and the batch file is there to try others.
+
+```bash
+make run BATCH=examples/own-surfaces.toml
+```
+
+```bash
+make report BATCH=examples/own-surfaces.toml
+```
+
+The tasks of that file belong to no claim, so it is kept outside `batches/` and nothing of it is in `records/`. `make examples` runs the four scripts.
+
+The cost of an Ext group grows quickly with the degree and with the ranks of the two sheaves. Measured here on the surfaces with seed 1 and p = 32003: a pair with a line bundle as its source takes a second or two for every d; on the quartic the four pairs among M_H and M_x take 4 to 22 seconds; for d = 3 and d = 4 none of those four finished within two minutes. `make plan` prints the cost of each task, which orders the tasks and is not a time; give such pairs their own `limits`, or keep them to the quartic.
+
 ## Requirements
 
 Macaulay2 (version 1.25 was used) and Python 3.11 or later; the scheduler uses the standard library only. Linux is assumed: the scheduler reads `/proc` and, where `systemd-run --user` is available, uses control groups.
@@ -690,6 +720,7 @@ make test-slow
 | `runners/run-tests.m2` | runs the fast or the slow tests of the package |
 | `k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
 | `batches/` | batch files |
+| `examples/` | scripts and a batch file to copy for a surface, a word, a pair or a batch of one's own |
 | `CLAIMS.md`, `claims/` | the claims with what the records say; `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |
 | `records/` | the records of the batches that were run for this repository |
 | `tools/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `records/` |

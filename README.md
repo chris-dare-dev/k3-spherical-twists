@@ -35,6 +35,8 @@ needsPackage "K3Twists"
 sheafInvariants k3Surface 2   -- computed and predicted h^i of the sheaves, on a quartic
 ```
 
+For a surface, a word, a pair of sheaves or a batch of your own, start from the files in [examples/](GUIDE.md#examples-to-start-from).
+
 ## What is in it
 
 | | |

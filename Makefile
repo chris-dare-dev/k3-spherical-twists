@@ -1,6 +1,7 @@
 # Targets run from the repository root.
 #   make test                              fast tests: Macaulay2 package and scheduler
 #   make test-slow                         the Macaulay2 tests that take longer
+#   make examples                          the scripts of examples/, each a short computation to copy
 #   make run BATCH=batches/invariants.toml compute the tasks of a batch that have no record yet
 #   make report BATCH=batches/invariants.toml REPORT_ARGS=--full
 #   make record BATCH=batches/invariants.toml   run, then copy the records into records/ (committed code only)
@@ -25,7 +26,7 @@ STORE    = $(if $(shell grep -l '^\[graph\]' $(BATCH)),--store $(RUN_DIR)/result
 EXPECT  ?= 0
 BATCHES ?=
 
-.PHONY: test test-m2 test-python test-slow test-all lint format plan run report record adopt smoke tables check
+.PHONY: test test-m2 test-python test-slow test-all examples lint format plan run report record adopt smoke tables check
 
 test: test-m2 test-python
 
@@ -39,6 +40,9 @@ test-slow:
 	$(M2) --script runners/run-tests.m2 slow
 
 test-all: test test-slow
+
+examples:
+	set -e; for script in examples/*.m2; do echo "== $$script"; $(M2) --script $$script; done
 
 lint:
 	ruff check $(CHECKED)
