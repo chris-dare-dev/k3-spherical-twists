@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """claims.py -- the claim tables, written from the registry, the batch files and the records.
 
-Usage:  python3 tools/claims.py tables              write the generated parts of CLAIMS.md and GUIDE.md,
-                                                     and claims/RECORDS.md
-        python3 tools/claims.py check               fail if they are not what `tables` writes, or if the
+Usage:  python3 src/bookkeeping/claims.py tables              write the generated parts of CLAIMS.md and GUIDE.md,
+                                                     and data/claims/RECORDS.md
+        python3 src/bookkeeping/claims.py check               fail if they are not what `tables` writes, or if the
                                                      registry and the batch files do not fit together
-        python3 tools/claims.py headline RUN_DIR    print the headline table from the records of one run
+        python3 src/bookkeeping/claims.py headline RUN_DIR    print the headline table from the records of one run
                                                      directory (for example results/smoke), and fail if
                                                      it is not the one in GUIDE.md
-        python3 tools/claims.py adopt RUN_DIR ...   copy the records of finished runs (results/<batch>)
-                                                     into records/<batch>
+        python3 src/bookkeeping/claims.py adopt RUN_DIR ...   copy the records of finished runs (results/<batch>)
+                                                     into data/records/<batch>
 
-What is read:  claims/claims.toml (the claims and the tasks that compute them), batches/*.toml (which
-tasks exist; the Macaulay2 runner expands them, so Macaulay2 is needed), records/<batch>/results.jsonl
+What is read:  data/claims/claims.toml (the claims and the tasks that compute them), data/batches/*.toml (which
+tasks exist; the Macaulay2 runner expands them, so Macaulay2 is needed), data/records/<batch>/results.jsonl
 (what was computed here).  A task without a record reads "not re-run".  A record of a task that has
 changed since (another surface, another predicted value) reads "stale" and supports nothing.
 
-`adopt` is tools/adopt.py, which says what it copies and what it refuses.
+`adopt` is src/bookkeeping/adopt.py, which says what it copies and what it refuses.
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, TypedDict
 
-REPOSITORY = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPOSITORY))
+REPOSITORY = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPOSITORY / "src"))
 
 import adopt  # noqa: E402
 
@@ -42,9 +42,9 @@ from k3batch.identity import TASK_LABELS  # noqa: E402
 from k3batch.runner import DEFAULT_RUNNER, expand  # noqa: E402
 from k3batch.store import ResultStore  # noqa: E402
 
-REGISTRY = REPOSITORY / "claims" / "claims.toml"
-RECORDS = REPOSITORY / "records"
-DETAIL = REPOSITORY / "claims" / "RECORDS.md"
+REGISTRY = REPOSITORY / "data" / "claims" / "claims.toml"
+RECORDS = REPOSITORY / "data" / "records"
+DETAIL = REPOSITORY / "data" / "claims" / "RECORDS.md"
 HEADLINE_BATCH = "invariants"  # the batch `make smoke` runs; the headline table names tasks of it
 NOT_RERUN = "not re-run"
 STALE = "stale"
@@ -113,7 +113,7 @@ def list_tasks(expansions: Mapping[str, Sequence[Mapping[str, Any]]]) -> list[Li
 def batch_tasks() -> list[Listed]:
     """Every task of every batch file, as the Macaulay2 runner expands it."""
     expansions = {}
-    for path in sorted((REPOSITORY / "batches").glob("*.toml")):
+    for path in sorted((REPOSITORY / "data" / "batches").glob("*.toml")):
         expanded, _ = expand(DEFAULT_RUNNER, load_config(path).description)
         expansions[path.stem] = [task.payload for task in expanded]
     return list_tasks(expansions)
@@ -207,7 +207,7 @@ def validate(registry: Mapping[str, Any], tasks: Sequence[Listed]) -> None:
             problems.append(f"the task {task['id']} ({', '.join(task['batches'])}) belongs to no claim")
     for row in registry["headline"]:
         if len(headline_tasks(row, tasks)) != 1:
-            problems.append(f"headline: {row['task']} is not one task of batches/{HEADLINE_BATCH}.toml")
+            problems.append(f"headline: {row['task']} is not one task of data/batches/{HEADLINE_BATCH}.toml")
     if problems:
         raise RegistryError("\n".join(problems))
 
@@ -272,7 +272,7 @@ def summary(
     found = [standing(task, records) for task in chosen]
     counts = Counter(status for status, _ in found)
     recorded = [record for status, record in found if record is not None and status != STALE]
-    link = f"[tasks](claims/RECORDS.md#{anchor(claim['id'])})"
+    link = f"[tasks](data/claims/RECORDS.md#{anchor(claim['id'])})"
     if counts[NOT_RERUN] == len(chosen):
         named = claim.get("batches")
         batches = sorted(
@@ -308,13 +308,13 @@ def claims_table(
 def detail(
     registry: Mapping[str, Any], tasks: Sequence[Listed], records: Mapping[str, Sequence[Record]]
 ) -> str:
-    """claims/RECORDS.md: every claim with its tasks, one row per task."""
+    """data/claims/RECORDS.md: every claim with its tasks, one row per task."""
     lines = [
         "# Tasks and records, claim by claim",
         "",
-        "Generated by `tools/claims.py tables`; do not edit. For every claim of [CLAIMS.md](../CLAIMS.md) that has "
+        "Generated by `src/bookkeeping/claims.py tables`; do not edit. For every claim of [CLAIMS.md](../../CLAIMS.md) that has "
         "tasks: each task with the batches that contain it, its predicted value, and the latest record of the task "
-        f'in [records/](../records/), if there is one. A task without a record reads "{NOT_RERUN}": nothing in this '
+        f'in [data/records/](../records/), if there is one. A task without a record reads "{NOT_RERUN}": nothing in this '
         f'repository then says what it computes to. A record reads "{STALE}" when its task has changed since it was '
         "computed (another surface, another object, another predicted value): it supports nothing until the task is "
         "run again.",
@@ -378,7 +378,10 @@ def blocks(
 
 
 def splice(text: str, name: str, lines: list[str], path: Path) -> str:
-    begin, end = f"<!-- BEGIN GENERATED {name}: tools/claims.py tables -->", f"<!-- END GENERATED {name} -->"
+    begin, end = (
+        f"<!-- BEGIN GENERATED {name}: src/bookkeeping/claims.py tables -->",
+        f"<!-- END GENERATED {name} -->",
+    )
     if text.count(begin) != 1 or text.count(end) != 1:
         raise RegistryError(f"{path.name} needs exactly one pair of markers for the generated part {name!r}")
     head, rest = text.split(begin)
@@ -441,7 +444,7 @@ def command_headline(run_dir: Path) -> int:
 def command_adopt(run_dirs: list[Path]) -> int:
     for run_dir in run_dirs:
         done = adopt.adopt(run_dir, RECORDS, REPOSITORY)
-        print(f"records/{run_dir.name}: {len(done.records)} records, {stamp(done.records)}")
+        print(f"data/records/{run_dir.name}: {len(done.records)} records, {stamp(done.records)}")
         for (old, now), count in sorted(done.moved.items()):
             print(f"   {count} records: commit {old[:7]} is {now[:7]} in the present history (same tree)")
     return 0

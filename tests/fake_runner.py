@@ -13,8 +13,8 @@ behaves:
     silent       exit with status 0 without giving a result
     garbled      give a result that is not one (file protocol: a response that is not JSON)
     value, predicted   reported in the result; "mismatch" when both are given and differ
-    read_source  read K3Twists.m2 relative to this script and the working directory
-    edit_source  replace K3Twists.m2 in the named checkout; commit when commit_source is set
+    read_source  read src/K3Twists.m2 relative to this script and the working directory
+    edit_source  replace src/K3Twists.m2 in the named checkout; commit when commit_source is set
 
 With `--journal FILE` every run appends "start <pid> <time> <id>" and "end <pid> <time> <id>" lines.
 """
@@ -76,11 +76,11 @@ def run(task: dict, journal: str | None) -> dict | None:
     if task.get("read_source"):
         value = [
             (Path(__file__).resolve().parents[1] / "K3Twists.m2").read_text(),
-            Path("K3Twists.m2").read_text(),
+            Path("src/K3Twists.m2").read_text(),
         ]
     if "edit_source" in task:
         checkout = Path(task["edit_source"])
-        (checkout / "K3Twists.m2").write_text("after capture\n")
+        (checkout / "src" / "K3Twists.m2").write_text("after capture\n")
         if task.get("commit_source"):
             subprocess.run(
                 ["git", "-C", str(checkout), "commit", "-am", "change the source during a run"],

@@ -72,15 +72,15 @@ Use `quartic_with_conic` for the conic family. Both families have degree four an
 
 `markedQuarticSpec` records the equation, curve generators and point generators as sparse integer data, so rebuilding a saved model uses those exact equations and markings. The batch runner accepts the same recipe fields, including the optional `model` table. Distinct explicit markings are part of the inputs that identify a computation.
 
-Run `python3 -m k3batch run batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
+Run `PYTHONPATH=src python3 -m k3batch run data/batches/marked-quartics.toml` for the curve sheaf's cohomology and self-Ext on both families. The invariant task names are `h^i(O_C)` and `Ext^i(O_C, O_C)`. The original catalogue still uses the hyperplane classes for its entries.
 
 ## Claims and records
 
-[CLAIMS.md](CLAIMS.md) lists what this page says the code computes, claim by claim, with what the committed records in [records/](records/) say about each: how many of its tasks were run, when, at which commit, and how they ended. [claims/RECORDS.md](claims/RECORDS.md) has one row per task.
+[CLAIMS.md](CLAIMS.md) lists what this page says the code computes, claim by claim, with what the committed records in [data/records/](data/records/) say about each: how many of its tasks were run, when, at which commit, and how they ended. [data/claims/RECORDS.md](data/claims/RECORDS.md) has one row per task.
 
-`make smoke` runs the batch [batches/invariants.toml](batches/invariants.toml): 45 tasks, about ten seconds on four processes. Each row below is one task of it: the predicted value, and what the task computed in its latest record in [records/](records/). `make smoke` ends by printing this table from its own fresh run, and fails if it is not the table printed here.
+`make smoke` runs the batch [data/batches/invariants.toml](data/batches/invariants.toml): 45 tasks, about ten seconds on four processes. Each row below is one task of it: the predicted value, and what the task computed in its latest record in [data/records/](data/records/). `make smoke` ends by printing this table from its own fresh run, and fails if it is not the table printed here.
 
-<!-- BEGIN GENERATED headline: tools/claims.py tables -->
+<!-- BEGIN GENERATED headline: src/bookkeeping/claims.py tables -->
 | Quantity | Predicted | Computed | Status | Task |
 |---|---|---|---|---|
 | hⁱ(I_x(H)) on the quartic (n = 4): (n − 1, 0, 0) | (3, 0, 0) | (3, 0, 0) | ok | `invariant/d2-p32003-s1/h^i(I_x(H))` |
@@ -114,31 +114,31 @@ Use `applyWordToClass` to evaluate a long word using only integer lattice arithm
 
 ## Examples to start from
 
-Each file of [examples/](examples/) is a short computation to copy and change. A script is run from the repository root, or its expressions are pasted at the Macaulay2 prompt; it ends in assertions, so a run that ends without an error agreed with what it expected.
+Each file of [data/examples/](data/examples/) is a short computation to copy and change. A script is run from the repository root, or its expressions are pasted at the Macaulay2 prompt; it ends in assertions, so a run that ends without an error agreed with what it expected.
 
 ```bash
-M2 --script examples/own-surface.m2
+M2 --script data/examples/own-surface.m2
 ```
 
 | File | What it shows | Here |
 |---|---|---|
-| `examples/own-surface.m2` | a surface of another degree, prime and seed (d = 3, p = 101, seed 7), and its fifteen fast invariants against their predictions | 1 s |
-| `examples/own-word.m2` | a word of three signed twists applied to the point sheaf: the class of the image, a word of forty steps on classes alone, and the answer `unsupported` where the image cannot be built as a complex | under 1 s |
-| `examples/own-pair.m2` | the Ext groups between sheaves of the catalogue chosen by name, with the Euler characteristic predicted from their classes | 2 s |
-| `examples/own-surfaces.toml` | a batch file: the fast invariants and six pairs on four surfaces with other seeds and primes, 84 tasks | 20 s |
-| `examples/resumable-quartic.m2` | a marked quartic, a twist realized as a complex, and its cohomology ([below](#resumable-marked-quartic-study)) | 1 s |
+| `data/examples/own-surface.m2` | a surface of another degree, prime and seed (d = 3, p = 101, seed 7), and its fifteen fast invariants against their predictions | 1 s |
+| `data/examples/own-word.m2` | a word of three signed twists applied to the point sheaf: the class of the image, a word of forty steps on classes alone, and the answer `unsupported` where the image cannot be built as a complex | under 1 s |
+| `data/examples/own-pair.m2` | the Ext groups between sheaves of the catalogue chosen by name, with the Euler characteristic predicted from their classes | 2 s |
+| `data/examples/own-surfaces.toml` | a batch file: the fast invariants and six pairs on four surfaces with other seeds and primes, 84 tasks | 20 s |
+| `data/examples/resumable-quartic.m2` | a marked quartic, a twist realized as a complex, and its cohomology ([below](#resumable-marked-quartic-study)) | 1 s |
 
 What can be changed: `d` is 2, 3 or 4, the characteristic is any prime, and another seed gives another surface of the same family. A value outside these ends with one line, for example `expected d = 2, 3 or 4`. The predictions are formulas in n = d + 2, so they hold for every prime and seed; the committed records all use seed 1 and p = 32003, and the batch file is there to try others.
 
 ```bash
-make run BATCH=examples/own-surfaces.toml
+make run BATCH=data/examples/own-surfaces.toml
 ```
 
 ```bash
-make report BATCH=examples/own-surfaces.toml
+make report BATCH=data/examples/own-surfaces.toml
 ```
 
-The tasks of that file belong to no claim, so it is kept outside `batches/` and nothing of it is in `records/`. `make examples` runs the four scripts.
+The tasks of that file belong to no claim, so it is kept outside `data/batches/` and nothing of it is in `data/records/`. `make examples` runs the four scripts.
 
 The cost of an Ext group grows quickly with the degree and with the ranks of the two sheaves. Measured here on the surfaces with seed 1 and p = 32003: a pair with a line bundle as its source takes a second or two for every d; on the quartic the four pairs among M_H and M_x take 4 to 22 seconds; for d = 3 and d = 4 none of those four finished within two minutes. `make plan` prints the cost of each task, which orders the tasks and is not a time; give such pairs their own `limits`, or keep them to the quartic.
 
@@ -161,18 +161,18 @@ docker run --rm -v "$PWD":/work -w /work k3-twists-m2 make test
 A long computation is described as a batch: a file that says which surfaces, which tasks, which limits, and how much of the machine to use. One task is one computation with one answer, for example Extⁱ(M_H, M_x) on the quartic with seed 1 over the field with 32003 elements.
 
 ```bash
-python3 -m k3batch plan batches/quartic-sample.toml
+PYTHONPATH=src python3 -m k3batch plan data/batches/quartic-sample.toml
 ```
 
 ```bash
-python3 -m k3batch run batches/quartic-sample.toml
+PYTHONPATH=src python3 -m k3batch run data/batches/quartic-sample.toml
 ```
 
 ```bash
-python3 -m k3batch report results/quartic-sample
+PYTHONPATH=src python3 -m k3batch report results/quartic-sample
 ```
 
-`plan` lists the tasks a run would compute, with their costs and limits, and computes nothing. `run` computes each task that lacks a reusable record for its exact computation. `report` prints tables from the records. `make plan`, `make run` and `make report` do the same with `BATCH=batches/….toml`.
+`plan` lists the tasks a run would compute, with their costs and limits, and computes nothing. `run` computes each task that lacks a reusable record for its exact computation. `report` prints tables from the records. `make plan`, `make run` and `make report` do the same with `BATCH=data/batches/….toml`.
 
 ### The batch file
 
@@ -212,7 +212,7 @@ A `[[tasks]]` table may carry its own `limits = { time_seconds = …, memory_mb 
 
 Each task has a cost. For a pair it is the rank of the sheaf Hom(E, F). The cost is a hint and not an estimate of the time: tasks run in order of cost, cheapest first, and tiers use it to give expensive tasks larger limits. Tasks whose memory limits do not fit the budget together never run at the same time; a task whose limit is the whole budget runs alone.
 
-The batches in `batches/`:
+The batches in `data/batches/`:
 
 | File | Content |
 |---|---|
@@ -273,17 +273,17 @@ A record carries the task, its outcome and where it came from:
 
 ### Committed records
 
-A run writes to `results/<batch>/`, which is not in git. The records behind [CLAIMS.md](CLAIMS.md) are in [records/](records/), one directory per batch:
+A run writes to `results/<batch>/`, which is not in git. The records behind [CLAIMS.md](CLAIMS.md) are in [data/records/](data/records/), one directory per batch:
 
 ```bash
-make record BATCH=batches/invariants.toml
+make record BATCH=data/batches/invariants.toml
 ```
 
 ```bash
 make tables
 ```
 
-`make record` runs the batch and copies its records to `records/<batch>/`; for `batches/limits-demo.toml`, whose synthetic tasks are stopped on purpose, add `EXPECT=3`. `make adopt BATCHES="a b"` copies the records of runs that are already in `results/`. For a batch with a `[graph]` table, `make plan`, `make run` and `make record` use the SQLite store at `results/<batch>/results.sqlite`, and the records are adopted from it. A record is copied only if it was computed from committed code with no uncommitted change in the working tree (an untracked file counts as one), and only if it names neither the machine nor a directory outside the repository; [tools/adopt.py](tools/adopt.py) has the rules. `make tables` then rewrites the generated tables, and `make check` fails when they are not what the registry, the batch files and the records give.
+`make record` runs the batch and copies its records to `data/records/<batch>/`; for `data/batches/limits-demo.toml`, whose synthetic tasks are stopped on purpose, add `EXPECT=3`. `make adopt BATCHES="a b"` copies the records of runs that are already in `results/`. For a batch with a `[graph]` table, `make plan`, `make run` and `make record` use the SQLite store at `results/<batch>/results.sqlite`, and the records are adopted from it. A record is copied only if it was computed from committed code with no uncommitted change in the working tree (an untracked file counts as one), and only if it names neither the machine nor a directory outside the repository; [src/bookkeeping/adopt.py](src/bookkeeping/adopt.py) has the rules. `make tables` then rewrites the generated tables, and `make check` fails when they are not what the registry, the batch files and the records give.
 
 In the tables a record counts for a task as long as the task is the same computation with the same predicted value, whatever has changed in the code since; the record names its commit. A record of a task that has changed reads `stale`. This is a rule of the tables only. When the scheduler decides whether to compute a task again it also compares the code, as described under [Reports](#reports).
 
@@ -291,7 +291,7 @@ In the tables a record counts for a task as long as the task is the same computa
 
 With JSONL storage, the scheduler saves a separate manifest under `runs/<id>.json` before each run starts. It pins the exact result record selected for each task and carries a revised check when a runner declares that the observation supports independent comparison.
 
-`report` defaults to the latest run. Use `python3 -m k3batch report results/quartic-sample --run <id>` to select an earlier run using its printed ID or its ID in `runs.jsonl`. Reports from before run manifests were introduced remain readable. Use `--legacy` to read unversioned historical records from a directory that also has versioned runs. Unversioned records are ineligible for automatic reuse.
+`report` defaults to the latest run. Use `PYTHONPATH=src python3 -m k3batch report results/quartic-sample --run <id>` to select an earlier run using its printed ID or its ID in `runs.jsonl`. Reports from before run manifests were introduced remain readable. Use `--legacy` to read unversioned historical records from a directory that also has versioned runs. Unversioned records are ineligible for automatic reuse.
 
 Computation fingerprints include the expanded operation and scientific inputs, local package source contents, runner versions, and the launcher and recognized runner script contents. Placement fields (`id`, `set`, `group`, and `cost`) describe the report and schedule. At the start of each plan or run, the CLI copies the package, scheduler, and repository-local runner files that contribute to the fingerprint into a private source directory. Expansion and tasks run from that directory, so edits and commits made after capture are picked up by the next run. A dirty checkout contributes its captured file contents and is recorded with `code.dirty: true`. Custom runners should use absolute paths for data outside the snapshot and include their external code and runtime versions in their expansion metadata.
 
@@ -310,9 +310,9 @@ A runner may declare `comparison = "equals"` for full-value comparison or `compa
 Use `--store` with a local SQLite path to keep several batch runs in one database. Their output directories still hold logs and runner files. The database records run membership, attempts and their outcomes, prediction revisions, and artifact descriptors supplied by the runner. Exact matches can be reused across output directories. Reports resolve logs relative to the directory of the original attempt.
 
 ```bash
-python3 -m k3batch plan batches/quartic-sample.toml --store results/study.sqlite
-python3 -m k3batch run batches/quartic-sample.toml --store results/study.sqlite
-python3 -m k3batch report results/quartic-sample --store results/study.sqlite --run RUN_ID --full
+PYTHONPATH=src python3 -m k3batch plan data/batches/quartic-sample.toml --store results/study.sqlite
+PYTHONPATH=src python3 -m k3batch run data/batches/quartic-sample.toml --store results/study.sqlite
+PYTHONPATH=src python3 -m k3batch report results/quartic-sample --store results/study.sqlite --run RUN_ID --full
 ```
 
 A database admits one writing coordinator at a time. Readers can inspect committed results while a run is active. If the coordinator dies, the next writer marks its running attempts and run as interrupted. Completed records remain available. The database uses WAL mode on local storage.
@@ -320,9 +320,9 @@ A database admits one writing coordinator at a time. Readers can inspect committ
 Import from a completed JSONL run directory to retain the original records, available manifests, and run metadata. A repeated import skips records that are already present. Unversioned records stay available for historical reports. The source files are left in place.
 
 ```bash
-python3 -m k3batch import-jsonl results/earlier-experiment --store results/study.sqlite
-python3 -m k3batch report results/earlier-experiment --store results/study.sqlite --legacy
-python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinned-results.jsonl
+PYTHONPATH=src python3 -m k3batch import-jsonl results/earlier-experiment --store results/study.sqlite
+PYTHONPATH=src python3 -m k3batch report results/earlier-experiment --store results/study.sqlite --legacy
+PYTHONPATH=src python3 -m k3batch export-jsonl --store results/study.sqlite --run RUN_ID > pinned-results.jsonl
 ```
 
 Without `--run`, export writes one standalone JSON row per finished attempt. Use `--surface '{"d":2,"seed":1,"characteristic":32003,"special_quadric":false}'` to match a complete surface object, or filter with `--method`, `--observation` for a result record ID, or `--commit`. With `--run`, export includes the exact observations and checks the run pinned, with the source record ID, source run ID, and selected run ID. The run report shows tasks without a result as “not run.”
@@ -333,8 +333,8 @@ records, file digests, and content-addressed artifact files. Chain maps bring
 both complex endpoints and their model with them.
 
 ```bash
-python3 -m k3batch export-run results/quartic-sample exported-run --store results/study.sqlite --run RUN_ID
-python3 -m k3batch verify-run exported-run --full
+PYTHONPATH=src python3 -m k3batch export-run results/quartic-sample exported-run --store results/study.sqlite --run RUN_ID
+PYTHONPATH=src python3 -m k3batch verify-run exported-run --full
 ```
 
 After copying the bundle to another machine, run `verify-run` there. It checks
@@ -449,8 +449,8 @@ To save a model from Macaulay2, load `JSON` and write
 digest, then fetch its verified bytes for another process.
 
 ```bash
-model=$(python3 -m k3batch publish-artifact results/artifacts model.json --producer attempt-1)
-python3 -m k3batch read-artifact results/artifacts "$model" > verified-model.json
+model=$(PYTHONPATH=src python3 -m k3batch publish-artifact results/artifacts model.json --producer attempt-1)
+PYTHONPATH=src python3 -m k3batch read-artifact results/artifacts "$model" > verified-model.json
 ```
 
 Use `loadK3ModelArtifact(fromJSON get "verified-model.json", digest)` in the new
@@ -530,8 +530,8 @@ its consumers. Runs with no graph edges follow the usual scheduling and reuse ru
 ### Resumable marked quartic study
 
 At the Macaulay2 prompt, load the package and evaluate the expressions in
-`examples/resumable-quartic.m2`. From the repository root the same session runs
-with `M2 --script examples/resumable-quartic.m2`. The line marking gives
+`data/examples/resumable-quartic.m2`. From the repository root the same session runs
+with `M2 --script data/examples/resumable-quartic.m2`. The line marking gives
 the ordered basis `H, C` with Gram matrix `{{4,1},{1,-2}}`. The script shows
 the catalogue, the class `(-3,(1,0),-1)` of the forward twist of `O(H)` about
 `O`, its realization as `M_H[1]`, and the capability response for the
@@ -543,12 +543,12 @@ enforced cgroup v2 limits, then resume against the same ledger.
 
 ```bash
 scratch=$(mktemp -d)
-python3 -m k3batch run batches/resumable-quartic.toml \
+PYTHONPATH=src python3 -m k3batch run data/batches/resumable-quartic.toml \
     --store "$scratch/study.sqlite" --out "$scratch/run" \
     --memory-guard cgroup --checkpoint-after quartic_prefix/realize
-python3 -m k3batch run batches/resumable-quartic.toml \
+PYTHONPATH=src python3 -m k3batch run data/batches/resumable-quartic.toml \
     --store "$scratch/study.sqlite" --out "$scratch/run" --memory-guard cgroup
-python3 -m k3batch report "$scratch/run" \
+PYTHONPATH=src python3 -m k3batch report "$scratch/run" \
     --store "$scratch/study.sqlite" --run RUN_ID --full
 ```
 
@@ -561,28 +561,28 @@ attempt IDs, and memory-control mode. The cohomology table is `(0,0,4)` in
 degrees −1 through 1, and Ext from the realized object to `O` is `(4,0,0)`
 in degrees 1 through 3.
 
-Use `batches/marked-quartics.toml` for cohomology and self-Ext of the marked
+Use `data/batches/marked-quartics.toml` for cohomology and self-Ext of the marked
 line and conic as curves on their respective quartics.
 
-Use `batches/resumable-quartic-point.toml` with the same checkpoint and report
+Use `data/batches/resumable-quartic-point.toml` with the same checkpoint and report
 commands and a fresh ledger to study the marked point. Its realization selects
 `target = "O_x"` and publishes a version 2 cone because the point sheaf has a
 presented module term. The cohomology of `I_x[1]` is `(0,0,1)` in degrees −1
 through 1, and Ext to `O` is `(1,0,0)` in degrees 1 through 3.
 
-Use `batches/resumable-quartic-mixed-point.toml` to resume the mixed word
+Use `data/batches/resumable-quartic-mixed-point.toml` to resume the mixed word
 from that same version 2 checkpoint. The inverse worker checks the comparison
 to `I_x[1]` and publishes the mixed cone, the coevaluation, and the
 comparison from its finite source back to the saved cone.
 
-Use `batches/resumable-quartic-hypercohomology.toml` to observe the entire
+Use `data/batches/resumable-quartic-hypercohomology.toml` to observe the entire
 reloaded `T_O(O(-H))` cone. The batch computes derived global sections using
 the differentials and compares the hypercohomology with the evaluation triangle.
 Only degree 3 is nonzero, of dimension four. From M2, use
 `hypercohomologyObservation(K, C)` on a graded complex over the quartic model
 `K`. The observed degrees are cohomological.
 
-Use `batches/resumable-quartic-inverse.toml` with the same checkpoint and
+Use `data/batches/resumable-quartic-inverse.toml` with the same checkpoint and
 report commands and a fresh SQLite ledger. The forward task writes the cone,
 evaluation, and source augmentation together. After the checkpoint, the
 hypercohomology worker reads the saved cone and the inverse worker checks the
@@ -590,7 +590,7 @@ saved maps against that same cone. The pinned report gives both workers' input
 digests and source attempt, the degree-three hypercohomology, and the verified
 sheaf quasi-isomorphism with `O(-H)`.
 
-Use `batches/resumable-quartic-second-forward.toml` to run a third consumer of
+Use `data/batches/resumable-quartic-second-forward.toml` to run a third consumer of
 that saved forward prefix. It computes the second forward twist from the
 reloaded evaluation triangle and publishes the second cone, evaluation, and
 source augmentation. The pinned report records one shared forward attempt,
@@ -656,7 +656,7 @@ The file size limit still applies to each job log.
 
 ## Design
 
-Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.
+Macaulay2 does the mathematics and nothing else. `runTask` computes one task and `expandBatch` lists the tasks of a batch, including which pairs exist and what they cost; `src/runners/task-runner.m2` exposes the two as a command that reads and prints JSON. The scheduler is in Python and knows no mathematics: it calls the runner, enforces limits and keeps records. It is tested against a fake runner without Macaulay2.
 
 The process boundary is the task because Macaulay2 cannot be relied on to stop itself or to isolate work inside one process:
 
@@ -669,7 +669,7 @@ A process per task costs the start of Macaulay2 and the loading of the package, 
 ### Runner protocol
 
 The bundled Macaulay2 runner uses separate request and response files. Python invokes
-`M2 --script runners/task-runner.m2 protocol-v2 REQUEST RESPONSE` and keeps process
+`M2 --script src/runners/task-runner.m2 protocol-v2 REQUEST RESPONSE` and keeps process
 diagnostics in the usual task log. A request is one UTF-8 JSON object with `version`
 (2), `operation_version` (1), `request_id`, `operation` (`expand` or `run`), and
 `payload`. The payload is a batch description for expansion and one expanded task
@@ -708,25 +708,28 @@ make test-slow
 
 `make check` expands every batch file with Macaulay2 and fails if the claim registry does not fit the tasks or if a generated table is out of date. `make smoke` is described under [Claims and records](#claims-and-records).
 
-`make lint` runs `ruff` and `mypy` on the scheduler and the tools; neither is needed to run them. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
+`make lint` runs `ruff` and `mypy` on the scheduler and the bookkeeping; neither is needed to run them. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
 
 ## Layout
 
+The root holds three folders: the code, its tests, and the data this repository publishes.
+
 | Path | Content |
 |---|---|
-| `K3Twists.m2` | the package: exports, and the files it loads |
-| `K3Twists/` | surfaces, classes, sheaves, catalogue, invariants, tasks, documentation, tests |
-| `runners/task-runner.m2` | the command the scheduler calls: expands a batch, computes one task |
-| `runners/run-tests.m2` | runs the fast or the slow tests of the package |
-| `k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
-| `batches/` | batch files |
-| `examples/` | scripts and a batch file to copy for a surface, a word, a pair or a batch of one's own |
-| `CLAIMS.md`, `claims/` | the claims with what the records say; `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |
-| `records/` | the records of the batches that were run for this repository |
-| `tools/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `records/` |
-| `tests/` | tests of the scheduler and the tools, and the fake runner they use |
+| `src/K3Twists.m2`, `src/K3Twists/` | the Macaulay2 package: surfaces, classes, sheaves, catalogue, invariants, tasks, documentation, tests |
+| `src/runners/` | `task-runner.m2`, the command the scheduler calls (expands a batch, computes one task); `run-tests.m2`, which runs the fast or the slow tests of the package |
+| `src/k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
+| `src/bookkeeping/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `data/records/` |
+| `tests/` | tests of the scheduler and the bookkeeping, and the fake runner they use |
+| `data/batches/` | batch files |
+| `data/records/` | the records of the batches that were run for this repository |
+| `data/claims/` | `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |
+| `data/examples/` | scripts and a batch file to copy for a surface, a word, a pair or a batch of one's own |
+| `CLAIMS.md` | the claims with what the records say |
 | `results/` | run directories; not in git |
-| `Dockerfile`, `Makefile`, `pyproject.toml`, `.github/workflows/` | container, targets, lint settings, continuous integration |
+| `Dockerfile`, `Makefile`, `pyproject.toml`, `.github/` | container, targets, lint settings, continuous integration and the check that keeps the root to these folders |
+
+The Python packages are under `src/`: `make` sets `PYTHONPATH` itself, and a command run by hand starts with `PYTHONPATH=src`. A Macaulay2 script outside `src/` puts `src/` on its `path` before `needsPackage "K3Twists"`, as the files of `data/examples/` do.
 
 ## What this does not show
 

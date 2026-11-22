@@ -81,7 +81,7 @@ class FileProtocol(unittest.TestCase):
             self.request.read(2)
 
     def test_bundled_makefile_entrypoint_uses_a_file_for_large_input(self) -> None:
-        runner = ("M2", "--script", "runners/task-runner.m2")
+        runner = ("M2", "--script", "src/runners/task-runner.m2")
         large = "🧪" * 200_000
         invocation = RunnerInvocation.prepare(runner, "expand", {"fixture": large}, self.root)
         self.addCleanup(invocation.cleanup)

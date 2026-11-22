@@ -1,5 +1,5 @@
 -- Tests of the package.  A test whose first line is "-- slow" takes more than a few seconds;
--- runners/run-tests.m2 uses that line to run the fast and the slow tests separately.
+-- src/runners/run-tests.m2 uses that line to run the fast and the slow tests separately.
 
 TEST ///
     -- the recursion c_(k+1) = n c_k - c_(k-1)

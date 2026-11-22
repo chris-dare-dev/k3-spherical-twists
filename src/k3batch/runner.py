@@ -13,8 +13,8 @@ from typing import Any
 from . import wire
 from .model import Task
 
-REPOSITORY = Path(__file__).resolve().parent.parent
-RUNNER_SCRIPT = Path("runners/task-runner.m2")
+REPOSITORY = Path(__file__).resolve().parents[2]
+RUNNER_SCRIPT = Path("src/runners/task-runner.m2")
 DEFAULT_RUNNER = ("M2", "--script", str(REPOSITORY / RUNNER_SCRIPT))
 
 TASK_MARK = "@task "

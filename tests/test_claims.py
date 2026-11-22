@@ -14,7 +14,7 @@ from k3batch.runner import DEFAULT_RUNNER, REPOSITORY
 
 from . import helpers
 
-sys.path.insert(0, str(REPOSITORY / "tools"))
+sys.path.insert(0, str(REPOSITORY / "src" / "bookkeeping"))
 
 import claims
 
@@ -117,7 +117,7 @@ class Validation(unittest.TestCase):
             "no batch file 'absent'",
             "invariant/d2/rank M_H (invariants) belongs to no claim",
             "prefix/realize (point) belongs to no claim",
-            "is not one task of batches/invariants.toml",
+            "is not one task of data/batches/invariants.toml",
         ):
             self.assertIn(part, message)
         self.assertNotIn("synthetic", message)
@@ -251,7 +251,10 @@ class Files(unittest.TestCase):
         self.assertEqual([(task["id"], task["batches"]) for task in tasks], [("t", ["a", "b"]), ("t", ["c"])])
 
     def test_generated_parts_need_their_markers(self) -> None:
-        begin, end = "<!-- BEGIN GENERATED x: tools/claims.py tables -->", "<!-- END GENERATED x -->"
+        begin, end = (
+            "<!-- BEGIN GENERATED x: src/bookkeeping/claims.py tables -->",
+            "<!-- END GENERATED x -->",
+        )
         text = f"before\n{begin}\nold\n{end}\nafter\n"
         self.assertEqual(
             claims.splice(text, "x", ["new"], Path("f.md")), f"before\n{begin}\nnew\n{end}\nafter\n"

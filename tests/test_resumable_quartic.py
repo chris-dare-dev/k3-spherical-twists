@@ -88,7 +88,7 @@ class ResumableQuartic(unittest.TestCase):
             ledger = root / "study.sqlite"
             output = root / "run"
             database = ("--store", str(ledger))
-            batch = f"batches/{batch_name}.toml"
+            batch = f"data/batches/{batch_name}.toml"
             run = ("run", batch, "--out", str(output), "--memory-guard", "poll", *database)
 
             def cli(*args: str, code: int = 0) -> str:
@@ -320,7 +320,7 @@ class ResumableQuartic(unittest.TestCase):
         script = store.database.parent / "reload-output.m2"
         script.write_text(
             f"""
-            path = prepend("./", path);
+            path = prepend("./src/", path);
             needsPackage "K3Twists"; needsPackage "JSON"; needsPackage "Complexes";
             objects = {json.dumps(str(store.objects) + "/")};
             readData = digest -> fromJSON get(objects | digest | ".json");

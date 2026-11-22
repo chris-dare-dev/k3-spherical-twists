@@ -36,10 +36,10 @@ def implementation_files(
 ) -> tuple[Path, dict[str, dict[str, Path]]]:
     """Find the local source and runner files. Keys describe their original locations."""
     sources = [
-        repository / "K3Twists.m2",
-        *(repository / "K3Twists").rglob("*.m2"),
-        *(repository / "runners").rglob("*.m2"),
-        *(repository / "k3batch").rglob("*.py"),
+        repository / "src" / "K3Twists.m2",
+        *(repository / "src" / "K3Twists").rglob("*.m2"),
+        *(repository / "src" / "runners").rglob("*.m2"),
+        *(repository / "src" / "k3batch").rglob("*.py"),
     ]
     if not runner:
         raise RunnerError("the runner command is empty")

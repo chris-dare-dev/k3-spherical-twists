@@ -18,7 +18,7 @@ from k3batch.sqlite_store import SQLiteStore
 
 from . import helpers
 
-sys.path.insert(0, str(REPOSITORY / "tools"))
+sys.path.insert(0, str(REPOSITORY / "src" / "bookkeeping"))
 
 import adopt
 

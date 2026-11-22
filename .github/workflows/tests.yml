@@ -17,6 +17,8 @@ jobs:
           python-version: "3.12"
       - run: pip install ruff==0.17.5 mypy==2.4.1
       - run: make lint
+      - name: The root holds src/, tests/, data/ and the standard files
+        run: python3 .github/check_root.py
 
   fast-tests:
     runs-on: ubuntu-latest
@@ -37,9 +39,9 @@ jobs:
       - name: The negative control ends as three mismatches, with status 1
         run: |
           status=0
-          python3 -m k3batch run batches/negative-control.toml --memory-guard poll || status=$?
+          PYTHONPATH=src python3 -m k3batch run data/batches/negative-control.toml --memory-guard poll || status=$?
           test "$status" -eq 1
-          python3 - <<'PY'
+          PYTHONPATH=src python3 - <<'PY'
           from pathlib import Path
 
           from k3batch.store import ResultStore

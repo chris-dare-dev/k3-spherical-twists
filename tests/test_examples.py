@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parent.parent
-EXAMPLES = REPOSITORY / "examples"
+EXAMPLES = REPOSITORY / "data" / "examples"
 BATCH = EXAMPLES / "own-surfaces.toml"
 SCHEDULER = (sys.executable, "-m", "k3batch")
 GUARD = ("--memory-guard", "poll")
@@ -38,11 +38,11 @@ class Layout(unittest.TestCase):
             ["own-pair.m2", "own-surface.m2", "own-surfaces.toml", "own-word.m2", "resumable-quartic.m2"],
         )
         for name in names:
-            self.assertIn(f"examples/{name}", guide)
+            self.assertIn(f"data/examples/{name}", guide)
 
     def test_the_example_batch_is_on_other_surfaces_and_outside_the_claims(self) -> None:
-        # every task of batches/ must belong to a claim; a reader's surfaces belong to none
-        self.assertFalse((REPOSITORY / "batches" / BATCH.name).exists())
+        # every task of data/batches/ must belong to a claim; a reader's surfaces belong to none
+        self.assertFalse((REPOSITORY / "data" / "batches" / BATCH.name).exists())
         surfaces = tomllib.loads(BATCH.read_text(encoding="utf-8"))["surfaces"]
         self.assertEqual(sorted({surface["d"] for surface in surfaces}), [2, 3, 4])
         for surface in surfaces:

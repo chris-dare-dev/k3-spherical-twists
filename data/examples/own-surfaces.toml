@@ -1,6 +1,6 @@
 # Surfaces of your own, as a batch: copy this file, change the surfaces and the tasks, and run it.
 #
-#     python3 -m k3batch run examples/own-surfaces.toml        (or: make run BATCH=examples/own-surfaces.toml)
+#     PYTHONPATH=src python3 -m k3batch run data/examples/own-surfaces.toml   (or: make run BATCH=data/examples/own-surfaces.toml)
 #     python3 -m k3batch report results/own-surfaces
 #
 # The committed records of this repository all use one seed and one prime (seed 1, p = 32003).  The

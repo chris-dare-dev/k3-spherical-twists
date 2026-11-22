@@ -180,15 +180,15 @@ class CommandLine(unittest.TestCase):
     def _assert_run_uses_snapshot(self, *, sqlite: bool, commit: bool) -> None:
         checkout = self.scratch / f"checkout-{sqlite}-{commit}"
         shutil.copytree(
-            REPOSITORY / "k3batch",
-            checkout / "k3batch",
+            REPOSITORY / "src" / "k3batch",
+            checkout / "src" / "k3batch",
             ignore=shutil.ignore_patterns("__pycache__"),
         )
-        (checkout / "runners").mkdir()
-        shutil.copy2(FAKE_RUNNER, checkout / "runners")
+        (checkout / "src" / "runners").mkdir()
+        shutil.copy2(FAKE_RUNNER, checkout / "src" / "runners")
         self.run_dir = checkout / "results"
         database = self.run_dir / "ledger.sqlite"
-        source = checkout / "K3Twists.m2"
+        source = checkout / "src" / "K3Twists.m2"
         source.write_text("before capture\n")
 
         def git(*args: str) -> str:
@@ -202,7 +202,8 @@ class CommandLine(unittest.TestCase):
         git("commit", "-qm", "initial source")
         before = git("rev-parse", "HEAD")
         journal = Journal(checkout.parent / f"{checkout.name}.journal")
-        self.runner = shlex.join([sys.executable, "runners/fake_runner.py", "--journal", str(journal.path)])
+        runner = (sys.executable, "src/runners/fake_runner.py", "--journal", str(journal.path))
+        self.runner = shlex.join(runner)
         mutate = (
             '{ name = "first", read_source = true, '
             f"edit_source = {json.dumps(str(checkout))}, commit_source = {str(commit).lower()} }}"
@@ -215,6 +216,7 @@ class CommandLine(unittest.TestCase):
                 self.command("run", self.batch(items(*entries)), "--workers", 1,
                              "--memory-guard", "poll", *options),
                 cwd=checkout, capture_output=True, text=True, timeout=30,
+                env={**os.environ, "PYTHONPATH": str(checkout / "src")},
             )  # fmt: skip
             self.assertEqual(done.returncode, EXIT_OK, done.stderr)
 
