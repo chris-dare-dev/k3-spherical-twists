@@ -29,7 +29,7 @@ class SourceSnapshot:
 
     @property
     def watchdog(self) -> Path:
-        return self.root / "k3batch" / "_job.py"
+        return self.root / "src" / "k3batch" / "_job.py"
 
     def expand(self, description: dict[str, Any], backend: LocalBackend) -> tuple[list[Task], dict[str, Any]]:
         return expand(

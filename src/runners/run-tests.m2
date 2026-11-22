@@ -1,5 +1,5 @@
 -- Runs the tests of the package and exits with status 1 if one fails.
---   M2 --script runners/run-tests.m2 [fast|slow|all]      (default: all)
+--   M2 --script src/runners/run-tests.m2 [fast|slow|all]      (default: all)
 -- A test is slow when its first line is "-- slow".
 path = prepend(currentFileDirectory | "../", path);
 needsPackage "K3Twists";

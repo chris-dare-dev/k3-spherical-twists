@@ -1,6 +1,6 @@
 """adopt.py -- copy the records of a finished run into the directory of committed records.
 
-`adopt` writes records/<batch>/results.jsonl and, next to it, adopted.json: the commit of each record
+`adopt` writes data/records/<batch>/results.jsonl and, next to it, adopted.json: the commit of each record
 with the hash of its tree.  The records of a run with the default store are the lines of its
 results.jsonl, copied unchanged, with its manifest.json.  A batch with a dependency graph runs with a
 SQLite store; `make record` puts it at results/<batch>/results.sqlite, and its records are written out
@@ -12,8 +12,8 @@ commit of the code that computed it.  One field can change on the way: if the hi
 after the run (messages only, every tree as it was), a record's commit is replaced by the commit that
 now has the same tree.
 
-It is run as `tools/claims.py adopt RUN_DIRECTORY...`.  Nothing here knows about claims: it reads the
-records of the scheduler and the history of the repository.
+It is run as `src/bookkeeping/claims.py adopt RUN_DIRECTORY...`.  Nothing here knows about claims: it reads
+the records of the scheduler and the history of the repository.
 """
 
 from __future__ import annotations

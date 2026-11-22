@@ -35,14 +35,14 @@ needsPackage "K3Twists"
 sheafInvariants k3Surface 2   -- computed and predicted h^i of the sheaves, on a quartic
 ```
 
-For a surface, a word, a pair of sheaves or a batch of your own, start from the files in [examples/](GUIDE.md#examples-to-start-from).
+For a surface, a word, a pair of sheaves or a batch of your own, start from the files in [data/examples/](GUIDE.md#examples-to-start-from).
 
 ## What is in it
 
 | | |
 |---|---|
-| [K3Twists/](K3Twists/) | The Macaulay2 package: surfaces, sheaves, catalogue, invariants, Ext tables |
-| [k3batch/](k3batch/) | The scheduler: batch files, limits, records, reports |
+| [src/K3Twists/](src/K3Twists/) | The Macaulay2 package: surfaces, sheaves, catalogue, invariants, Ext tables |
+| [src/k3batch/](src/k3batch/) | The scheduler: batch files, limits, records, reports |
 | [CLAIMS.md](CLAIMS.md) | Each claim, and what the committed records say about it |
 | [GUIDE.md](GUIDE.md) | Full reference: what is computed, batches, records, design, layout |
 

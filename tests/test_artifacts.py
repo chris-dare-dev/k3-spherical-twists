@@ -219,7 +219,7 @@ class Macaulay2ArtifactRoundTrip(unittest.TestCase):
     def run_m2(self, name: str, code: str) -> None:
         script = self.directory / f"{name}.m2"
         script.write_text(
-            'path = prepend("./", path); needsPackage "K3Twists"; needsPackage "JSON"; '
+            'path = prepend("./src/", path); needsPackage "K3Twists"; needsPackage "JSON"; '
             'needsPackage "Complexes";\n'
             f"outDir = {json.dumps(str(self.directory) + '/')};\n"
             'emitData = (name, D) -> (outDir | name | ".json") << toJSON D << close;\n'

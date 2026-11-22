@@ -1,10 +1,11 @@
 -- A word in spherical twists of your own, applied to the skyscraper sheaf of a point.
--- Paste the expressions into M2, or run with M2 --script examples/own-word.m2 from the repository.
+-- Paste the expressions into M2, or run with M2 --script data/examples/own-word.m2 from the repository root.
 --
 -- A word lists signed steps in the order they are applied: 1 is a twist, -1 its inverse.  The class of
 -- the image costs lattice arithmetic only, whatever the length of the word.  Building the image as a
 -- complex is a separate step, and it answers "unsupported", with the reason, where the package has no
 -- construction (GUIDE.md, "Certified quartic cones", says which words it has).
+path = prepend("src/", path);                -- the package is in src/ of the repository
 needsPackage "K3Twists";
 K = k3Surface 2;
 P = catalogueObject(K, "O_x");                                      -- the point sheaf
