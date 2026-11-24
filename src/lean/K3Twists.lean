@@ -7,5 +7,7 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.Analysis.SpecificLimits.GrowthRate
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
+import K3Twists.Order.HarderNarasimhan
+import K3Twists.RepresentationTheory.Quiver.Kronecker.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.Preprojective
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep

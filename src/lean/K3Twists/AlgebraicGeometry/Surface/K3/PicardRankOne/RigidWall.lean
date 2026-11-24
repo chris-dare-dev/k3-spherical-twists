@@ -3,6 +3,7 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
+import K3Twists.RepresentationTheory.Quiver.Kronecker.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
 
 /-!
@@ -28,11 +29,12 @@ pairing `g = 3`, the iterated extensions are the nilpotent representations of th
   every other subrepresentation has smaller slope, so the HN filtration is `(H', W) ⊂ M` with
   quotients the stable root `(8, 3)` and the simple at vertex zero; on the other side `(H', 0)`
   is the semisimple `S₀⁸`, and `M/(H', 0)`, of dimension `(1, 3)`, is stable;
-* `rigidWall_stable_roots`: `(8, 3) = R₂` and `(1, 3) = L₁` are real roots.
-
-On each side the first piece of the filtration is the unique largest subrepresentation of
-maximal slope and the quotient is stable of smaller slope; these inequalities are what make the
-two filtrations the HN filtrations of the wall object for the two orders of the phases.
+* `rigidWall_stable_roots`: `(8, 3) = R₂` and `(1, 3) = L₁` are real roots;
+* `rigidWall_hnUpper`, `rigidWall_hnLower`: these are the HN filtrations, for the slope functions
+  `wallSlope` (rank `i + j`, degree `j`) and its opposite, and the only ones; their polygons in the
+  coordinates `(i + j, j)` are `(0, 0) → (11, 3) → (12, 3)` and `(0, 0) → (8, 0) → (12, 3)`. By
+  `Quiver.Kronecker.RigidRep.hnUpperOf` and `hnLowerOf` the same holds for every central charge
+  `i Z₀ + j Z₁` on the corresponding side of the wall.
 -/
 
 namespace AlgebraicGeometry.K3.PicardRankOne
@@ -151,5 +153,52 @@ theorem rigidWall_stable_roots :
     rfl
   · rw [rigidWall_dimVec, (rigidWall_lower (k := k)).1, u_one, h2]
     rfl
+
+/-! ### The two HN filtrations -/
+
+section HarderNarasimhan
+
+open Order
+
+variable (K : Type*) [Field K] [LinearOrder K] [IsStrictOrderedRing K]
+
+/-- **The first side**, where the phase increases with `j/(i + j)`: the HN filtration is
+`0 ⊂ (H', W) ⊂ M` and there is no other. Its polygon in the coordinates `(i + j, j)` has
+vertices `(0, 0)`, `(11, 3)`, `(12, 3)`: one stable factor of dimension `(8, 3)` followed by the
+simple at vertex zero. -/
+theorem rigidWall_hnUpper :
+    (∀ F : (DoubledRep.wallSlope K (rigidRep k (Fin 3))).HNFiltration, F = hnUpper K) ∧
+      (hnUpper K (k := k) (ι := Fin 3)).chain = ![⊥, upperCorner, ⊤] ∧
+      (fun i : Fin 3 ↦ ((DoubledRep.wallSlope K (rigidRep k (Fin 3))).rk ((hnUpper K).chain i),
+        (DoubledRep.wallSlope K (rigidRep k (Fin 3))).deg ((hnUpper K).chain i))) =
+        ![(0, 0), (11, 3), (12, 3)] ∧
+      (DoubledRep.wallSlope K (rigidRep k (Fin 3))).IsStable ⊥ upperCorner := by
+  refine ⟨fun F ↦ Subsingleton.elim F _, rfl, funext fun i ↦ ?_, isStable_upperCorner K⟩
+  have h := (rigidWall_upper (k := k)).1
+  have h' := rigidWall_dimVec k
+  fin_cases i <;>
+    simp [hnUpper, DoubledRep.wallSlope_rk, DoubledRep.wallSlope_deg, h, h'] <;> norm_num
+
+/-- **The other side**, where the phase increases with `i/(i + j)`: the HN filtration is
+`0 ⊂ (H', 0) ⊂ M` and there is no other. Its polygon in the coordinates `(i + j, j)` has
+vertices `(0, 0)`, `(8, 0)`, `(12, 3)`: eight copies of the simple at vertex zero followed by one
+stable factor of dimension `(1, 3)`. -/
+theorem rigidWall_hnLower :
+    (∀ F : (DoubledRep.wallSlope K (rigidRep k (Fin 3))).neg.HNFiltration,
+      F = hnLower K (by simp)) ∧
+      (hnLower K (k := k) (ι := Fin 3) (by simp)).chain = ![⊥, lowerCorner, ⊤] ∧
+      (fun i : Fin 3 ↦
+        ((DoubledRep.wallSlope K (rigidRep k (Fin 3))).rk ((hnLower K (by simp)).chain i),
+          -(DoubledRep.wallSlope K (rigidRep k (Fin 3))).neg.deg ((hnLower K (by simp)).chain i))) =
+        ![(0, 0), (8, 0), (12, 3)] ∧
+      (DoubledRep.wallSlope K (rigidRep k (Fin 3))).neg.IsStable lowerCorner ⊤ := by
+  refine ⟨fun F ↦ Subsingleton.elim F _, rfl, funext fun i ↦ ?_, isStable_lowerCorner_top K⟩
+  have h := (rigidWall_lower (k := k)).1
+  have h' := rigidWall_dimVec k
+  fin_cases i <;>
+    simp [hnLower, DoubledRep.wallSlope_rk, DoubledRep.wallSlope_deg, h, h']
+  norm_num
+
+end HarderNarasimhan
 
 end AlgebraicGeometry.K3.PicardRankOne
