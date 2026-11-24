@@ -1,10 +1,12 @@
-module
-
-public import K3Twists.Rate
-public import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Algebra.Group.Commute.Defs
-public import Mathlib.GroupTheory.GroupAction.Defs
-public import Mathlib.Topology.MetricSpace.Pseudo.Defs
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import K3Twists.Analysis.SpecificLimits.GrowthRate
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Algebra.Group.Commute.Defs
+import Mathlib.GroupTheory.GroupAction.Defs
+import Mathlib.Topology.MetricSpace.Pseudo.Defs
 
 /-!
 # The point-mass corollary
@@ -21,7 +23,7 @@ uniformly in `x` and in `σ` at bounded distance from a reference condition; the
 `c e^{-d} p(W) ≤ m_σ(W 𝒪_x) ≤ C e^{d} p(W)` for **every** word; and the rate per letter
 `exp(h_cat(Φ)/ℓ)` along the prefixes of a periodic word of period `ℓ`.
 
-This file proves all of these from the inputs collected in `PointMassInputs`. Mathlib does not
+This file proves all of these from the inputs collected in `PointMassHypotheses`. Mathlib does not
 yet have derived categories of K3 surfaces, Bridgeland stability or categorical entropy, so the
 geometric facts enter as named fields; each field's docstring gives its source (a lemma of the
 article, or a published theorem). Everything after the fields is proved here: the comparison
@@ -34,9 +36,7 @@ ample `A = 𝒪(bH)` with `ν = A²/2`, `G = S₀ ⊕ S₁ ⊕ S₂`, `H(W) = h(
 `p(W) = Σ_i R(W⁻¹ S_i)`.
 -/
 
-@[expose] public section
-
-namespace K3Twists
+namespace AlgebraicGeometry.K3.PicardRankOne
 
 open Filter Topology Real Finset
 
@@ -46,7 +46,7 @@ open Filter Topology Real Finset
 autoequivalences containing the spherical twists and acting on them, `Stab` for the distinguished
 component `Stab†(X)` with Bridgeland's metric (on which `Γ` acts) and `Pt` for the closed points.
 -/
-structure PointMassInputs (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ Obj]
+structure PointMassHypotheses (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ Obj]
     [PseudoMetricSpace Stab] [MulAction Γ Stab] where
   /-- `h(U, V) = Σ_j dim Hom(U, V[j])`. -/
   hom : Obj → Obj → ℝ
@@ -118,7 +118,8 @@ structure PointMassInputs (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ Obj]
   condition is `|Z_τ(𝒪_x)| = 1`. -/
   standard_mass : ∀ Φ, Standard Φ → ∀ x, mass τ (Φ • point x) = 1
   /-- For a standard autoequivalence `H(Φⁿ)` grows at most quadratically: by Riemann–Roch and
-  Kodaira vanishing it is `18 + 12ν + 9du²n²` (`K3Twists.standard_H_formula`). -/
+  Kodaira vanishing it is `18 + 12ν + 9du²n²`
+  (`AlgebraicGeometry.K3.PicardRankOne.standard_H_formula`). -/
   standard_hom : ∀ Φ, Standard Φ → ∃ A B : ℝ, ∀ n : ℕ, hom G (Φ ^ n • G) ≤ A + B * n ^ 2
   /-- The image of a point is nonzero, so its mass is positive. -/
   mass_pos : ∀ σ (W : Γ) x, 0 < mass σ (W • point x)
@@ -137,10 +138,10 @@ structure PointMassInputs (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ Obj]
   hcat_spec : ∀ Φ : Γ,
     Tendsto (fun n : ℕ => log (hom G (Φ ^ n • G)) / n) atTop (𝓝 (hcat Φ))
 
-namespace PointMassInputs
+namespace PointMassHypotheses
 
 variable {Obj Γ Stab Pt : Type*} [Group Γ] [MulAction Γ Obj] [PseudoMetricSpace Stab]
-  [MulAction Γ Stab] (I : PointMassInputs Obj Γ Stab Pt)
+  [MulAction Γ Stab] (I : PointMassHypotheses Obj Γ Stab Pt)
 
 /-- `H(W) = h(G, WG)`. -/
 def H (W : Γ) : ℝ := I.hom I.G (W • I.G)
@@ -505,6 +506,6 @@ theorem tendsto_log_pointMass_prefix [Nonempty Pt] (letter : ℕ → Γ) {ℓ : 
     constructor <;> linarith
   exact tendsto_log_div_of_period hℓ hwhole hclose
 
-end PointMassInputs
+end PointMassHypotheses
 
-end K3Twists
+end AlgebraicGeometry.K3.PicardRankOne

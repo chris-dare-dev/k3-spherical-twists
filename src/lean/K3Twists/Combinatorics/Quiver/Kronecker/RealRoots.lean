@@ -1,41 +1,37 @@
-module
-
-public import K3Twists.Mukai
-public import Mathlib.RingTheory.Polynomial.Chebyshev
-public import Mathlib.Data.Rat.Lemmas
-public import Mathlib.Tactic.Linarith
-public import Mathlib.Tactic.NormNum
-public import Mathlib.Tactic.Positivity
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import Mathlib.RingTheory.Polynomial.Chebyshev
+import Mathlib.Data.Rat.Lemmas
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
 
 /-!
-# The integer arithmetic of a wall with two spherical simples
+# Real roots of the Kronecker quiver
 
-At a wall whose stable constituents are two spherical objects `S₀, S₁` with
-`g = ext¹(S₀, S₁)`, a wall object with multiplicities `(a, b)` has
-`dim End - ext¹/2 = a² + b² - gab`, and its stable constituents on either side of the wall have
-dimension vectors among the *positive real roots*, the solutions of `a² + b² - gab = 1`.
+The `g`-Kronecker quiver has Tits form `q(a, b) = a² + b² - gab` on dimension vectors. Its
+positive real roots, the solutions of `q(a, b) = 1`, are the dimension vectors of the stable
+constituents on either side of a wall with two spherical simples `S₀, S₁`, `g = ext¹(S₀, S₁)`;
+a rigid wall object of multiplicities `(a, b)` has `dim End = q(a, b)`.
 
-This file proves the integer statements of the article's section on rigid wall groups:
-
-* `realRoot_classification`: for `g ≥ 2` the nonnegative solutions of `a² + b² - gab = 1` are
-  exactly `R_m = (u_{m+1}, u_m)` and `L_m = (u_m, u_{m+1})`, `m ≥ 0`, where
+* `realRoot_classification`: for `g ≥ 2` the nonnegative solutions of `q(a, b) = 1` are exactly
+  `R_m = (u_{m+1}, u_m)` and `L_m = (u_m, u_{m+1})`, `m ≥ 0`, where
   `u₀ = 0, u₁ = 1, u_{m+1} = g u_m - u_{m-1}` (`u_m` is the rescaled Chebyshev polynomial
   `S_{m-1}` evaluated at `g`);
 * `det_R`: the exact identity `[R_m, R_j] = u_{j-m}` for the determinant `[v, w]` of two dimension
   vectors, and `det_R_sub_ge_one`: `[R_m, R_{j+1} - R_j] ≥ 1` for all integers `m, j`, which
   orders every finite string of roots without a limiting root ratio;
-* `fan_minor_ge_one`: the same bound for any fan `v_{j+1} = g_j v_j - v_{j-1}` with `g_j ≥ 2` and
-  adjacent minors one;
-* `no_null_vector`: for `|g| ≥ 3` the form `x² + gxy + y²` has no nonzero rational zero, so the
-  span of two spherical classes of pairing `±g` contains no isotropic class;
-* `twoExtensions_numerics`: the inequality that leaves only the two universal extensions in the
-  wall group carrying the point;
-* the numbers of the example of a rigid wall at `g = 3`.
+* `fan_minor_ge_one`, `fan_minor_ge_one_left`: the same bound for any fan
+  `v_{j+1} = g_j v_j - v_{j-1}` with `g_j ≥ 2` and adjacent minors one;
+* `no_null_vector`: for `|g| ≥ 3` the form `x² + gxy + y²` has no nonzero rational zero.
 -/
 
-@[expose] public section
-
-namespace K3Twists
+namespace Quiver.Kronecker
 
 open Polynomial
 
@@ -415,66 +411,4 @@ theorem no_null_vector {g : ℤ} (hg : 3 ≤ |g|) {x y : ℚ} (h : x ^ 2 + g * x
     field_simp
     linear_combination (-4 : ℚ) * h
 
-/-- For two spherical classes `s₀, s₁` of Mukai pairing `⟨s₀, s₁⟩ = g` with `|g| ≥ 3`, no nonzero
-rational combination is isotropic. -/
-theorem span_roots_anisotropic {d : ℚ} {s₀ s₁ : Mukai ℚ} (h₀ : Mukai.IsRoot d s₀)
-    (h₁ : Mukai.IsRoot d s₁) {g : ℤ} (hg : 3 ≤ |g|) (h01 : Mukai.pairing d s₀ s₁ = g)
-    {x y : ℚ} (hiso : Mukai.IsIsotropic d (x • s₀ + y • s₁)) : x = 0 ∧ y = 0 := by
-  unfold Mukai.IsIsotropic at hiso
-  unfold Mukai.IsRoot at h₀ h₁
-  simp only [Mukai.pairing_add_left, Mukai.pairing_add_right, Mukai.pairing_smul_left,
-    Mukai.pairing_smul_right, h₀, h₁, h01, Mukai.pairing_comm d s₁ s₀] at hiso
-  have := no_null_vector (g := -g) (by rwa [abs_neg]) (x := x) (y := y)
-    (by push_cast; linear_combination (-1 / 2 : ℚ) * hiso)
-  exact this
-
-/-! ### The wall group that carries the point -/
-
-/-- The square of `v(N) = q·v(S) + v(U)` for a spherical `S` and an isotropic `U` with
-`⟨v(S), v(U)⟩ = g` is `2q(g - q)`. -/
-lemma square_roots_plus_isotropic {R : Type*} [CommRing R] {d : R} {s w : Mukai R}
-    (hs : Mukai.IsRoot d s) (hw : Mukai.IsIsotropic d w) {g : R} (hsw : Mukai.pairing d s w = g)
-    (q : R) : Mukai.pairing d (q • s + w) (q • s + w) = 2 * q * (g - q) := by
-  unfold Mukai.IsRoot at hs
-  unfold Mukai.IsIsotropic at hw
-  simp only [Mukai.pairing_add_left, Mukai.pairing_add_right, Mukai.pairing_smul_left,
-    Mukai.pairing_smul_right, hs, hw, hsw, Mukai.pairing_comm d w s]
-  ring
-
-/-- **The numerical step of the two-extension lemma.** If a wall object `N` has filtration
-`S^a, U, S^b` with `q = a + b ≤ g`, then `e(N) ≥ 2 + 2ab + 2q(g - q)`; the bound `e(N) ≤ 2`
-leaves only `ab = 0` and `q ∈ {0, g}`, that is `N = U` or one of the two universal extensions
-`T_S U`, `T_S⁻¹ U`. -/
-theorem twoExtensions_numerics {a b g e : ℤ} (ha : 0 ≤ a) (hb : 0 ≤ b) (hqg : a + b ≤ g)
-    (he : 2 + 2 * a * b + 2 * (a + b) * (g - (a + b)) ≤ e) (he2 : e ≤ 2) :
-    a * b = 0 ∧ (a + b = 0 ∨ a + b = g) := by
-  have hab : 0 ≤ a * b := mul_nonneg ha hb
-  have hq : 0 ≤ (a + b) * (g - (a + b)) := mul_nonneg (by linarith) (by linarith)
-  have hab0 : a * b = 0 := by nlinarith
-  have hq0 : (a + b) * (g - (a + b)) = 0 := by nlinarith
-  refine ⟨hab0, ?_⟩
-  rcases mul_eq_zero.mp hq0 with h | h
-  · exact Or.inl h
-  · exact Or.inr (by linarith)
-
-/-! ### The example of a rigid wall at `g = 3` -/
-
-/-- At `g = 3`: `u = 0, 1, 3, 8, 21, …`. -/
-lemma u_three_values : u 3 2 = 3 ∧ u 3 3 = 8 := by
-  have h2 : u 3 2 = 3 := by simp
-  refine ⟨h2, ?_⟩
-  have := u_add_one 3 2
-  rw [show (2 : ℤ) + 1 = 3 by norm_num, show (2 : ℤ) - 1 = 1 by norm_num, h2, u_one] at this
-  rw [this]; norm_num
-
-/-- The example of a rigid wall object at `g = 3` with multiplicities `(9, 3)`:
-`dim End = 9² + 3² - 3·9·3 = 9`, and the stable roots on its two boundaries,
-`(8, 3) = R₂` and `(1, 3) = L₁`, are real roots. -/
-theorem rigid_example :
-    kroneckerForm 3 9 3 = 9 ∧ kroneckerForm 3 8 3 = 1 ∧ kroneckerForm 3 1 3 = 1 ∧
-      (u 3 3, u 3 2) = ((8 : ℤ), (3 : ℤ)) ∧ (u 3 1, u 3 2) = ((1 : ℤ), (3 : ℤ)) := by
-  obtain ⟨h2, h3⟩ := u_three_values
-  refine ⟨by norm_num [kroneckerForm], by norm_num [kroneckerForm], by norm_num [kroneckerForm],
-    by rw [h3, h2], by rw [u_one, h2]⟩
-
-end K3Twists
+end Quiver.Kronecker

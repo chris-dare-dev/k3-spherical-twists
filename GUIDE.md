@@ -710,7 +710,7 @@ make test-slow
 
 `make check` expands every batch file with Macaulay2 and fails if the claim registry does not fit the tasks or if a generated table is out of date. `make smoke` is described under [Claims and records](#claims-and-records).
 
-`make lean` builds the Lean proofs with every warning an error (so a `sorry` fails), runs `tests/lean/AxiomAudit.lean`, which fails if any declaration of the `K3Twists` namespace uses an axiom other than `propext`, `Classical.choice` and `Quot.sound`, and checks `tests/lean/Consistency.lean`, a model in which every input of the point-mass corollary holds. What is proved, and from which inputs, is in [src/lean/README.md](src/lean/README.md).
+`make lean` builds the Lean proofs with every warning an error (so a `sorry` fails) under Mathlib's linters, builds the test library `K3TwistsTest` (with a model in which every input of the point-mass corollary holds), runs Batteries' environment linters, checks that the umbrella `K3Twists.lean` imports every module, runs `scripts/AxiomAudit.lean`, which fails if any constant of a `K3Twists` module uses an axiom other than `propext`, `Classical.choice` and `Quot.sound`, and runs the style checker. What is proved, from which inputs, and the conventions for new files are in [src/lean/README.md](src/lean/README.md).
 
 `make lint` runs `ruff` and `mypy` on the scheduler and the bookkeeping; neither is needed to run them. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
 
@@ -724,8 +724,8 @@ The root holds three folders: the code, its tests, and the data this repository 
 | `src/runners/` | `task-runner.m2`, the command the scheduler calls (expands a batch, computes one task); `run-tests.m2`, which runs the fast or the slow tests of the package |
 | `src/k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
 | `src/bookkeeping/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `data/records/` |
-| `src/lean/` | the Lean proofs: a Lake project (`lakefile.toml`, `lean-toolchain`, `lake-manifest.json`) whose library `K3Twists` has the lattice, charge, wall, rate and point-mass modules |
-| `tests/` | tests of the scheduler and the bookkeeping, and the fake runner they use; `tests/lean/`, the axiom audit and the model of the corollary's inputs |
+| `src/lean/` | the Lean proofs: a Lake project (`lakefile.toml`, `lean-toolchain`, `lake-manifest.json`) whose library `K3Twists` mirrors Mathlib's folders, with its test library `K3TwistsTest` and its `scripts/` |
+| `tests/` | tests of the scheduler and the bookkeeping, and the fake runner they use |
 | `data/batches/` | batch files |
 | `data/records/` | the records of the batches that were run for this repository |
 | `data/claims/` | `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |

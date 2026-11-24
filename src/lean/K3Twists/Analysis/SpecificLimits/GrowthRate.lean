@@ -1,10 +1,12 @@
-module
-
-public import Mathlib.Analysis.Subadditive
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-public import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
-public import Mathlib.Topology.MetricSpace.Pseudo.Basic
-public import Mathlib.Topology.UniformSpace.UniformConvergence
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import Mathlib.Analysis.Subadditive
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
+import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
+import Mathlib.Topology.MetricSpace.Pseudo.Basic
+import Mathlib.Topology.UniformSpace.UniformConvergence
 
 /-!
 # Exponential growth rates
@@ -21,9 +23,7 @@ Throughout, `x ^ (n : ℝ)⁻¹` is the `n`-th root; at `n = 0` it is `x⁰ = 1`
 limits.
 -/
 
-@[expose] public section
-
-namespace K3Twists
+namespace Real
 
 open Filter Topology Real
 
@@ -260,4 +260,4 @@ theorem tendsto_log_div_of_period {a : ℕ → ℝ} {ℓ : ℕ} (hℓ : 0 < ℓ)
   field_simp
   ring
 
-end K3Twists
+end Real

@@ -1,9 +1,11 @@
-module
-
-public import K3Twists.Mukai
-public import K3Twists.Wall
-public import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Analysis.Real.Sqrt
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
+import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Analysis.Real.Sqrt
 
 /-!
 # The examples of the mass section
@@ -21,11 +23,9 @@ public import Mathlib.Analysis.Real.Sqrt
   `(d + 2)² - 4 = d(d + 4)` is not a square (`psi_discriminant_not_square`).
 -/
 
-@[expose] public section
+namespace AlgebraicGeometry.K3.PicardRankOne
 
-namespace K3Twists
-
-open Finset
+open Finset Quiver.Kronecker
 
 /-! ### Standard words -/
 
@@ -42,10 +42,10 @@ theorem standard_H_formula {R : Type*} [CommRing R] (d n u b : R) :
 
 /-- `Θ = T_S T_B` acts trivially on Mukai vectors when `v(B) = v(S)` is a root: the two
 reflections cancel. -/
-theorem theta_acts_trivially {R : Type*} [CommRing R] {d : R} {s b : Mukai R}
-    (hs : Mukai.IsRoot d s) (hsb : b = s) (v : Mukai R) :
-    Mukai.reflect d s (Mukai.reflect d b v) = v := by
-  subst hsb; exact Mukai.reflect_reflect hs v
+theorem theta_acts_trivially {R : Type*} [CommRing R] {d : R} {s b : MukaiVector R}
+    (hs : MukaiVector.IsRoot d s) (hsb : b = s) (v : MukaiVector R) :
+    MukaiVector.reflect d s (MukaiVector.reflect d b v) = v := by
+  subst hsb; exact MukaiVector.reflect_reflect hs v
 
 /-- `h(S, B) = 1 + (q² - 1) + q² = 2q²` from `dim Hom^j(S, B) = 1, q² - 1, q²` (`j = 0, 1, 2`). -/
 lemma theta_hom_SB (q : ℤ) : 1 + (q ^ 2 - 1) + q ^ 2 = 2 * q ^ 2 := by ring
@@ -97,21 +97,21 @@ theorem theta_lower_bound {Obj : Type*} (hS hB : Obj → ℝ) (TS TB : Obj → O
 
 /-- `v(𝒪_X)` and `v(L)`, `L = 𝒪_X(H)`, pair to `-(d + 2)`. -/
 lemma pairing_O_L {R : Type*} [CommRing R] (d : R) :
-    Mukai.pairing d (Mukai.lineBundle d 0) (Mukai.lineBundle d 1) = -(d + 2) := by
-  rw [Mukai.pairing_lineBundle]; ring
+    MukaiVector.pairing d (MukaiVector.lineBundle d 0) (MukaiVector.lineBundle d 1) = -(d + 2) := by
+  rw [MukaiVector.pairing_lineBundle]; ring
 
 /-- `Ψ = T_{𝒪_X} T_L` on the plane of `a = v(𝒪_X)` and `b = v(L)`:
 `Ψ a = ((d + 2)² - 1) a - (d + 2) b` and `Ψ b = (d + 2) a - b`, a matrix of trace
 `(d + 2)² - 2` and determinant one. -/
 theorem psi_action {R : Type*} [CommRing R] (d : R) :
-    let a := Mukai.lineBundle d 0
-    let b := Mukai.lineBundle d 1
-    Mukai.reflect d a (Mukai.reflect d b a) = ((d + 2) ^ 2 - 1) • a + (-(d + 2)) • b ∧
-      Mukai.reflect d a (Mukai.reflect d b b) = (d + 2) • a + (-1 : R) • b ∧
+    let a := MukaiVector.lineBundle d 0
+    let b := MukaiVector.lineBundle d 1
+    MukaiVector.reflect d a (MukaiVector.reflect d b a) = ((d + 2) ^ 2 - 1) • a + (-(d + 2)) • b ∧
+      MukaiVector.reflect d a (MukaiVector.reflect d b b) = (d + 2) • a + (-1 : R) • b ∧
       ((d + 2) ^ 2 - 1) + (-1) = (d + 2) ^ 2 - 2 ∧
       ((d + 2) ^ 2 - 1) * (-1) - (d + 2) * (-(d + 2)) = 1 := by
   refine ⟨?_, ?_, by ring, by ring⟩ <;>
-    ext <;> simp [Mukai.reflect, Mukai.pairing, Mukai.lineBundle] <;> ring
+    ext <;> simp [MukaiVector.reflect, MukaiVector.pairing, MukaiVector.lineBundle] <;> ring
 
 /-- The trace `t = (d + 2)² - 2` exceeds `2` for `d ≥ 1`, so the characteristic polynomial
 `x² - tx + 1` has a root `ρ > 1` (and `ρ⁻¹ < 1`). -/
@@ -134,4 +134,4 @@ theorem psi_discriminant_not_square {d : ℤ} (hd : 1 ≤ d) : ¬ IsSquare (d * 
   have h := not_isSquare_sq_sub_four (g := d + 2) (by rw [abs_of_nonneg (by linarith)]; linarith)
   rwa [show (d + 2) ^ 2 - 4 = d * (d + 4) by ring] at h
 
-end K3Twists
+end AlgebraicGeometry.K3.PicardRankOne

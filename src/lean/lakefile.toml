@@ -1,6 +1,13 @@
 name = "K3Twists"
 version = "0.1.0"
 defaultTargets = ["K3Twists"]
+# `lake test` builds the test library; `lake lint` runs Batteries' environment linters.
+testDriver = "K3TwistsTest"
+lintDriver = "batteries/runLinter"
+# Files are plain Lean files, as in derived-alg-geo-lean, so that files copied from it build
+# unchanged. Mathlib itself uses the module system; moving a file there adds `module`.
+allowNonModules = true
+weakLeanArgs = ["-Dweak.linter.style.haveILetI=false"]
 
 [leanOptions]
 autoImplicit = false
@@ -13,3 +20,25 @@ rev = "v4.36.0"
 
 [[lean_lib]]
 name = "K3Twists"
+
+# Mathlib's linters, configured as in derived-alg-geo-lean. A linter set to `false` is one that
+# files copied from there still trip; delete the line once the library is clean for it. The
+# header linter stays off: the MIT header here has no `Authors:` line.
+[lean_lib.leanOptions]
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+weak.linter.flexible = false
+weak.linter.unusedDecidableInType = false
+weak.linter.unusedFintypeInType = false
+weak.linter.style.emptyLine = false
+weak.linter.style.header = false
+weak.linter.style.longLine = false
+weak.linter.style.maxHeartbeats = false
+weak.linter.style.multiGoal = false
+weak.linter.style.show = false
+weak.linter.style.whitespace = false
+
+# Tests in the style of `MathlibTest`: models and examples that must keep compiling.
+[[lean_lib]]
+name = "K3TwistsTest"
+globs = ["K3TwistsTest.+"]

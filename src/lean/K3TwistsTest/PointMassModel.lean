@@ -1,19 +1,23 @@
-import K3Twists
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.PointMass
 
 /-!
 # The inputs of the point-mass corollary are consistent
 
 A theorem proved from inconsistent hypotheses says nothing. This file builds a model of
-`PointMassInputs`: five objects `S₀, S₁, S₂, G, 𝒪_x` with total Hom `h(U, V) = w(U) w(V)` for
+`PointMassHypotheses`: five objects `S₀, S₁, S₂, G, 𝒪_x` with total Hom `h(U, V) = w(U) w(V)` for
 the weights `1, 1, 1, 3, 1`, the trivial group of autoequivalences, one stability condition and
 one point. Every field holds, and the corollary specializes to rate one.
 
 The model says nothing about K3 surfaces; it only shows that the list of inputs can be met.
 
-Run from `src/lean`: `lake env lean ../../tests/lean/Consistency.lean`.
+Built by `lake test`.
 -/
 
-namespace K3Twists.ConsistencyTest
+namespace AlgebraicGeometry.K3.PicardRankOne.PointMassModel
 
 open Filter Topology Real
 
@@ -43,7 +47,7 @@ instance : MulAction Unit Obj where
 @[simp] lemma unit_smul (g : Unit) (U : Obj) : g • U = U := rfl
 
 /-- The model. -/
-noncomputable def model : PointMassInputs Obj Unit Unit Unit where
+noncomputable def model : PointMassHypotheses Obj Unit Unit Unit where
   hom U V := w U * w V
   rank _ := 1
   mass _ U := w U
@@ -116,4 +120,4 @@ example : Tendsto (fun n : ℕ => model.mass () (() ^ n • model.point ()) ^ (n
     (𝓝 1) := by
   simpa [model] using model.tendsto_pointMass () () ()
 
-end K3Twists.ConsistencyTest
+end AlgebraicGeometry.K3.PicardRankOne.PointMassModel

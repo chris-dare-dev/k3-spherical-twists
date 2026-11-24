@@ -1,0 +1,2 @@
+# The conflict fixtures contain conflict markers on purpose.
+*.leansrc conflict-marker-size=64

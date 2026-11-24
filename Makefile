@@ -10,7 +10,8 @@
 #   make tables      write the generated tables of CLAIMS.md, GUIDE.md and data/claims/RECORDS.md
 #   make check       fail if those tables are not what the registry and the records give
 #   make lean-deps   once: fetch Mathlib's build cache for the Lean proofs in src/lean
-#   make lean        build the Lean proofs (a warning fails it), audit their axioms, check the model
+#   make lean        build the Lean proofs (a warning fails it), their tests, linters, umbrella,
+#                    axiom audit and style check
 # ARGS is passed to k3batch, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
 PYTHON ?= python3
@@ -22,7 +23,6 @@ REPORT_ARGS ?=
 export PYTHONPATH := $(CURDIR)/src
 
 LAKE   ?= lake
-LEAN_TESTS = $(CURDIR)/tests/lean
 
 K3BATCH  = $(PYTHON) -m k3batch
 RUNNER   = --runner '$(M2) --script src/runners/task-runner.m2'
@@ -93,5 +93,8 @@ lean-deps:
 
 lean:
 	cd src/lean && $(LAKE) build --wfail
-	cd src/lean && $(LAKE) env lean $(LEAN_TESTS)/AxiomAudit.lean
-	cd src/lean && $(LAKE) env lean $(LEAN_TESTS)/Consistency.lean
+	cd src/lean && $(LAKE) test
+	cd src/lean && $(LAKE) lint
+	cd src/lean && $(LAKE) exe mk_all --lib K3Twists --check
+	cd src/lean && $(LAKE) env lean scripts/AxiomAudit.lean
+	cd src/lean && $(PYTHON) scripts/check_mathlib_style.py --check-baseline

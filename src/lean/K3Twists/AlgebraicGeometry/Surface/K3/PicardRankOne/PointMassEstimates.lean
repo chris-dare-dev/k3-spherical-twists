@@ -1,9 +1,11 @@
-module
-
-public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-public import Mathlib.Analysis.Real.Sqrt
-public import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Algebra.Order.BigOperators.Group.Finset
+/-
+Copyright (c) 2026 Chris Dare. All rights reserved.
+Released under the MIT license.
+-/
+import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Mathlib.Analysis.Real.Sqrt
+import Mathlib.Algebra.BigOperators.Fin
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!
 # The finite estimates behind the point-mass corollary
@@ -25,9 +27,7 @@ The algebra inside Lemma A.1 of the article and the arithmetic of its explicit c
   `K = 5(2 + 36ν)(2 + 25ν)⁸ 7⁴⁶`.
 -/
 
-@[expose] public section
-
-namespace K3Twists
+namespace AlgebraicGeometry.K3.PicardRankOne
 
 open Finset Real
 
@@ -216,4 +216,4 @@ theorem diag_constant {ν X Y : ℝ} (hν : 0 ≤ ν) (m x y : Fin 5 → ℝ)
     _ = 5 * (2 + 36 * ν) * (2 + 25 * ν) ^ 8 * 7 ^ 46 * X * Y := by
         rw [sum_const, card_univ, Fintype.card_fin, hq]; ring
 
-end K3Twists
+end AlgebraicGeometry.K3.PicardRankOne
