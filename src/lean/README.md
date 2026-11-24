@@ -69,6 +69,23 @@ From these, Lean proves every assertion of the corollary:
 
 A theorem proved from hypotheses that cannot hold together says nothing. [K3TwistsTest/PointMassModel.lean](K3TwistsTest/PointMassModel.lean) builds a five-object model in which every field holds. [scripts/AxiomAudit.lean](scripts/AxiomAudit.lean) checks every constant of every `K3Twists` module for `sorry` and for axioms other than `propext`, `Classical.choice` and `Quot.sound`.
 
+## Higher Picard rank: an elliptic K3 surface with a section
+
+On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕ ℤF`, the curve `C` is contracted on a wall whose spherical simples `A = 𝒪_C` and `B = 𝒪_C(-1)[1]` pair to two. The curve with an embedded point `𝒪_X/(I_C I_x)` and its family `M_{d,x}` appear there as HN quotients of twisted points, at the stability condition of Tramel and Xia (arXiv:1702.06252) with `H = C + 2F`, `β = -C/4`, `z = 2 - i`. The lattice, charge and phase numbers of these towers are proved from Mathlib alone; the geometry (the stability condition, the stability of `A`, `B` and the tails, the exact sequences and towers themselves) is cited, not formalized.
+
+| Statement | Lean |
+|---|---|
+| The Mukai extension `ℤ ⊕ N ⊕ ℤ` of a symmetric bilinear lattice, its roots and reflections (copied from derived-alg-geo-lean) | `Mukai.pairing`, `Mukai.reflect_reflect`, `Mukai.pairing_reflect_reflect` |
+| `C² = -2`, `C·F = 1`, `F² = 0`; `H = C + 2F` has `H² = 2` and contracts `C` and only `C` | `intersection_curve_fibre`, `intersection_polarization`, `intersection_polarization_pos` |
+| The wall: `⟨v(A), v(B)⟩ = 2`, `v(A) + v(B) = v(𝒪_x)`, `v(aA + bB)² = -2(a - b)² = -2 q₂(a, b)` with `q₂` the Kronecker form | `pairing_wallA_wallB`, `wallA_add_wallB`, `selfPairing_wallClass_eq_kroneckerForm` |
+| Riemann–Roch on the wall: an `(m, 1)` object `D₀ ⊕ A^r` has `dim Ext¹ = 2(1 + pq) - 2(p + q - 1)² + 2r(2 - p - q)`, which is `2` only at `p = q = 1`; the class `(2, 2)` is isotropic | `ext_one_count`, `ext_one_count_eq_two_iff`, `selfPairing_wallClass_two_two` |
+| `v(𝒪_C(j)) = (j + 1)v(A) + j v(B)`; `M_{d,x}` has multiplicities `(d + 2, d + 1)` and square `-2`; `D(jC)/(I_x ⊗ D(-C))` grows by layers `𝒪_C(d - 2j)`; the thickening `K_ε ⊗ 𝒪_X/(I_x I_C^{r+1})` has class `(0, (r + 1)C, (r + 1)(r + 1 + ε) + 1)` and square `-2(r + 1)²`, so `dim Ext¹ = 2` | `curveSheaf_eq_wallClass`, `embeddedPoint_eq_wallClass`, `idealQuotient_succ`, `thickening_eq`, `selfPairing_thickening` |
+| The quotients of each tower add up to the class of the twisted point: the two towers of the thickening, `T_{K_ε(-(r+1)C)} 𝒪_x`, the two-letter word `T_{D(nF)}⁻¹ T_{D(-C)} 𝒪_x` in every degree, the rank-two example | `point_add_sum_curveSheaf`, `sum_A_side_odd`, `sum_A_side_even`, `reflect_lineBundle_point`, `reflect_reflect_point`, `reflect_rankTwo_point` |
+| The charge at the wall: `Z(aA + bB) = -(a + b)/2` (phase one), `Z(M_{d,x}) = -(2d + 3)/2`, `Z(𝒪_X[1]) = -2 + i`, `Z(𝒪_X(-C - F)[1]) = -7/4 + 2i`, `Z(𝒪_X(-C + 2F)) = 4 + i`, `Z(𝒪_X(-C + 3F)) = 19/4 + 2i`, `Z(𝒪_X(-2C + 2F)) = 17/2 + i`, `Z(I_x(-2C + 2F)) = 19/2 + i`, and the order of their phases | `charge_wallClass`, `charge_embeddedPoint`, `charge_structureSheaf_shift`, `charge_tailOdd_shift`, `charge_twoLetter`, `charge_rankTwo`, `arg_charge_wallClass`, `arg_charge_structureSheaf_shift` |
+| The parity argument: a root of odd rank and imaginary charge `2` is not the sum of two roots of imaginary charge `1`; so `𝒪_X(-C - F)[1]` and every line bundle of `H`-slope `3` are stable | `not_isSpherical_sub_of_odd_rank`, `not_split_tail_odd`, `not_split_slope_three` |
+| Near the wall phases follow `B`-fractions: `j/(2j + 1)` (for `𝒪_C(j)`) increases below `1/2`, `j/(2j - 1)` (for `T_A 𝒪_C(j)`) decreases above it, and a subobject in the section-evaluation argument has fraction at most `j/(2j + 1)` | `cross_restrictedCharge`, `curveSheaf_fraction_strictMono`, `twistCurveSheaf_fraction`, `subobject_fraction_le` |
+| `exp h_cat(T_{𝒪_C} T_{𝒪_C(2)}) = (4² - 2 + √(4⁴ - 4·4²))/2 = 7 + 4√3` (Barbacovi–Kim, arXiv:2107.06079), while points off `C` are fixed | `barbacoviKim_four`, `barbacoviKim_four_root` |
+
 ## Layout
 
 The library mirrors Mathlib: a file sits at the Mathlib path of the API it extends, or of its
@@ -79,12 +96,15 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 |---|---|---|
 | `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences | `Real` |
 | `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3: pairing, roots, reflections, punctures | `MukaiVector` |
+| `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai extension `ℤ ⊕ N ⊕ ℤ` of a bilinear lattice and its reflections, copied from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/Lattice.lean` | the Mukai lattice of an elliptic K3 with a section and the classes of its curve wall | `AlgebraicGeometry.K3.EllipticWithSection` |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/CurveWall.lean` | the charge of the curve wall, its phases, and the parity argument for the tails | same |
 
 Beside the library: `K3Twists.lean`, the umbrella, generated by Mathlib's `mk_all`;
 `K3TwistsTest/`, a test library in the style of `MathlibTest` that `lake test` builds; and
