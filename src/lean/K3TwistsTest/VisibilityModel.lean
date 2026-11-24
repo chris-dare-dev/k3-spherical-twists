@@ -9,8 +9,9 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 
 This file builds a model of `VisibilityHypotheses` at `d = 1`: the objects are the shifts
 `𝒪_x[n]` of one point, with classes `±(0, 0, 1)`, no spherical objects, no stability conditions
-and no marked punctures, under the trivial group. The fields about objects hold outright, and
-those about stability conditions and marked punctures hold vacuously.
+and no marked punctures, under the trivial group acting by the identity on the Mukai lattice.
+The fields about objects hold outright, and those about stability conditions and marked
+punctures hold vacuously.
 
 So the model only shows that the list of fields is not contradictory in itself. A model with
 stability conditions needs Bridgeland stability on a K3 surface, which Mathlib does not have.
@@ -94,7 +95,14 @@ noncomputable def model : VisibilityHypotheses Obj Empty Empty Unit where
   sphere_injective ℓ := ℓ.elim
   exists_stable _ h := h.elim
   stable_smul _ σ := σ.elim
+  act _ v := v
+  pairing_act _ _ _ := rfl
+  act_one _ := rfl
+  act_mul _ _ _ := rfl
+  cl_smul _ _ := rfl
+  charge_smul _ σ := σ.elim
   point := 0
+  cl_point := by simp [cl]
   Geometric σ := σ.elim
   stable_point_iff σ := σ.elim
   OnGeometricSheet σ := σ.elim

@@ -51,11 +51,15 @@ by `ℓ`, a deck translate of the spherical bundle of class `root ℓ`.
 * `stable_smul_point_iff`, `stable_smul_point_iff_rayClear`: a point image `G 𝒪_x` is stable at
   `σ` exactly when `G⁻¹σ` is geometric, that is when `G⁻¹σ` lies on the geometric sheet and the
   upward ray from its point is clear, by Bayer–Bridgeland's description of the geometric chamber
-  and `rayClear_iff`.
-
-Not formalized here: the projective isometry of `G` carries the upward ray from the point of
-`G⁻¹σ` to the ray from `base σ` to the cusp of `G 𝒪_x`; this needs the Mukai action of
-autoequivalences on real classes.
+  and `rayClear_iff`;
+* `rayClear_inv_smul_iff`: the Mukai action `G_*` carries that upward ray to the sight line from
+  `base σ` to the cusp of `v(G 𝒪_x)`, since it is an isometry matching the charges of `G⁻¹σ` with
+  those of `σ` (`cuspRayClear_iff_of_isometry`);
+* `stable_smul_point_iff_cuspRayClear`, `stable_smul_point_iff_cuspClear`,
+  `stable_smul_point_iff_rayClear_of_r_eq_zero`: **the lemma for point images**: `G 𝒪_x` is
+  stable at `σ` exactly when the ray from `base σ` to its cusp is unobstructed and has the
+  prescribed marking (`G⁻¹σ` on the geometric sheet); the ray is the straight segment to the cusp
+  `(c/r, (c/r)²)` when `v(G 𝒪_x) = (r, c, s)` has `r ≠ 0`, and the upward ray when `r = 0`.
 -/
 
 noncomputable section
@@ -228,10 +232,24 @@ structure VisibilityHypotheses (Obj Stab Mark Γ : Type*) [AddAction ℤ Obj] [T
   sphere_injective : ∀ ℓ ℓ' (n : ℤ), n +ᵥ sphere ℓ = sphere ℓ' → ℓ = ℓ'
   /-- Every spherical object is stable somewhere ([BB], Corollary 6.9). -/
   exists_stable : ∀ E, Spherical E → ∃ σ, Stable σ E
-  /-- Autoequivalences act compatibly on objects and stability conditions. -/
+  /-- Autoequivalences act compatibly on objects and stability conditions:
+  `g (Z, 𝒫) = (Z ∘ g_*⁻¹, g 𝒫)` ([BB], §2). -/
   stable_smul : ∀ (g : Γ) σ E, Stable (g • σ) (g • E) ↔ Stable σ E
+  /-- The action `g_*` of an autoequivalence on the Mukai lattice. -/
+  act : Γ → MukaiVector ℤ → MukaiVector ℤ
+  /-- `g_*` is an isometry: the cohomological action of a Fourier–Mukai equivalence preserves the
+  integral structure and the Mukai pairing ([BB], §1). -/
+  pairing_act : ∀ g v w, pairing d (act g v) (act g w) = pairing d v w
+  act_one : ∀ v, act 1 v = v
+  act_mul : ∀ g h v, act (g * h) v = act g (act h v)
+  /-- `v(gE) = g_* v(E)`. -/
+  cl_smul : ∀ g E, cl (g • E) = act g (cl E)
+  /-- `Z_{gσ}(g_* v) = Z_σ(v)` ([BB], §2). -/
+  charge_smul : ∀ g σ v, charge (g • σ) (act g v) = charge σ v
   /-- A skyscraper sheaf `𝒪_x`. -/
   point : Obj
+  /-- `v(𝒪_x) = (0, 0, 1)`. -/
+  cl_point : cl point = MukaiVector.point
   /-- The geometric chamber `U(X)`: the stability conditions in which all skyscraper sheaves are
   stable of one phase. -/
   Geometric : Stab → Prop
@@ -614,6 +632,73 @@ theorem stable_smul_point_iff_rayClear (G : Γ) (σ : Stab) :
     I.Stable σ (G • I.point) ↔
       I.OnGeometricSheet (G⁻¹ • σ) ∧ RayClear I.d (I.base (G⁻¹ • σ)) := by
   rw [I.stable_smul_point_iff, I.geometric_iff, rayClear_iff I.d_pos (I.base_mem _)]
+
+lemma act_inv_act (G : Γ) (v : MukaiVector ℤ) : I.act G⁻¹ (I.act G v) = v := by
+  rw [← I.act_mul, inv_mul_cancel, I.act_one]
+
+lemma act_act_inv (G : Γ) (v : MukaiVector ℤ) : I.act G (I.act G⁻¹ v) = v := by
+  rw [← I.act_mul, mul_inv_cancel, I.act_one]
+
+/-- `Z_{G⁻¹σ}(v) = Z_σ(G_* v)`. -/
+lemma charge_inv_smul (G : Γ) (σ : Stab) (v : MukaiVector ℤ) :
+    I.charge (G⁻¹ • σ) v = I.charge σ (I.act G v) := by
+  have h := I.charge_smul G⁻¹ σ (I.act G v)
+  rwa [I.act_inv_act] at h
+
+/-- **The Mukai action carries the ray to the cusp.** The upward ray from the point of `G⁻¹σ`,
+the geodesic ray to the cusp of `𝒪_x`, is clear exactly when the sight line from the point of `σ`
+to the cusp of `v(G 𝒪_x) = G_*(0, 0, 1)` is clear: `G_*` is an isometry matching the charges of
+`G⁻¹σ` with those of `σ` (`cuspRayClear_iff_of_isometry`). -/
+theorem rayClear_inv_smul_iff (G : Γ) (σ : Stab) :
+    RayClear I.d (I.base (G⁻¹ • σ)) ↔ CuspRayClear I.d (I.base σ) (I.cl (G • I.point)) := by
+  rw [← cuspRayClear_point_iff I.d_pos (I.base_mem _), I.cl_smul, I.cl_point]
+  refine cuspRayClear_iff_of_isometry (I.act G) (I.act G⁻¹) (I.act_act_inv G) (I.pairing_act G)
+    (fun v w m => ⟨fun h => ?_, fun h => ?_⟩) _
+  · have h' := I.charge_eq_of_modelCharge_eq h
+    rw [I.charge_inv_smul, I.charge_inv_smul] at h'
+    exact I.modelCharge_eq_of_charge_eq h'
+  · have h' := I.charge_eq_of_modelCharge_eq h
+    rw [← I.charge_inv_smul, ← I.charge_inv_smul] at h'
+    exact I.modelCharge_eq_of_charge_eq h'
+
+/-- **Point images, by the ray to their cusp.** `G 𝒪_x` is stable at `σ` exactly when the sight
+line from the point of `σ` to the cusp of `G 𝒪_x` is unobstructed and has the prescribed marking,
+that is `G⁻¹σ` lies on the geometric sheet. -/
+theorem stable_smul_point_iff_cuspRayClear (G : Γ) (σ : Stab) :
+    I.Stable σ (G • I.point) ↔
+      I.OnGeometricSheet (G⁻¹ • σ) ∧ CuspRayClear I.d (I.base σ) (I.cl (G • I.point)) := by
+  rw [I.stable_smul_point_iff_rayClear, I.rayClear_inv_smul_iff]
+
+/-- The class of a point image is isotropic. -/
+lemma isIsotropic_cl_smul_point (G : Γ) : IsIsotropic I.d (I.cl (G • I.point)) := by
+  unfold IsIsotropic
+  rw [I.cl_smul, I.pairing_act, I.cl_point]
+  exact isIsotropic_point I.d
+
+/-- **Point images with a cusp on the parabola.** If `v(G 𝒪_x) = (r, c, s)` has `r ≠ 0`, then
+`G 𝒪_x` is stable at `σ` exactly when `G⁻¹σ` lies on the geometric sheet and the straight segment
+from the point of `σ` to the cusp `(c/r, (c/r)²)` meets no puncture. -/
+theorem stable_smul_point_iff_cuspClear (G : Γ) (σ : Stab) (hr : (I.cl (G • I.point)).r ≠ 0) :
+    I.Stable σ (G • I.point) ↔ I.OnGeometricSheet (G⁻¹ • σ) ∧
+      CuspClear I.d (I.base σ) (((I.cl (G • I.point)).c : ℝ) / (I.cl (G • I.point)).r) := by
+  rw [I.stable_smul_point_iff_cuspRayClear,
+    cuspRayClear_iff_cuspClear I.d_pos (I.base_mem σ) (I.isIsotropic_cl_smul_point G) hr]
+
+/-- **Point images with the cusp at infinity.** If `v(G 𝒪_x)` has rank zero, `G 𝒪_x` is stable
+at `σ` exactly when `G⁻¹σ` lies on the geometric sheet and the upward ray from the point of `σ`
+meets no puncture. -/
+theorem stable_smul_point_iff_rayClear_of_r_eq_zero (G : Γ) (σ : Stab)
+    (hr : (I.cl (G • I.point)).r = 0) :
+    I.Stable σ (G • I.point) ↔ I.OnGeometricSheet (G⁻¹ • σ) ∧ RayClear I.d (I.base σ) := by
+  have hne : I.cl (G • I.point) ≠ 0 := by
+    -- `⟨G_*(0, 0, 1), G_*(1, 0, 0)⟩ = ⟨(0, 0, 1), (1, 0, 0)⟩ = -1`
+    intro h0
+    have h1 := I.pairing_act G MukaiVector.point ⟨1, 0, 0⟩
+    have h2 : I.act G MukaiVector.point = 0 := by rw [← I.cl_point, ← I.cl_smul]; exact h0
+    rw [h2] at h1
+    simp [pairing, MukaiVector.point] at h1
+  rw [I.stable_smul_point_iff_cuspRayClear,
+    cuspRayClear_iff_rayClear I.d_pos (I.base_mem σ) (I.isIsotropic_cl_smul_point G) hr hne]
 
 end VisibilityHypotheses
 

@@ -36,6 +36,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | Visibility on the cover, the lattice part: a clear upward ray is Bayer–Bridgeland's condition `Z(δ) ∉ ℝ_{≤0}`; on a clear segment, roots `λ_i δ + t_i κ` with `λ_i > 0`, `Σ λ_i = 1`, `Σ t_i = 0` are the single root `δ`; an obstacle has a positively proportional charge and pairing `≤ -3` with `δ`; an obstructed segment has a first obstacle | `rayClear_iff`, `eq_singleton_of_segmentClear`, `obstacle_charge_pos_mul`, `exists_first_obstacle` |
 | The finite search: an obstacle has `r'² ≤ max(r², 1/(dh))` on a segment to a root, `d r' h ≤ e\|b - m\|` on a segment to the cusp `m = c₀/e`, `d r'² h ≤ 1` on the upward ray, so there are finitely many; a verified search decides visibility at rational points | `obstacle_rank_sq_le`, `cusp_obstacle_rank_le`, `ray_obstacle_rank_sq_le`, `finite_obstacles`, `segmentClear_iff_check`, `not_segmentClear_example` |
 | Clear sight: `dh > 1` clears the upward ray and the segment to a puncture of rank one; `e\|b - m\| < dh` clears the segment to the cusp `m` (which generalizes the opening check); the rigid wall example | `rayClear_of_one_lt`, `segmentClear_of_one_lt`, `cuspClear_of_lt`, `opening_cuspClear`, `rigid_segmentClear` |
+| The sight line to the cusp of an isotropic class `w` (no root with `⟨δ', w⟩ < 0` and `Z_p(δ') ∈ ℝ_{≥0} Z_p(w)`) is the upward ray for rank zero and the segment to `(c/r, (c/r)²)` otherwise; an isometry matching the charges at two points carries one sight line to the other | `cuspRayClear_point_iff`, `cuspRayClear_iff_rayClear`, `cuspRayClear_iff_cuspClear`, `cuspRayClear_iff_of_isometry` |
 | For `g ≥ 2` the nonnegative solutions of `a² + b² - gab = 1` are exactly `R_m = (u_{m+1}, u_m)` and `L_m = (u_m, u_{m+1})` | `realRoot_classification` |
 | `[R_m, R_j] = u_{j-m}`, and every ray-difference minor `[R_m, R_{j+1} - R_j]` is at least one | `det_R`, `det_R_sub_ge_one` |
 | The same bound for any fan `v_{j+1} = g_j v_j - v_{j-1}`, `g_j ≥ 2`, with adjacent minors one, on both sides | `fan_minor_ge_one`, `fan_minor_ge_one_left` |
@@ -94,7 +95,8 @@ A theorem proved from hypotheses that cannot hold together says nothing. [K3Twis
 - the rigid-factor lemma ([BB], Lemma 2.6), `⟨v(E), v(F)⟩ ≥ 0` for non-isomorphic stable objects of one phase (the proof of [BB], Lemma 3.1), openness of stability ([BB], Proposition 2.10) and closedness of semistability (arXiv:math/0212237, §8);
 - the cover: a clear segment lifts to a marked puncture, and the points that see a marked puncture form a connected set (arXiv:math/0307164, Theorem 1.1; [BB], Theorem 1.3);
 - the marked spheres, deck translates of the spherical bundles, stable near their punctures and determined up to shift by them ([BB], Lemma 5.3, Proposition 2.3, Theorem 1.4); every sphere is stable somewhere ([BB], Corollary 6.9);
-- the geometric chamber: one skyscraper sheaf is stable exactly there ([BB], Lemma 6.7), and it is the part of the geometric sheet over the slit region `V(X)` ([BB], Theorem 2.2).
+- the geometric chamber: one skyscraper sheaf is stable exactly there ([BB], Lemma 6.7), and it is the part of the geometric sheet over the slit region `V(X)` ([BB], Theorem 2.2);
+- autoequivalences act on the Mukai lattice by isometries `G_*`, with `v(GE) = G_* v(E)`, and on `Stab†(X)` by `Z_{Gσ} = Z_σ ∘ G_*⁻¹` ([BB], §1 and §2).
 
 From these, Lean proves the lemma:
 
@@ -104,6 +106,7 @@ From these, Lean proves the lemma:
 | Where a sphere is stable, the segment to its puncture is clear; a stable sphere is determined by its class and phase | `VisibilityHypotheses.segmentClear_of_stable`, `eq_of_stable_of_cl_eq` |
 | Every sphere is a shifted marked sphere, and it is stable exactly where its marked puncture is seen: where the segment to its puncture is clear and lifts to its marking | `VisibilityHypotheses.exists_eq_vadd_sphere`, `stable_vadd_sphere_iff`, `stable_iff_sees_marking`, `stable_iff_segmentClear_and_sees` |
 | A point image `G𝒪_x` is stable exactly when `G⁻¹σ` is geometric: on the geometric sheet, with a clear upward ray | `VisibilityHypotheses.stable_smul_point_iff`, `stable_smul_point_iff_rayClear` |
+| `G_*` carries that upward ray to the ray from the point of `σ` to the cusp of `G𝒪_x`; so `G𝒪_x` is stable exactly where the ray to its cusp is unobstructed and has the prescribed marking: the segment to `(c/r, (c/r)²)` if `v(G𝒪_x) = (r, c, s)` has `r ≠ 0`, the upward ray if `r = 0` | `VisibilityHypotheses.rayClear_inv_smul_iff`, `stable_smul_point_iff_cuspRayClear`, `stable_smul_point_iff_cuspClear`, `stable_smul_point_iff_rayClear_of_r_eq_zero` |
 
 [K3TwistsTest/VisibilityModel.lean](K3TwistsTest/VisibilityModel.lean) meets the field list of `VisibilityHypotheses`, vacuously on the stability side: a model with stability conditions needs Bridgeland stability in Mathlib.
 
