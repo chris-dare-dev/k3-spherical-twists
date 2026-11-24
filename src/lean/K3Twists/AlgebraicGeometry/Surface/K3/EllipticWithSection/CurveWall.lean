@@ -37,6 +37,9 @@ numbers those towers use, exactly:
 * near the wall the order of phases on wall objects is the order of their `B`-fractions
   (`cross_restrictedCharge`), with the fractions `j/(2j + 1)` of `𝒪_C(j)` and `j/(2j - 1)` of
   `T_A 𝒪_C(j)` ordered as the towers need;
+* the first three words `T_{𝒪_X(-2C)}`, `T_{𝒪_X(-C + 2F)}⁻¹`, `T_{𝒪_X(-C + 3F)}⁻¹` applied to
+  `𝒪_x`: the charges `-4 - i`, `-7/2`, `19/2 + 4i` of the two-letter tower add up to `2 + 3i`,
+  and the masses at the wall are `4 + √5`, `(7/2)(1 + √17)` and `3/2 + √41/4`;
 * the Euler characteristics behind the Ext dimensions of the towers, and the Barbacovi–Kim
   number `7 + 4√3` of the word `T_{𝒪_C} T_{𝒪_C(2)}` (arXiv:2107.06079, Theorem 4.0.1).
 -/
@@ -270,6 +273,98 @@ lemma subobject_fraction_le {i j : ℕ} (hij : j + 1 ≤ i) :
   · simp
   · have : (0 : ℚ) < j := by exact_mod_cast hj
     exact div_le_div_of_nonneg_left this.le (by positivity) (by linarith)
+
+/-! ### The first three words and their masses
+
+`E = T_L 𝒪_x` with `L = 𝒪_X(-2C)` has HN quotients `R = 𝒪_X/(I_x I_C²)` and `𝒪_X[1]`;
+`Y = T_K⁻¹ E` with `K = 𝒪_X(-C + 2F)` has `K[1]`, `M_{2,x}` and `V^{⊕2}`, `V = 𝒪_X(-C + 3F)`;
+and `T_V⁻¹ Y = 𝒪_{C+Γ}(C + 4F)` has `𝒪_C(1)` and `𝒪_Γ(x)`. The mass at the wall is the sum of
+the moduli of the charges of the HN quotients. -/
+
+lemma norm_of_eq {z : ℂ} {x y : ℝ} (h : z = x + y * I) : ‖z‖ = √(x ^ 2 + y ^ 2) := by
+  rw [h, norm_add_mul_I]
+
+/-- `|Z(𝒪_X[1])| = |-2 + i| = √5`. -/
+lemma norm_charge_structureSheaf_shift : ‖charge (-lineBundle 0)‖ = √5 := by
+  rw [charge_structureSheaf_shift, norm_of_eq (x := -2) (y := 1) (by push_cast; ring)]
+  norm_num
+
+/-- `Z(𝒪_Γ(D)) = -k - 1/4 + i` for a line bundle of degree `k` on a smooth fibre `Γ`. -/
+lemma charge_fibreSheaf (k : ℤ) : charge (fibreSheaf k) = -k - 1 / 4 + I := by
+  rw [charge_apply]
+  simp only [fibreSheaf_def, intersection_curve_apply, intersection_polarization_apply,
+    fibre_fst, fibre_snd]
+  push_cast
+  ring
+
+/-- **The two-letter tower.** Its quotients have charges `-4 - i`, `-7/2` and `19/2 + 4i`, in
+strictly decreasing phase, adding up to `2 + 3i`, the charge of the class of `T_K⁻¹ T_L 𝒪_x`. -/
+lemma charge_twoLetter_tower :
+    charge (-lineBundle (-1, 2)) = -4 - I ∧ charge (embeddedPoint 2) = -7 / 2 ∧
+      charge ((2 : ℤ) • lineBundle (-1, 3)) = 19 / 2 + 4 * I ∧
+      charge (reflect intersection (lineBundle (-1, 2))
+        (reflect intersection (lineBundle (-2, 0)) point)) = 2 + 3 * I := by
+  obtain ⟨hK, hV⟩ := charge_twoLetter
+  refine ⟨by rw [map_neg, hK]; ring, (charge_embeddedPoint_values).2.2, ?_, ?_⟩
+  · rw [map_zsmul, hV, zsmul_eq_mul]; push_cast; ring
+  · rw [reflect_apply, reflect_apply, charge_apply]
+    simp
+    ring
+
+/-- **The mass of the one-letter tower** `R`, `𝒪_X[1]` at the wall: `4 + √5`. -/
+lemma mass_oneLetter :
+    ‖charge (idealQuotient (tailDivisor 0 - (1 : ℤ) • curve) 1)‖ +
+      ‖charge (-lineBundle 0)‖ = 4 + √5 := by
+  have hR : charge (idealQuotient (tailDivisor 0 - (1 : ℤ) • curve) 1) = -4 := by
+    rw [thickening_eq_wallClass, charge_wallClass]; norm_num
+  rw [hR, norm_charge_structureSheaf_shift]
+  norm_num
+
+/-- **The mass of the two-letter tower** `K[1]`, `M_{2,x}`, `V^{⊕2}` at the wall:
+`√17 + 7/2 + 5√17/2 = (7/2)(1 + √17)`. -/
+lemma mass_twoLetter :
+    ‖charge (-lineBundle (-1, 2))‖ + ‖charge (embeddedPoint 2)‖ +
+      2 * ‖charge (lineBundle (-1, 3))‖ = 7 / 2 * (1 + √17) := by
+  have hK : ‖charge (-lineBundle (-1, 2))‖ = √17 := by
+    rw [charge_twoLetter_tower.1, norm_of_eq (x := -4) (y := -1) (by push_cast; ring)]
+    norm_num
+  have hM : ‖charge (embeddedPoint 2)‖ = 7 / 2 := by
+    rw [(charge_embeddedPoint_values).2.2]; norm_num
+  have hV : ‖charge (lineBundle (-1, 3))‖ = 5 / 4 * √17 := by
+    rw [(charge_twoLetter).2, norm_of_eq (x := 19 / 4) (y := 2) (by push_cast; ring),
+      show (19 / 4 : ℝ) ^ 2 + 2 ^ 2 = (5 / 4) ^ 2 * 17 by norm_num,
+      Real.sqrt_mul (by norm_num), Real.sqrt_sq (by norm_num)]
+  rw [hK, hM, hV]
+  ring
+
+/-- **The mass of the three-letter tower** `𝒪_C(1)`, `𝒪_Γ(x)` at the wall: `3/2 + √41/4`. The
+fibre term has charge `-5/4 + i`, of phase between `1/2` and `1`, below `𝒪_C(1)`. -/
+lemma mass_threeLetter :
+    ‖charge (curveSheaf 1)‖ + ‖charge (fibreSheaf 1)‖ = 3 / 2 + √41 / 4 ∧
+      π / 2 < arg (charge (fibreSheaf 1)) ∧ arg (charge (fibreSheaf 1)) < π := by
+  have hF : charge (fibreSheaf 1) = -5 / 4 + I := by rw [charge_fibreSheaf]; push_cast; ring
+  refine ⟨?_, ?_, ?_⟩
+  · have hC : ‖charge (curveSheaf 1)‖ = 3 / 2 := by
+      rw [charge_curveSheaf]; norm_num
+    have hΓ : ‖charge (fibreSheaf 1)‖ = 1 / 4 * √41 := by
+      rw [hF, norm_of_eq (x := -5 / 4) (y := 1) (by push_cast; ring),
+        show (-5 / 4 : ℝ) ^ 2 + 1 ^ 2 = (1 / 4) ^ 2 * 41 by norm_num,
+        Real.sqrt_mul (by norm_num), Real.sqrt_sq (by norm_num)]
+    rw [hC, hΓ]
+    ring
+  · rw [hF, ← not_le, arg_le_pi_div_two_iff]; norm_num
+  · rw [hF]; exact (arg_mem_Ioo_of_im_pos (by simp)).2
+
+/-- The presentation of `𝒪_X(-2C)[1]` by `𝒪_C(2)`, `A` and `𝒪_X[1]` bounds its mass by
+`5/2 + 1/2 + √5 = 3 + √5`. -/
+lemma mass_bound_shift :
+    curveSheaf 2 + wallA - lineBundle 0 = -lineBundle (-2, 0) ∧
+      ‖charge (curveSheaf 2)‖ + ‖charge wallA‖ + ‖charge (-lineBundle 0)‖ = 3 + √5 := by
+  refine ⟨by ext <;> simp [wallA], ?_⟩
+  have h2 : ‖charge (curveSheaf 2)‖ = 5 / 2 := by rw [charge_curveSheaf]; norm_num
+  have hA : ‖charge wallA‖ = 1 / 2 := by rw [charge_wallA]; norm_num [norm_one]
+  rw [h2, hA, norm_charge_structureSheaf_shift]
+  ring
 
 /-! ### Euler characteristics behind the towers
 

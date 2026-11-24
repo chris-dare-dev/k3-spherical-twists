@@ -46,8 +46,11 @@ lattice statements about them:
   the class of `𝒪_C(1)`. The quotients of each HN tower add up to the class of the twisted point:
   the two towers of the thickening (`point_add_sum_curveSheaf`, `sum_A_side_odd`,
   `sum_A_side_even`), the one-letter word `T_{K_ε(-(r+1)C)}` (`reflect_lineBundle_point`), the
-  two-letter word `T_{D(nF)}⁻¹ T_{D(-C)}` in every degree (`reflect_reflect_point`) and the
-  rank-two example (`reflect_rankTwo_point`).
+  two-letter word `T_{D(nF)}⁻¹ T_{D(-C)}` in every degree (`reflect_reflect_point`), the
+  three-letter word, of class `(0, C + F, 3) = v(𝒪_{C+Γ}(C + 4F))` for the fibre `Γ` through the
+  point (`reflect_threeLetter_point`), and the rank-two example (`reflect_rankTwo_point`).
+* **Stable classes in charge coordinates** (`neg_two_le_selfPairing_iff`): with `p = 4 Re Z` and
+  `q = Im Z` for the charge of the curve wall, `v² ≥ -2` is an ellipse condition on `(r, a)`.
 * **The parity argument** (`not_isSpherical_sub_of_odd_rank`): a root of odd rank with
   `H·c - r = 2`, `H = C + 2F`, is not the sum of two roots with `H·c - r = 1`. It is the lattice
   step in the proofs that the tails `𝒪_X(-C - F)[1]` and the line bundles of `H`-slope `3` are
@@ -471,6 +474,46 @@ lemma reflect_rankTwo_point :
       reflect intersection (lineBundle (-2, 2) + lineBundle (-1, 0)) point =
         -((2 : ℤ) • lineBundle (-2, 2)) + (curveSheaf 1 + wallA) - (2 : ℤ) • lineBundle 0 := by
   constructor <;> rw [reflect_apply] <;> ext <;> simp [wallA]
+
+/-- `v(𝒪_Γ(D)) = (0, F, k)` for a line bundle of degree `k` on a smooth fibre `Γ`, an elliptic
+curve, where `χ(𝒪_Γ(D)) = k`. -/
+def fibreSheaf (k : ℤ) : MukaiLattice NS := (0, fibre, k)
+
+@[simp] lemma fibreSheaf_def (k : ℤ) : fibreSheaf k = (0, fibre, k) := rfl
+
+/-- **The three-letter word on classes.** With `L = 𝒪_X(-2C)`, `K = 𝒪_X(-C + 2F)` and
+`V = 𝒪_X(-C + 3F)`, the class of `T_V⁻¹ T_K⁻¹ T_L 𝒪_x` is `(0, C + F, 3)`. It is the class of
+the line bundle `𝒪_{C+Γ}(C + 4F)` on the union of the section and the fibre `Γ` through `x`, and
+of its HN quotients `𝒪_C(1)` and `𝒪_Γ(x)`. -/
+lemma reflect_threeLetter_point :
+    reflect intersection (lineBundle (-1, 3)) (reflect intersection (lineBundle (-1, 2))
+        (reflect intersection (lineBundle (-2, 0)) point)) = (0, (1, 1), 3) ∧
+      lineBundle (1, 4) - lineBundle (0, 3) = (0, (1, 1), 3) ∧
+      curveSheaf 1 + fibreSheaf 1 = (0, (1, 1), 3) := by
+  refine ⟨?_, ?_, ?_⟩
+  · simp only [reflect_apply]
+    ext <;> simp
+  · ext <;> simp
+  · ext <;> simp
+
+/-- **The class of a stable object in charge coordinates.** For `v = (r, aC + bF, s)` put
+`p = 12r - 4s + 2a - b` (four times the real part of the charge of the curve wall) and
+`q = b - r` (its imaginary part). Then `v² ≥ -2` is equivalent to
+`(43r - 2(p + 2q))² + 43(4a - r - 2q)² ≤ 4(p + 2q)² + 172q² + 688`: the difference of the two
+sides is `344(v² + 2)`. For a bounded charge this confines `(r, a)` to an ellipse, and then
+`4s = 11r + 2a - q - p`. -/
+theorem neg_two_le_selfPairing_iff {r a b s p q : ℤ} (hp : p = 12 * r - 4 * s + 2 * a - b)
+    (hq : q = b - r) :
+    -2 ≤ selfPairing intersection (r, (a, b), s) ↔
+      (43 * r - 2 * (p + 2 * q)) ^ 2 + 43 * (4 * a - r - 2 * q) ^ 2 ≤
+        4 * (p + 2 * q) ^ 2 + 172 * q ^ 2 + 688 := by
+  have key : 4 * (p + 2 * q) ^ 2 + 172 * q ^ 2 + 688 -
+      ((43 * r - 2 * (p + 2 * q)) ^ 2 + 43 * (4 * a - r - 2 * q) ^ 2) =
+      344 * (selfPairing intersection (r, (a, b), s) + 2) := by
+    subst hp hq
+    simp only [selfPairing_mk, intersection_apply]
+    ring
+  constructor <;> intro h <;> linarith
 
 /-! ### The parity argument -/
 
