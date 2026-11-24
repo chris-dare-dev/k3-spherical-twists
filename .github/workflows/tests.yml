@@ -65,3 +65,17 @@ jobs:
             macaulay2 make coreutils git ca-certificates
       - uses: actions/checkout@v4
       - run: make test-slow
+
+  # The Lean proofs under src/lean: a warning (a `sorry`, say) fails the build; then the test
+  # library, Batteries' linters, the generated umbrella, the axiom audit and the style check.
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: src/lean
+          build-args: --wfail
+      - name: Tests, linters, umbrella, axioms and style
+        run: make lean

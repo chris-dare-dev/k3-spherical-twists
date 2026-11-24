@@ -1,0 +1,757 @@
+#!/usr/bin/env python3
+"""Fast Mathlib-convention check for a single owner-authored Lean file.
+
+This runs on every agent edit, so it must stay under ~50ms and must never need
+Lake, Lean, or the network. It deliberately does *not* re-check anything
+`lake exe lint-style`, `lake exe runLinter` or the Mathlib linters that
+`lakefile.toml` switches on already catch in CI; it covers the gap between an
+edit landing and CI running for the `K3Twists` library. Copied from derived-alg-geo-lean,
+with its paths changed.
+
+Every finding is an ERROR: objectively wrong, no judgement involved. Under
+`--hook` it exits 2, so the PostToolUse hook blocks and the agent fixes it
+before moving on.
+
+Usage:
+    python3 scripts/check_mathlib_style.py FILE [FILE ...]
+    python3 scripts/check_mathlib_style.py --hook              # hook JSON on stdin
+    python3 scripts/check_mathlib_style.py --diff-only REF F.. # only changed lines
+    python3 scripts/check_mathlib_style.py --self-test         # known-answer fixtures
+    python3 scripts/check_mathlib_style.py --check-baseline    # ratchet over the library
+    python3 scripts/check_mathlib_style.py --relax             # re-record the baseline
+
+`--diff-only` exists because a branch gate and an edit hook are answering
+different questions. The hook judges the line you just wrote, so it is strict.
+A branch gate that reported every pre-existing violation in a file the branch
+happens to touch would turn editing any legacy file into a mandatory refactor
+of it -- which `CONTRIBUTING.md` explicitly does not want ("avoid unrelated
+refactors in a feature change"), and which stalls an unattended run on debt
+that is not its business. Findings are therefore filtered to lines the diff
+actually adds or changes.
+
+`scripts/style-baseline.json` answers the same question for the *hook*, which
+has no diff to filter by: it lists findings a file already carried, so the hook
+blocks on what an edit *adds*. Here it is empty and should stay so.
+
+It records the offending source line rather than its line number, which churns
+under every unrelated edit above it -- the reason `check_warnings.py` gives for
+keying on the message instead. Unlike that gate it records the text and not only
+a count, because a per-edit hook has to name the line to fix, and a count can
+only say the file has one too many.
+"""
+
+from __future__ import annotations
+
+import functools
+import json
+import re
+import sys
+from pathlib import Path
+
+from _output import force_utf8_output
+
+MAX_LINE = 100
+
+ROOT = Path(__file__).resolve().parent.parent
+FIXTURES = ROOT / "scripts" / "fixtures" / "mathlib-style"
+# Anchored at the repository root, not the working directory: the PostToolUse
+# hook runs from wherever the agent's shell happens to be, and a baseline the
+# hook cannot find is a hook that blocks on all of it again.
+STYLE_BASELINE = ROOT / "scripts" / "style-baseline.json"
+
+# Only owner-authored library source. Vendored Apache source keeps upstream
+# style, audit scripts are not library modules, and `.claude/` holds review
+# fixtures that were deliberately frozen.
+INCLUDED_PREFIXES = ("K3Twists/",)
+INCLUDED_FILES = ("K3Twists.lean",)
+EXCLUDED_PARTS = (".lake", "vendor", "scripts", ".claude", "docbuild")
+
+DECL_RE = re.compile(
+    r"^(?P<attrs>@\[[^\]]*\]\s*)?"
+    r"(?P<kw>theorem|lemma|def|abbrev|structure|class|inductive|instance)\b"
+    r"(?P<rest>.*)$"
+)
+NAME_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_.'₁-₉]*)")
+STRING_RE = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+# Git writes `<<<<<<< `, `=======`, `>>>>>>> `, and -- under
+# `merge.conflictStyle = diff3` -- `||||||| `, each at the very start of a line.
+# Seven `<` or seven `>` there are unambiguous: no Lean token and no prose this
+# repository writes opens a line that way, so those two are the anchors.
+# `=======` is *not* unambiguous -- it is a legal Markdown setext heading
+# underline, and the module docstrings here are Markdown -- and seven pipes are
+# a marker only in diff3 output. Both are therefore reported only when an anchor
+# appears elsewhere in the same file, which is exactly the condition git
+# guarantees whenever it writes either of them.
+CONFLICT_ANCHOR_RE = re.compile(r"^(?:<{7}|>{7})(?: |$)")
+CONFLICT_INNER_RE = re.compile(r"^(?:={7}$|\|{7}(?: |$))")
+
+# Invariant for `PROV`: no comment or docstring in the library records how it
+# came to be written. Provenance goes in the commit message (CREDO.md §4), so a
+# comment carries none of these: an issue or pull-request number, a milestone
+# code such as `MO1.08`, a decision-record number, a calendar date, a review tag
+# such as `P2-12`, a path into the process records, or the name of an agent.
+# `&#` is excluded so an HTML character reference in a docstring is not a hit.
+PROVENANCE_RES = (
+    ("an issue or pull-request number",
+     re.compile(r"(?<![\w&#])#\d+\b|\b(?:issue|PR|pull request)s? \d+\b", re.I)),
+    ("a milestone code", re.compile(r"\b[A-Z]{2,4}\d+(?:\.\d+)+[a-z]?\b")),
+    ("a decision-record number", re.compile(r"\bADR-?\d+\b")),
+    ("a date", re.compile(r"\b20\d\d-[01]\d-[0-3]\d\b")),
+    ("a review tag", re.compile(r"\bP[0-3]-\d+\b|\bfinding \d+\b")),
+    ("a path into the process records",
+     re.compile(r"(?:(?<![\w/.])|(?<=\.\./))(?:docs|openspec|notes)/[\w.-]|\.claude/")),
+    ("the name of an agent", re.compile(r"\b(?:Claude|Codex|ChatGPT|Copilot)\b")),
+)
+
+# Invariant for `NAMENUM`: no declaration or file name carries a source's
+# numbering. A source is cited in the docstring ("Proposition 3.15 of
+# arXiv:1902.08184") and the name says what the statement is (CREDO.md, Lean
+# rules). Matches `Proposition315Data`, `Theorems187And57`, `theorem75`,
+# `lemma_4_15` and `Definition20_5`, in a declaration, a namespace or a file
+# name. An underscore counts only between two digits, and a digit only after a
+# numbered-statement word, so `pow_two` and `Ext2` are untouched.
+PAPER_NUMBERING_RE = re.compile(
+    r"(?:Proposition|Lemma|Theorem|Corollary|Remark|Definition|Example|Section|Tag|Prop|Thm|Cor)s?_?\d"
+    r"|(?:^|_)(?:proposition|lemma|theorem|corollary|remark|definition|example|section|tag)s?_?\d"
+    r"|\d_\d"
+)
+NAMESPACE_RE = re.compile(r"^\s*namespace\s+(\S+)")
+
+
+class Finding:
+    def __init__(self, severity: str, line: int, code: str, message: str) -> None:
+        self.severity = severity
+        self.line = line
+        self.code = code
+        self.message = message
+
+
+def in_scope(path: Path) -> bool:
+    """Is `path` owner-authored `K3Twists` library source?
+
+    Both halves of this test are answered *relative to the repository root*,
+    and each half used to be answered against the path as given. That is two
+    separate ways for the checker to fall silent, and both were live:
+
+    * An agent session runs in a worktree under `.claude/worktrees/<name>/`,
+      and the `PostToolUse` hook is handed an absolute path. So `.claude`
+      appeared in `parts`, `EXCLUDED_PARTS` matched it, and every library file
+      edited in a worktree was skipped -- on every platform.
+    * `INCLUDED_PREFIXES` is written with `/`, but on Windows
+      `str(Path("K3Twists/Foo.lean"))` is `K3Twists\\Foo.lean`, so
+      the substring test never matched at all.
+
+    Either one alone makes the hook a no-op, which is the other half of why
+    nothing local caught it. A path outside the repository keeps the old
+    as-given reading.
+    """
+    if path.suffix != ".lean":
+        return False
+    try:
+        rel = path.resolve().relative_to(ROOT)
+    except (ValueError, OSError):
+        rel = path
+    if any(p in EXCLUDED_PARTS for p in rel.parts):
+        return False
+    text = rel.as_posix()
+    return rel.name in INCLUDED_FILES or any(p in text for p in INCLUDED_PREFIXES)
+
+
+def strip_string_literals(line: str) -> str:
+    """Blank out double-quoted spans so token checks do not fire inside strings."""
+    return STRING_RE.sub(lambda m: '"' + " " * (len(m.group(0)) - 2) + '"', line)
+
+
+def column_in_string(line: str, column: int) -> bool:
+    """Does `column` (0-based) fall inside a double-quoted literal on `line`?"""
+    return any(m.start() <= column < m.end() for m in STRING_RE.finditer(line))
+
+
+def code_only(lines: list[str]) -> list[str]:
+    """Blank out every block comment, docstring, and line comment.
+
+    Token checks (`sorry`, `λ`, `$`) must not fire on prose: this repository's
+    module docstrings discuss `sorry` precisely because it is banned, and a
+    checker that cannot tell prose from code would make that undocumentable.
+    Nesting is tracked because Lean block comments nest.
+    """
+    out: list[str] = []
+    depth = 0
+    for line in lines:
+        buf = []
+        i = 0
+        s = strip_string_literals(line)
+        while i < len(s):
+            if s.startswith("/-", i):
+                depth += 1
+                i += 2
+                continue
+            if s.startswith("-/", i) and depth:
+                depth -= 1
+                i += 2
+                continue
+            if not depth and s.startswith("--", i):
+                break
+            buf.append(" " if depth else s[i])
+            i += 1
+        out.append("".join(buf))
+    return out
+
+
+def comments_only(lines: list[str]) -> list[str]:
+    """The complement of `code_only`: each line's comment and docstring text.
+
+    The nesting is read from the string-blanked line, as `code_only` reads it,
+    so a `--` inside a string literal opens nothing; the text kept is the raw
+    line's, so a quotation inside a docstring is still judged.
+    """
+    out: list[str] = []
+    depth = 0
+    for line in lines:
+        buf = []
+        i = 0
+        s = strip_string_literals(line)
+        while i < len(s):
+            if s.startswith("/-", i):
+                depth += 1
+                i += 2
+                continue
+            if s.startswith("-/", i) and depth:
+                depth -= 1
+                i += 2
+                continue
+            if not depth and s.startswith("--", i):
+                buf.append(line[i + 2:])
+                break
+            buf.append(line[i] if depth else " ")
+            i += 1
+        out.append("".join(buf))
+    return out
+
+
+def conflict_markers(raw: str, lines: list[str]) -> list[Finding]:
+    """Findings for git merge-conflict markers committed into the file.
+
+    Nothing else in `scripts/` catches these: the structural gates read
+    imports and declaration names, not the rest of a file, so a file full of
+    `<<<<<<< HEAD` passes them. Lean rejects it only once CI reaches the module,
+    as `unexpected token '<<<'; expected command`.
+
+    Raw lines, not `code_only`: a conflict inside a docstring is still a
+    conflict, and a conflicted file's block-comment nesting is unbalanced
+    anyway, so the blanking pass cannot be trusted here.
+    """
+    # One C-level scan of the whole file keeps the common case -- a file with
+    # no conflict in it -- off the per-line path entirely.
+    if "<<<<<<<" not in raw and ">>>>>>>" not in raw:
+        return []
+    text = [ln[:-1] if ln.endswith("\r") else ln for ln in lines]
+    hits = {i for i, ln in enumerate(text, start=1) if CONFLICT_ANCHOR_RE.match(ln)}
+    if not hits:
+        return []
+    hits.update(i for i, ln in enumerate(text, start=1) if CONFLICT_INNER_RE.match(ln))
+    return [
+        Finding(
+            "ERROR",
+            i,
+            "CONFLICT",
+            f"Unresolved merge-conflict marker `{elide(text[i - 1])}`; finish the merge.",
+        )
+        for i in sorted(hits)
+    ]
+
+
+def elide(line: str, limit: int = 48) -> str:
+    """Shorten a quoted source line; a rebase marker carries a whole commit subject."""
+    return line if len(line) <= limit else line[:limit] + "..."
+
+
+def check_text(raw: str, path: Path) -> list[Finding]:
+    lines = raw.split("\n")
+
+    # A file with conflict markers is not Lean source yet, so every check below
+    # would be judging text that does not survive the resolution. Report the
+    # markers alone: the only useful next action is to finish the merge.
+    if conflicts := conflict_markers(raw, lines):
+        return conflicts
+
+    out: list[Finding] = []
+    code = code_only(lines)
+
+    # An import-only re-export file needs neither a copyright header nor a full
+    # module docstring; Mathlib's own header linter grants the same exemption.
+    has_decls = any(DECL_RE.match(c) for c in code)
+
+    # --- whole-file structure -------------------------------------------------
+    if has_decls and not raw.startswith("/-\nCopyright "):
+        out.append(Finding("ERROR", 1, "HDR", "File must open with a `/-\\nCopyright ...` header block."))
+    if PAPER_NUMBERING_RE.search(path.stem):
+        out.append(
+            Finding(
+                "ERROR",
+                1,
+                "NAMENUM",
+                f"The file name `{path.name}` carries a source's numbering; name the module by "
+                "its content (CREDO.md, Lean rules).",
+            )
+        )
+
+    # The module docstring must be the first command after the imports.
+    first_cmd = None
+    in_header = False
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if in_header:
+            # The copyright block is skipped to its close. It used to be skipped
+            # by an allowlist of its prose -- `Copyright`, `Released under`,
+            # `Authors` -- so any fourth line fell through and was reported as
+            # the first command. `Portions adapted from mattrobball/...` in the
+            # vendored attributions did exactly that, five times.
+            if s.endswith("-/"):
+                in_header = False
+            continue
+        if not s or s.startswith("--"):
+            continue
+        if s.startswith("/-") and not s.startswith("/-!"):
+            if s == "/-" or not s.endswith("-/"):
+                in_header = True
+            continue
+        if s == "-/":
+            continue
+        if s.startswith(("import ", "public import ", "meta import ")) or s == "module":
+            continue
+        # A file-level `set_option` is a command, but it is one Mathlib writes
+        # *before* the module docstring, so it does not answer "is the docstring
+        # first". 25 of the 30 MODDOC findings were files that open with
+        # `set_option backward.defeqAttrib.useBackward true`.
+        if s.startswith("set_option "):
+            continue
+        first_cmd = (i + 1, s)
+        break
+    if has_decls and first_cmd and not first_cmd[1].startswith("/-!"):
+        out.append(
+            Finding(
+                "ERROR",
+                first_cmd[0],
+                "MODDOC",
+                "The first command after the imports must be a `/-! ... -/` module docstring "
+                "(title, summary, main results, references).",
+            )
+        )
+
+    # --- per-line -------------------------------------------------------------
+    for idx, (line, c) in enumerate(zip(lines, code), start=1):
+        if line.endswith("\r"):
+            line = line[:-1]
+        # Lean import commands cannot be continued onto another line. Mathlib's
+        # own long-line linter therefore permits long imports; a deep subject
+        # hierarchy such as `CategoryTheory.Triangulated.StabilityCondition`
+        # needs the same exception.
+        is_import = re.match(r"^\s*(?:(?:public|meta)\s+)?import\s+", c) is not None
+        # A line that is only long because the limit lands inside a string
+        # literal is not the problem this rule is about. Those are the
+        # `(note := "...")` review records, up to 691 characters of deliberate
+        # prose; reflowing one means a string gap, which is legal Lean but
+        # edits the payload's whitespace for no readability gain. The code on
+        # such a line is short. 12 of the 145 LONG findings were these.
+        in_string = column_in_string(line, MAX_LINE)
+        # A Markdown table row cannot be continued either, and for the same
+        # reason `import` cannot: the row IS the line, and splitting it makes
+        # two malformed rows rather than one wrapped one. The module docstrings
+        # here are Markdown, and a wide table row is the shape this is about.
+        #
+        # Restricted to lines that are wholly comment or docstring, so a `| cons
+        # x xs => ...` match alternative -- perfectly breakable -- is untouched,
+        # and it wants both delimiters and two cells before it believes a row.
+        stripped = line.strip()
+        is_table_row = (
+            not c.strip()
+            and stripped.startswith("|")
+            and stripped.endswith("|")
+            and stripped.count("|") >= 3
+        )
+        if len(line) > MAX_LINE and not is_import and not in_string and not is_table_row:
+            out.append(Finding("ERROR", idx, "LONG", f"Line is {len(line)} chars; Mathlib's limit is {MAX_LINE}."))
+
+        if re.search(r"\bsorry\b", c):
+            out.append(Finding("ERROR", idx, "SORRY", "`sorry` is forbidden in this repository (CLAUDE.md)."))
+
+    for idx, comment in enumerate(comments_only(lines), start=1):
+        for what, rx in PROVENANCE_RES:
+            if m := rx.search(comment):
+                out.append(
+                    Finding(
+                        "ERROR",
+                        idx,
+                        "PROV",
+                        f"The comment carries {what} (`{m.group(0)}`). State the mathematics; "
+                        "provenance goes in the commit message (CREDO.md §4).",
+                    )
+                )
+                break
+
+    for idx, c in enumerate(code, start=1):
+        if (ns := NAMESPACE_RE.match(c)) and any(
+            PAPER_NUMBERING_RE.search(part) for part in ns.group(1).split(".")
+        ):
+            out.append(
+                Finding(
+                    "ERROR",
+                    idx,
+                    "NAMENUM",
+                    f"The namespace `{ns.group(1)}` carries a source's numbering. Name it by its "
+                    "content and cite the source in the docstring (CREDO.md, Lean rules).",
+                )
+            )
+
+    # --- declarations ---------------------------------------------------------
+    for idx, c in enumerate(code, start=1):
+        if not (m := DECL_RE.match(c)):
+            continue
+        nm = NAME_RE.match(m.group("rest"))
+        name = nm.group(1) if nm else "<anonymous>"
+        if PAPER_NUMBERING_RE.search(name.split(".")[-1]):
+            out.append(
+                Finding(
+                    "ERROR",
+                    idx,
+                    "NAMENUM",
+                    f"`{name}` carries a source's numbering. Name the statement by its content and "
+                    "cite the source in the docstring (CREDO.md, Lean rules).",
+                )
+            )
+
+    return out
+
+
+@functools.lru_cache(maxsize=None)
+def renamed_paths(ref: str) -> dict[str, str]:
+    """Map each renamed destination to its source path relative to `ref`."""
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--name-status", "--find-renames=20%", f"{ref}...HEAD"],
+            capture_output=True, text=True, check=True, encoding="utf-8",
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return {}
+
+    renames: dict[str, str] = {}
+    for line in out.splitlines():
+        fields = line.split("\t")
+        if len(fields) == 3 and fields[0].startswith("R"):
+            renames[fields[2]] = fields[1]
+    return renames
+
+
+def changed_lines(ref: str, path: Path) -> set[int] | None:
+    """Line numbers this branch adds or changes in `path`, or None for a new file.
+
+    None means "every line is new", so no filtering is applied.
+    """
+    import subprocess
+
+    try:
+        paths = [str(path)]
+        if source := renamed_paths(ref).get(str(path)):
+            paths.insert(0, source)
+        out = subprocess.run(
+            ["git", "diff", "--find-renames=20%", "-U0", f"{ref}...HEAD", "--", *paths],
+            capture_output=True, text=True, check=True, encoding="utf-8",
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+    if "new file mode" in out:
+        return None
+
+    lines: set[int] = set()
+    for m in re.finditer(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", out, re.MULTILINE):
+        start = int(m.group(1))
+        count = int(m.group(2) or 1)
+        lines.update(range(start, start + count))
+    return lines
+
+
+def rel_key(path: Path) -> str:
+    """The baseline's key for `path`: repository-relative, forward slashes.
+
+    `in_scope` already resolves against `ROOT` for exactly this reason -- the
+    hook is handed an absolute path inside `.claude/worktrees/<name>/`, and a
+    key recorded from that path would match in one worktree and nowhere else.
+    """
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except (ValueError, OSError):
+        return path.as_posix()
+
+
+def fingerprint(lines: list[str], finding: Finding) -> str:
+    """The source line a finding is about, as the baseline records it."""
+    if 1 <= finding.line <= len(lines):
+        return lines[finding.line - 1].rstrip()
+    return ""
+
+
+@functools.lru_cache(maxsize=1)
+def load_style_baseline() -> dict[tuple[str, str, str], int]:
+    """`(path, code, source line) -> how many of them this repository carries`."""
+    if not STYLE_BASELINE.exists():
+        return {}
+    try:
+        entries = json.loads(STYLE_BASELINE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError, OSError):
+        return {}
+    counts: dict[tuple[str, str, str], int] = {}
+    for path, code, text, n in entries:
+        counts[(path, code, text)] = counts.get((path, code, text), 0) + n
+    return counts
+
+
+def write_style_baseline(counts: dict[tuple[str, str, str], int]) -> None:
+    entries = sorted([path, code, text, n] for (path, code, text), n in counts.items())
+    STYLE_BASELINE.write_text(
+        json.dumps(entries, indent=1, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def split_baselined(
+    path: Path, lines: list[str], findings: list[Finding]
+) -> tuple[list[Finding], int]:
+    """Partition `findings` into what still blocks and how many the baseline covers."""
+    baseline = load_style_baseline()
+    if not baseline:
+        return findings, 0
+    key = rel_key(path)
+    budget = {k: n for k, n in baseline.items() if k[0] == key}
+    if not budget:
+        return findings, 0
+    kept: list[Finding] = []
+    covered = 0
+    for f in findings:
+        entry = (key, f.code, fingerprint(lines, f))
+        if budget.get(entry, 0) > 0:
+            budget[entry] -= 1
+            covered += 1
+            continue
+        kept.append(f)
+    return kept, covered
+
+
+def library_files() -> list[Path]:
+    """Every in-scope library file, as the whole-library modes read them."""
+    files = sorted(ROOT.joinpath("K3Twists").rglob("*.lean"))
+    files.append(ROOT / "K3Twists.lean")
+    return [p for p in files if p.exists() and in_scope(p)]
+
+
+def survey_library() -> dict[tuple[str, str, str], int]:
+    """Count every ERROR in the library, keyed as the baseline keys them."""
+    counts: dict[tuple[str, str, str], int] = {}
+    for p in library_files():
+        text = p.read_text(encoding="utf-8")
+        lines = text.split("\n")
+        for f in check_text(text, p):
+            entry = (rel_key(p), f.code, fingerprint(lines, f))
+            counts[entry] = counts.get(entry, 0) + 1
+    return counts
+
+
+def check_baseline(relax: bool) -> int:
+    """The ratchet: nothing new outside the baseline, and report what it outgrew.
+
+    `--relax` rewrites the file. It only ever *lowers* it: an addition is the
+    thing this gate exists to stop, and regenerating past one would be the gate
+    marking its own homework.
+    """
+    current = survey_library()
+
+    if relax and not STYLE_BASELINE.exists():
+        # First adoption, and the only time this file is written from a state
+        # it does not already dominate. Every later `--relax` may lower it and
+        # never raise it: a change that leaves more debt than it found is the
+        # thing the ratchet exists to stop.
+        write_style_baseline(current)
+        print(f"--relax: recorded {sum(current.values())} pre-existing ERROR(s) "
+              f"across {len({k[0] for k in current})} file(s) in "
+              f"{rel_key(STYLE_BASELINE)}.")
+        return 0
+
+    baseline = load_style_baseline()
+
+    if not current and not baseline:
+        print("style baseline: nothing recorded and nothing found")
+        return 0
+
+    added = {k: n - baseline.get(k, 0) for k, n in current.items()
+             if n > baseline.get(k, 0)}
+    if added:
+        total = sum(added.values())
+        print(f"::error::{total} style ERROR(s) are not in {rel_key(STYLE_BASELINE)}. "
+              "Fix them; do not regenerate the baseline to make this pass.")
+        for (path, code, text), n in sorted(added.items()):
+            print(f"  {path} (+{n}) [{code}] {elide(text, 72)}")
+        return 1
+
+    removed = {k: baseline[k] - current.get(k, 0) for k in baseline
+               if baseline[k] > current.get(k, 0)}
+    total_fixed = sum(removed.values())
+    print(f"style baseline: {sum(current.values())} ERROR(s) across "
+          f"{len({k[0] for k in current})} file(s), all recorded "
+          f"(baseline {sum(baseline.values())})")
+
+    if total_fixed and relax:
+        write_style_baseline(current)
+        print(f"--relax: baseline lowered by {total_fixed}; commit "
+              f"{rel_key(STYLE_BASELINE)} with the fix.")
+    elif total_fixed:
+        print(f"::notice::{total_fixed} baseline finding(s) are gone. Run "
+              "`python3 scripts/check_mathlib_style.py --relax` and commit "
+              f"{rel_key(STYLE_BASELINE)} so the gate keeps the ground you won.")
+    elif relax:
+        write_style_baseline(current)
+        print(f"--relax: rewrote {rel_key(STYLE_BASELINE)}.")
+    return 0
+
+
+def self_test() -> int:
+    """Run the known-answer fixtures under `scripts/fixtures/mathlib-style/`.
+
+    The layout is `<code>/allowed/*.leansrc` and `<code>/forbidden/*.leansrc`,
+    where `<code>` is the lowercased finding code under test: every `allowed`
+    fixture must produce no finding with that code and every `forbidden`
+    fixture must produce at least one, so an edit that silently stops
+    rejecting something is caught here instead of by the next regression.
+
+    Only the named code is asserted on, which lets a fixture be about exactly
+    one question rather than a fully Mathlib-clean file.
+
+    A fixture is Lean source text but deliberately not a `.lean` file: it must
+    reach neither `lake`, `lake exe lint-style`, the declaration sweep, nor
+    this checker's own `in_scope`.
+    """
+    failures: list[str] = []
+    groups = sorted(p for p in FIXTURES.iterdir() if p.is_dir()) if FIXTURES.is_dir() else []
+    if not groups:
+        print(f"no mathlib-style fixtures found under {FIXTURES}", file=sys.stderr)
+        return 1
+
+    checked = 0
+    for group in groups:
+        code = group.name.upper()
+        for verdict in ("allowed", "forbidden"):
+            base = group / verdict
+            fixtures = sorted(base.glob("*.leansrc")) if base.is_dir() else []
+            if not fixtures:
+                failures.append(f"no {verdict} fixtures for [{code}] under {base}")
+                continue
+            for fixture in fixtures:
+                checked += 1
+                found = [
+                    f
+                    for f in check_text(fixture.read_text(encoding="utf-8"), fixture)
+                    if f.code == code
+                ]
+                label = fixture.relative_to(ROOT).as_posix()
+                if verdict == "forbidden" and not found:
+                    failures.append(f"forbidden fixture {label} produced no [{code}] finding")
+                if verdict == "allowed" and found:
+                    where = ", ".join(f"line {f.line}" for f in found)
+                    failures.append(f"allowed fixture {label} was rejected: [{code}] at {where}")
+
+    for failure in failures:
+        print(f"mathlib-style fixture: {failure}", file=sys.stderr)
+    print(f"mathlib-style fixtures: {checked} checked, {len(failures)} failed")
+    return 1 if failures else 0
+
+
+def report(path: Path, findings: list[Finding]) -> int:
+    for f in sorted(findings, key=lambda f: f.line):
+        print(f"{path}:{f.line}: {f.severity} [{f.code}] {f.message}", file=sys.stderr)
+    return 1 if findings else 0
+
+
+def main(argv: list[str]) -> int:
+    if "--self-test" in argv:
+        return self_test()
+    if "--check-baseline" in argv or "--relax" in argv:
+        return check_baseline(relax="--relax" in argv)
+
+    paths: list[Path]
+    hook_mode = "--hook" in argv
+    diff_ref: str | None = None
+    if "--diff-only" in argv:
+        i = argv.index("--diff-only")
+        if i + 1 >= len(argv):
+            print("--diff-only needs a git ref", file=sys.stderr)
+            return 1
+        diff_ref = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]
+    if hook_mode:
+        try:
+            payload = json.load(sys.stdin)
+        except (json.JSONDecodeError, ValueError):
+            return 0
+        fp = (payload.get("tool_input") or {}).get("file_path")
+        if not fp:
+            return 0
+        paths = [Path(fp)]
+    else:
+        paths = [Path(a) for a in argv if not a.startswith("-")]
+
+    if not paths:
+        print("error: no files supplied; use explicit paths or --check-baseline", file=sys.stderr)
+        return 1
+
+    bad = 0
+    total_covered = 0
+    checked = 0
+    for p in paths:
+        if not p.exists():
+            print(f"error: input file does not exist: {p}", file=sys.stderr)
+            bad |= 1
+            continue
+        if not in_scope(p):
+            continue
+        checked += 1
+        text = p.read_text(encoding="utf-8")
+        findings = check_text(text, p)
+        # Before the diff filter, so a branch that merely moves a recorded line
+        # is not asked to refactor it. The baseline is what this repository has
+        # agreed to carry, in every mode that reads a file.
+        findings, covered = split_baselined(p, text.split("\n"), findings)
+        total_covered += covered
+        if diff_ref is not None:
+            touched = changed_lines(diff_ref, p)
+            if touched is not None:
+                findings = [f for f in findings if f.line in touched]
+        bad |= report(p, findings)
+
+    if not checked and not hook_mode:
+        print("error: no in-scope Lean files were checked", file=sys.stderr)
+        bad |= 1
+    print(f"mathlib-style: {checked} in-scope file(s) checked")
+    if bad:
+        print(
+            "\nMathlib-convention ERRORs above must be fixed before continuing.",
+            file=sys.stderr,
+        )
+        if total_covered:
+            print(
+                f"({total_covered} further finding(s) in these files are recorded "
+                f"in {rel_key(STYLE_BASELINE)} and are not yours to fix. Never add "
+                "to it.)",
+                file=sys.stderr,
+            )
+        # Exit 2 is the PostToolUse blocking code: stderr is fed back to the agent.
+        return 2 if hook_mode else 1
+    return 0
+
+
+if __name__ == "__main__":
+    force_utf8_output()
+    sys.exit(main(sys.argv[1:]))

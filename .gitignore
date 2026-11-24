@@ -6,3 +6,5 @@ __pycache__/
 .Macaulay2/
 *.log
 *.tmp
+# Lake's packages and build outputs for the Lean proofs
+src/lean/.lake/
