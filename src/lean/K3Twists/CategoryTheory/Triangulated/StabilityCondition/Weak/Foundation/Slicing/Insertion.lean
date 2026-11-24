@@ -65,16 +65,18 @@ variable {C : Type u} [Category.{v} C] [HasZeroObject C] [HasShift C ℤ]
 /-- **The homotopy pullback `B ×_M M'`.** Let `A → B → M → A⟦1⟧` and `M' → M → F → M'⟦1⟧` be
 distinguished. The fibre `B'` of the composite `B → M → F` sits in distinguished triangles
 `A → B' → M' → A⟦1⟧`, whose last map is the composite `M' → M → A⟦1⟧`, and
-`B' → B → F → B'⟦1⟧`; the map `B' → B` lies over `A → B` and over `M' → M`. -/
+`B' → B → F → B'⟦1⟧`. The map `B' → B` lies over `A → B` and over `M' → M`, and the connecting
+map `F → B'⟦1⟧` lies over the connecting map `F → M'⟦1⟧` and under `M → A⟦1⟧`: this is the
+octahedron of the composable pair `B → M → F`. -/
 theorem exists_pullback_triangles [IsTriangulated C] {A B M M' F : C}
     {f : A ⟶ B} {g : B ⟶ M} {h : M ⟶ A⟦(1 : ℤ)⟧} (hT : Triangle.mk f g h ∈ distTriang C)
     {ι : M' ⟶ M} {π : M ⟶ F} {δ : F ⟶ M'⟦(1 : ℤ)⟧} (hT' : Triangle.mk ι π δ ∈ distTriang C) :
     ∃ (B' : C) (f' : A ⟶ B') (g' : B' ⟶ M') (u : B' ⟶ B) (w : F ⟶ B'⟦(1 : ℤ)⟧),
       Triangle.mk f' g' (ι ≫ h) ∈ distTriang C ∧ Triangle.mk u (g ≫ π) w ∈ distTriang C ∧
-        f' ≫ u = f ∧ g' ≫ ι = u ≫ g := by
+        f' ≫ u = f ∧ g' ≫ ι = u ≫ g ∧ w ≫ g'⟦(1 : ℤ)⟧' = δ ∧ h ≫ f'⟦(1 : ℤ)⟧' = π ≫ w := by
   obtain ⟨B', u, w, hB⟩ := distinguished_cocone_triangle₁ (g ≫ π)
   let o := Triangulated.someOctahedron' rfl hT hT' hB
-  exact ⟨B', o.m₁, o.m₃, u, w, o.mem, hB, o.comm₁, o.comm₄⟩
+  exact ⟨B', o.m₁, o.m₃, u, w, o.mem, hB, o.comm₁, o.comm₄, o.comm₃, o.comm₂⟩
 
 end CategoryTheory.Pretriangulated
 
@@ -197,7 +199,8 @@ theorem HNFiltration.exists_concat [IsTriangulated C] {P : ℝ → ObjectPropert
         refine isomorphic_distinguished _ (FM.triangle_dist ⟨FM.n - 1, by omega⟩) _ ?_
         exact Triangle.isoMk _ _ (Iso.refl _) eM.symm (Iso.refl _) (by dsimp [TM]; simp)
           (by dsimp [TM]; simp) (by dsimp [TM]; simp)
-      obtain ⟨B', f', g', u, w, h₁, h₂, -, -⟩ := Pretriangulated.exists_pullback_triangles hT hTM
+      obtain ⟨B', f', g', u, w, h₁, h₂, -, -, -, -⟩ :=
+        Pretriangulated.exists_pullback_triangles hT hTM
       let FM' : HNFiltration C P TM.obj₁ :=
         (FM.prefix C (FM.n - 1) (by omega)).ofIso C eM₁.symm
       have hFM'n : FM'.n = FM.n - 1 := rfl
