@@ -76,6 +76,26 @@ From these, Lean proves every assertion of the corollary:
 
 A theorem proved from hypotheses that cannot hold together says nothing. [K3TwistsTest/PointMassModel.lean](K3TwistsTest/PointMassModel.lean) builds a five-object model in which every field holds. [scripts/AxiomAudit.lean](scripts/AxiomAudit.lean) checks every constant of every `K3Twists` module for `sorry` and for axioms other than `propext`, `Classical.choice` and `Quot.sound`.
 
+`VisibilityHypotheses` lists what the lemma "Visibility on the cover" uses about `D^b(X)` and `Stab†(X)`, with sources ([BB] is Bayer–Bridgeland, arXiv:1310.8266):
+
+- the shift (`v(E[1]) = -v(E)`, `φ(E[n]) = φ(E) + n`), Riemann–Roch for spheres (`v(E)² = -2`), `Z_σ(E) ∈ ℝ_{>0} e^{iπφ(E)}` for semistable `E`, and Jordan–Hölder factors of semistable objects;
+- `Z_σ` is the geometric charge at a point of the punctured half-plane followed by a real-linear automorphism of `ℂ`, and vanishes on no root (Bridgeland, arXiv:math/0307164, Theorem 1.1; [BB], equations (2) and (3));
+- the rigid-factor lemma ([BB], Lemma 2.6), `⟨v(E), v(F)⟩ ≥ 0` for non-isomorphic stable objects of one phase (the proof of [BB], Lemma 3.1), openness of stability ([BB], Proposition 2.10) and closedness of semistability (arXiv:math/0212237, §8);
+- the cover: a clear segment lifts to a marked puncture, and the points that see a marked puncture form a connected set (arXiv:math/0307164, Theorem 1.1; [BB], Theorem 1.3);
+- the marked spheres, deck translates of the spherical bundles, stable near their punctures and determined up to shift by them ([BB], Lemma 5.3, Proposition 2.3, Theorem 1.4); every sphere is stable somewhere ([BB], Corollary 6.9);
+- the geometric chamber: one skyscraper sheaf is stable exactly there ([BB], Lemma 6.7), and it is the part of the geometric sheet over the slit region `V(X)` ([BB], Theorem 2.2).
+
+From these, Lean proves the lemma:
+
+| Assertion | Lean |
+|---|---|
+| A semistable sphere seen along a clear segment is stable; the sphere of a marked puncture is stable wherever that puncture is seen | `VisibilityHypotheses.stable_of_semistable_of_segmentClear`, `stable_sphere_of_sees` |
+| Where a sphere is stable, the segment to its puncture is clear; a stable sphere is determined by its class and phase | `VisibilityHypotheses.segmentClear_of_stable`, `eq_of_stable_of_cl_eq` |
+| Every sphere is a shifted marked sphere, and it is stable exactly where its marked puncture is seen: where the segment to its puncture is clear and lifts to its marking | `VisibilityHypotheses.exists_eq_vadd_sphere`, `stable_vadd_sphere_iff`, `stable_iff_sees_marking`, `stable_iff_segmentClear_and_sees` |
+| A point image `G𝒪_x` is stable exactly when `G⁻¹σ` is geometric: on the geometric sheet, with a clear upward ray | `VisibilityHypotheses.stable_smul_point_iff`, `stable_smul_point_iff_rayClear` |
+
+[K3TwistsTest/VisibilityModel.lean](K3TwistsTest/VisibilityModel.lean) meets the field list of `VisibilityHypotheses`, vacuously on the stability side: a model with stability conditions needs Bridgeland stability in Mathlib.
+
 ## Layout
 
 The library mirrors Mathlib: a file sits at the Mathlib path of the API it extends, or of its
@@ -93,6 +113,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` | punctures, clear sight lines, the lattice arguments of visibility on the cover, the finite search | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/VisibilityOnCover.lean` | the lemma "Visibility on the cover" from its inputs | same |
 | `Analysis/Complex/UpperHalfPlane/ProjectiveModel.lean` | the projective model `(Re z, \|z\|²)` of the half-plane, whose geodesics are straight | `UpperHalfPlane` |
 | `LinearAlgebra/Lattice/Mukai/ProjectiveModel.lean` | the signature, negative cone and projective model of the Mukai lattice; reverse Cauchy–Schwarz | `MukaiVector` |
 
@@ -134,4 +155,4 @@ These follow Mathlib and derived-alg-geo-lean, so that files can move to either.
 
 ## What this does not cover
 
-The Harder–Narasimhan tower algorithm, the stability-theoretic statement of visibility on the cover, the wall lemmas beyond their integer arithmetic, and the evaluation lemma are not formalized; neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first.
+The Harder–Narasimhan tower algorithm, the wall lemmas beyond their integer arithmetic, and the evaluation lemma are not formalized; neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first.

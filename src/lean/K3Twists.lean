@@ -3,6 +3,7 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.PointMass
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.PointMassEstimates
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.TwistWords
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.Visibility
+import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
 import K3Twists.Analysis.SpecificLimits.GrowthRate
