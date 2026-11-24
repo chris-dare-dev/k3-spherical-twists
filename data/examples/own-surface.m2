@@ -4,7 +4,7 @@
 -- d is 2, 3 or 4 (a quartic, a quadric and a cubic, three quadrics); the characteristic is any prime;
 -- another seed gives another surface of the same family.  The predictions are formulas in n = d + 2,
 -- so they do not change with the prime or the seed, and every row below should agree.
-path = prepend("src/", path);                -- the package is in src/ of the repository
+path = prepend("src/macaulay2/", path);      -- the package is in src/macaulay2/ of the repository
 needsPackage "K3Twists";
 d = 3; p = 101; seed = 7;
 K = k3Surface(d, Characteristic => p, Seed => seed);

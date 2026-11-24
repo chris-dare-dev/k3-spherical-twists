@@ -1,7 +1,7 @@
 [project]
-name = "k3batch"
+name = "batch"
 version = "0.2"
-description = "Runs batches of Macaulay2 tasks for K3Twists under time and memory limits"
+description = "Runs the K3Twists computations in batches under time and memory limits, and keeps their records and claims"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = []
@@ -16,11 +16,11 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "PIE", "RET", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 # sentences of the generated pages and rows of tables, kept on one line each
-"src/bookkeeping/claims.py" = ["E501"]
-"tests/test_claims.py" = ["E501"]
+"src/batch/claims/tables.py" = ["E501"]
+"tests/batch/claims/test_claims.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src/k3batch", "src/bookkeeping/adopt.py", "src/bookkeeping/claims.py"]
+files = ["src/batch"]
 mypy_path = "src"

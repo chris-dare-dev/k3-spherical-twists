@@ -12,22 +12,23 @@
 #   make lean-deps   once: fetch Mathlib's build cache for the Lean proofs in src/lean
 #   make lean        build the Lean proofs (a warning fails it), their tests, linters, umbrella,
 #                    axiom audit and style check
-# ARGS is passed to k3batch, for example ARGS="--workers 8 --memory-budget 16000".
+# ARGS is passed to the batch command, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
 PYTHON ?= python3
 BATCH  ?= data/batches/quartic-sample.toml
 ARGS   ?=
 REPORT_ARGS ?=
 
-# the Python packages are under src/
+# the Python package (src/batch) is imported from src/
 export PYTHONPATH := $(CURDIR)/src
 
 LAKE   ?= lake
 
-K3BATCH  = $(PYTHON) -m k3batch
-RUNNER   = --runner '$(M2) --script src/runners/task-runner.m2'
+CLI      = $(PYTHON) -m batch
+CLAIMS   = $(PYTHON) -m batch.claims
+RUNNER   = --runner '$(M2) --script src/batch/runner/task-runner.m2'
 RUN_DIR  = results/$(basename $(notdir $(BATCH)))
-CHECKED  = src/k3batch src/bookkeeping tests
+CHECKED  = src/batch tests
 # a batch with a dependency graph needs the SQLite store; its records are adopted from there
 STORE    = $(if $(shell grep -l '^\[graph\]' $(BATCH)),--store $(RUN_DIR)/results.sqlite)
 # the status `make record` expects of the run: 0, or 3 for a batch whose tasks are stopped on purpose
@@ -39,13 +40,13 @@ BATCHES ?=
 test: test-m2 test-python
 
 test-m2:
-	$(M2) --script src/runners/run-tests.m2 fast
+	$(M2) --script tests/macaulay2/run-tests.m2 fast
 
 test-python:
 	$(PYTHON) -m unittest discover -s tests -t .
 
 test-slow:
-	$(M2) --script src/runners/run-tests.m2 slow
+	$(M2) --script tests/macaulay2/run-tests.m2 slow
 
 test-all: test test-slow
 
@@ -61,32 +62,32 @@ format:
 	ruff format $(CHECKED)
 
 plan:
-	$(K3BATCH) plan $(BATCH) $(RUNNER) $(STORE) $(ARGS)
+	$(CLI) plan $(BATCH) $(RUNNER) $(STORE) $(ARGS)
 
 run:
-	$(K3BATCH) run $(BATCH) $(RUNNER) $(STORE) $(ARGS)
+	$(CLI) run $(BATCH) $(RUNNER) $(STORE) $(ARGS)
 
 report:
-	$(K3BATCH) report $(RUN_DIR) $(REPORT_ARGS)
+	$(CLI) report $(RUN_DIR) $(REPORT_ARGS)
 
 record:
-	status=0; $(K3BATCH) run $(BATCH) $(RUNNER) $(STORE) $(ARGS) || status=$$?; \
+	status=0; $(CLI) run $(BATCH) $(RUNNER) $(STORE) $(ARGS) || status=$$?; \
 	if [ $$status -ne $(EXPECT) ]; then echo "run ended with status $$status, expected $(EXPECT)"; exit 1; fi
-	$(PYTHON) src/bookkeeping/claims.py adopt $(RUN_DIR)
+	$(CLAIMS) adopt $(RUN_DIR)
 
 adopt:
-	$(PYTHON) src/bookkeeping/claims.py adopt $(addprefix results/,$(BATCHES))
+	$(CLAIMS) adopt $(addprefix results/,$(BATCHES))
 
 smoke:
 	rm -rf results/smoke
-	$(K3BATCH) run data/batches/invariants.toml $(RUNNER) --out results/smoke $(ARGS)
-	$(PYTHON) src/bookkeeping/claims.py headline results/smoke
+	$(CLI) run data/batches/invariants.toml $(RUNNER) --out results/smoke $(ARGS)
+	$(CLAIMS) headline results/smoke
 
 tables:
-	$(PYTHON) src/bookkeeping/claims.py tables
+	$(CLAIMS) tables
 
 check:
-	$(PYTHON) src/bookkeeping/claims.py check
+	$(CLAIMS) check
 
 lean-deps:
 	cd src/lean && $(LAKE) exe cache get
