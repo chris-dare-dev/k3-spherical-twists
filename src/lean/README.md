@@ -161,4 +161,4 @@ These follow Mathlib and derived-alg-geo-lean, so that files can move to either.
 
 ## What this does not cover
 
-The Harder–Narasimhan tower algorithm, visibility on the cover, the wall lemmas beyond the quiver model, and the evaluation lemma are not formalized; neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first.
+The Harder–Narasimhan tower algorithm, visibility on the cover, the wall lemmas beyond the quiver model and the uniqueness of a rigid wall object given its incoming flag, and the evaluation lemma are not formalized; neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first.
