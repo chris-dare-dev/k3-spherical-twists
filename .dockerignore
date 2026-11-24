@@ -1,0 +1,4 @@
+# The image installs Macaulay2 and copies nothing from the checkout; keep heavy local
+# directories out of the build context.
+src/lean/.lake
+results

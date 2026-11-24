@@ -65,3 +65,17 @@ jobs:
             macaulay2 make coreutils git ca-certificates
       - uses: actions/checkout@v4
       - run: make test-slow
+
+  # The Lean proofs under src/lean: a warning (a `sorry`, say) fails the build; then the axiom
+  # audit and the model of the corollary's inputs.
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: src/lean
+          build-args: --wfail
+      - name: Only Lean's standard axioms, and a model in which every input holds
+        run: make lean

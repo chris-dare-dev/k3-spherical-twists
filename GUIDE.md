@@ -156,6 +156,8 @@ docker build -t k3-twists-m2 .
 docker run --rm -v "$PWD":/work -w /work k3-twists-m2 make test
 ```
 
+The Lean proofs under `src/lean/` need [elan](https://github.com/leanprover/elan), which installs the pinned toolchain (Lean 4.36.0) on first use; `make lean-deps` fetches Mathlib's build cache once. Neither Macaulay2 nor Python is involved.
+
 ## Running a batch
 
 A long computation is described as a batch: a file that says which surfaces, which tasks, which limits, and how much of the machine to use. One task is one computation with one answer, for example Extⁱ(M_H, M_x) on the quartic with seed 1 over the field with 32003 elements.
@@ -708,6 +710,8 @@ make test-slow
 
 `make check` expands every batch file with Macaulay2 and fails if the claim registry does not fit the tasks or if a generated table is out of date. `make smoke` is described under [Claims and records](#claims-and-records).
 
+`make lean` builds the Lean proofs with every warning an error (so a `sorry` fails), runs `tests/lean/AxiomAudit.lean`, which fails if any declaration of the `K3Twists` namespace uses an axiom other than `propext`, `Classical.choice` and `Quot.sound`, and checks `tests/lean/Consistency.lean`, a model in which every input of the point-mass corollary holds. What is proved, and from which inputs, is in [src/lean/README.md](src/lean/README.md).
+
 `make lint` runs `ruff` and `mypy` on the scheduler and the bookkeeping; neither is needed to run them. There is no linter or formatter for the Macaulay2 language; `installPackage "K3Twists"` checks that every exported function is documented and that the examples run.
 
 ## Layout
@@ -720,7 +724,8 @@ The root holds three folders: the code, its tests, and the data this repository 
 | `src/runners/` | `task-runner.m2`, the command the scheduler calls (expands a batch, computes one task); `run-tests.m2`, which runs the fast or the slow tests of the package |
 | `src/k3batch/` | the scheduler: batch file, runner protocol, limits, records, reports, command line |
 | `src/bookkeeping/` | `claims.py`, the generator of the claim tables; `adopt.py`, which copies the records of a run into `data/records/` |
-| `tests/` | tests of the scheduler and the bookkeeping, and the fake runner they use |
+| `src/lean/` | the Lean proofs: a Lake project (`lakefile.toml`, `lean-toolchain`, `lake-manifest.json`) whose library `K3Twists` has the lattice, charge, wall, rate and point-mass modules |
+| `tests/` | tests of the scheduler and the bookkeeping, and the fake runner they use; `tests/lean/`, the axiom audit and the model of the corollary's inputs |
 | `data/batches/` | batch files |
 | `data/records/` | the records of the batches that were run for this repository |
 | `data/claims/` | `claims.toml`, the registry of claims and their tasks; `RECORDS.md`, generated: every task with its record |
@@ -738,6 +743,7 @@ The Python packages are under `src/`: `make` sets `PYTHONPATH` itself, and a com
 - Only the sheaves above are covered, which correspond to words of length at most two. Images of longer words are complexes, and building them is the next thing to add.
 - The predicted values follow from short exact sequences; agreement confirms those computations and the code, not the theory as a whole.
 - For a pair of sheaves only the Euler characteristic is predicted; the three dimensions are computed and recorded but compared with nothing.
+- The Lean proofs check the lattice, charge and wall arithmetic from Mathlib alone, but the point-mass corollary only from its geometric inputs, which are hypotheses: Mathlib has no derived categories of K3 surfaces, stability conditions or categorical entropy yet. The Harder–Narasimhan tower algorithm is not formalized.
 
 ## A note on method
 

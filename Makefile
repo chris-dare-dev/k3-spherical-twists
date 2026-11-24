@@ -9,6 +9,8 @@
 #   make smoke       the invariants batch, computed afresh, and the headline table of GUIDE.md from it
 #   make tables      write the generated tables of CLAIMS.md, GUIDE.md and data/claims/RECORDS.md
 #   make check       fail if those tables are not what the registry and the records give
+#   make lean-deps   once: fetch Mathlib's build cache for the Lean proofs in src/lean
+#   make lean        build the Lean proofs (a warning fails it), audit their axioms, check the model
 # ARGS is passed to k3batch, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
 PYTHON ?= python3
@@ -18,6 +20,9 @@ REPORT_ARGS ?=
 
 # the Python packages are under src/
 export PYTHONPATH := $(CURDIR)/src
+
+LAKE   ?= lake
+LEAN_TESTS = $(CURDIR)/tests/lean
 
 K3BATCH  = $(PYTHON) -m k3batch
 RUNNER   = --runner '$(M2) --script src/runners/task-runner.m2'
@@ -29,7 +34,7 @@ STORE    = $(if $(shell grep -l '^\[graph\]' $(BATCH)),--store $(RUN_DIR)/result
 EXPECT  ?= 0
 BATCHES ?=
 
-.PHONY: test test-m2 test-python test-slow test-all examples lint format plan run report record adopt smoke tables check
+.PHONY: test test-m2 test-python test-slow test-all examples lint format plan run report record adopt smoke tables check lean lean-deps
 
 test: test-m2 test-python
 
@@ -82,3 +87,11 @@ tables:
 
 check:
 	$(PYTHON) src/bookkeeping/claims.py check
+
+lean-deps:
+	cd src/lean && $(LAKE) exe cache get
+
+lean:
+	cd src/lean && $(LAKE) build --wfail
+	cd src/lean && $(LAKE) env lean $(LEAN_TESTS)/AxiomAudit.lean
+	cd src/lean && $(LAKE) env lean $(LEAN_TESTS)/Consistency.lean
