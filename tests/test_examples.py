@@ -11,10 +11,10 @@ import tomllib
 import unittest
 from pathlib import Path
 
-REPOSITORY = Path(__file__).resolve().parent.parent
+REPOSITORY = Path(__file__).resolve().parents[1]
 EXAMPLES = REPOSITORY / "data" / "examples"
 BATCH = EXAMPLES / "own-surfaces.toml"
-SCHEDULER = (sys.executable, "-m", "k3batch")
+SCHEDULER = (sys.executable, "-m", "batch")
 GUARD = ("--memory-guard", "poll")
 RECORDED = {"seed": 1, "characteristic": 32003}  # the one seed and prime of the committed records
 

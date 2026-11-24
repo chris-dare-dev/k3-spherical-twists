@@ -7,7 +7,7 @@
 -- The cost grows quickly with the degree and with the ranks: the pairs below take about a second each
 -- on the quartic, where M_H with itself takes about twenty; for d = 3 or 4 a pair among M_H and M_x
 -- did not finish within two minutes when this was written.
-path = prepend("src/", path);                -- the package is in src/ of the repository
+path = prepend("src/macaulay2/", path);      -- the package is in src/macaulay2/ of the repository
 needsPackage "K3Twists";
 K = k3Surface 2;
 << "sheaves: " << apply(catalogueClasses K, first) << endl;
