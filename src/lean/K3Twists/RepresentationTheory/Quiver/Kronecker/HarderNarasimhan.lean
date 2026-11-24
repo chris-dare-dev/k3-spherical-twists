@@ -35,6 +35,16 @@ For the rigid representation of dimension `(g², g)`:
 By `Order.SlopeFunction.HNFiltration.instSubsingleton` these are the only HN filtrations, and by
 `HNFiltration.convexHull_subset` they read the upper and lower boundaries of the convex hull of
 the points `(i + j, j)` of the subrepresentations.
+
+## The flag does not depend on the representative
+
+The proposition on rigid wall groups computes the outgoing flag of a wall object on a chosen
+matrix representative and transports it to the actual object. That this is well defined is the
+following: an isomorphism of representations `u : M ≅ N` maps subrepresentations to
+subrepresentations with the same dimension vectors (`DoubledRep.Iso.mapSubrep`), so it carries
+the HN filtration of `M` to the HN filtration of `N` (`Iso.map_hnFiltration`, on either side of
+the wall); two choices of `u` give the same subrepresentations of `N`, and every automorphism of
+`M` fixes the prefixes of its HN filtration (`Iso.mapSubrep_chain`).
 -/
 
 namespace Quiver.Kronecker
@@ -173,6 +183,57 @@ theorem slope_le_slope_iff_neg {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r�
     div_le_div_iff₀ (by linarith) (by linarith), div_le_div_iff₀ (by linarith) (by linarith)]
   simp only [zero_mul, zero_add, one_mul]
   exact cross_le_iff_neg hD
+
+/-! ### The flag does not depend on the representative -/
+
+section Iso
+
+variable {M} {W₀ W₁ : Type*} [AddCommGroup W₀] [Module k W₀] [AddCommGroup W₁] [Module k W₁]
+  [FiniteDimensional k W₀] [FiniteDimensional k W₁] {N : DoubledRep k ι W₀ W₁}
+
+lemma Iso.rk_mapSubrep (u : Iso M N) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁) (d₀ d₁ : K)
+    (P : M.subreps) :
+    (N.slopeFunction h₀ h₁ d₀ d₁).rk (u.mapSubrep P) = (M.slopeFunction h₀ h₁ d₀ d₁).rk P := by
+  rw [slopeFunction_rk, slopeFunction_rk, u.dimVec_mapSubrep]
+
+lemma Iso.deg_mapSubrep (u : Iso M N) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁) (d₀ d₁ : K)
+    (P : M.subreps) :
+    (N.slopeFunction h₀ h₁ d₀ d₁).deg (u.mapSubrep P) = (M.slopeFunction h₀ h₁ d₀ d₁).deg P := by
+  rw [slopeFunction_deg, slopeFunction_deg, u.dimVec_mapSubrep]
+
+/-- **The HN flag does not depend on the representative.** For every isomorphism `u : M ≅ N`,
+the image under `u` of the HN filtration of `M` is the HN filtration of `N`: two isomorphisms
+transport the flag to the same subrepresentations of `N`. -/
+theorem Iso.map_hnFiltration (u : Iso M N) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁) (d₀ d₁ : K)
+    (F : (M.slopeFunction h₀ h₁ d₀ d₁).HNFiltration)
+    (G : (N.slopeFunction h₀ h₁ d₀ d₁).HNFiltration) :
+    F.map u.mapSubrep (u.rk_mapSubrep h₀ h₁ d₀ d₁) (u.deg_mapSubrep h₀ h₁ d₀ d₁) = G :=
+  Subsingleton.elim _ _
+
+/-- The same on the opposite side of the wall. -/
+theorem Iso.map_hnFiltration_neg (u : Iso M N) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁)
+    (d₀ d₁ : K) (F : (M.slopeFunction h₀ h₁ d₀ d₁).neg.HNFiltration)
+    (G : (N.slopeFunction h₀ h₁ d₀ d₁).neg.HNFiltration) :
+    SlopeFunction.HNFiltration.map (s := (M.slopeFunction h₀ h₁ d₀ d₁).neg)
+      (s' := (N.slopeFunction h₀ h₁ d₀ d₁).neg) u.mapSubrep
+      (fun P ↦ u.rk_mapSubrep h₀ h₁ d₀ d₁ P)
+      (fun P ↦ by simp only [SlopeFunction.neg_deg, u.deg_mapSubrep h₀ h₁ d₀ d₁]) F = G :=
+  Subsingleton.elim _ _
+
+/-- **Automorphisms fix the HN prefixes.** Every automorphism of `M` maps each prefix of its HN
+filtration to itself, on either side of the wall. -/
+theorem Iso.mapSubrep_chain (u : Iso M M) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁) (d₀ d₁ : K)
+    (F : (M.slopeFunction h₀ h₁ d₀ d₁).HNFiltration) (j : Fin (F.n + 1)) :
+    u.mapSubrep (F.chain j) = F.chain j :=
+  F.apply_chain_eq (u.rk_mapSubrep h₀ h₁ d₀ d₁) (u.deg_mapSubrep h₀ h₁ d₀ d₁) j
+
+theorem Iso.mapSubrep_chain_neg (u : Iso M M) {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁)
+    (d₀ d₁ : K) (F : (M.slopeFunction h₀ h₁ d₀ d₁).neg.HNFiltration) (j : Fin (F.n + 1)) :
+    u.mapSubrep (F.chain j) = F.chain j :=
+  F.apply_chain_eq (fun P ↦ u.rk_mapSubrep h₀ h₁ d₀ d₁ P)
+    (fun P ↦ by simp only [SlopeFunction.neg_deg, u.deg_mapSubrep h₀ h₁ d₀ d₁]) j
+
+end Iso
 
 end DoubledRep
 
