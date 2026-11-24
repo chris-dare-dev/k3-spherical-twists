@@ -85,11 +85,17 @@ theorem rigidRep_A_comp_B (i j : ι) : (rigidRep k ι).A j ∘ₗ (rigidRep k ι
 
 /-- Every path of length three vanishes, so the representation is nilpotent. -/
 theorem rigidRep_isNilpotent : (rigidRep k ι).IsNilpotent := by
-  refine ⟨3, fun w ↦ ?_⟩
-  simp only [List.ofFn_succ, List.ofFn_zero, List.prod_cons, List.prod_nil, mul_one]
-  generalize w 0 = a, w (Fin.succ 0) = b, w (Fin.succ (Fin.succ 0)) = c
-  refine LinearMap.ext fun x ↦ ?_
-  rcases a with a | a <;> rcases b with b | b <;> rcases c with c | c <;> simp
+  refine ⟨3, fun w hw ↦ ?_⟩
+  rcases w with _ | ⟨a, _ | ⟨b, _ | ⟨c, w⟩⟩⟩
+  · simp at hw
+  · simp at hw
+  · simp at hw
+  have h3 : (rigidRep k ι).arrow a * ((rigidRep k ι).arrow b * (rigidRep k ι).arrow c) = 0 := by
+    refine LinearMap.ext fun x ↦ ?_
+    rcases a with a | a <;> rcases b with b | b <;> rcases c with c | c <;> simp
+  rw [List.map_cons, List.map_cons, List.map_cons, List.prod_cons, List.prod_cons,
+    List.prod_cons, ← mul_assoc, ← mul_assoc, mul_assoc _ _ ((rigidRep k ι).arrow c), h3,
+    zero_mul]
 
 namespace RigidRep
 

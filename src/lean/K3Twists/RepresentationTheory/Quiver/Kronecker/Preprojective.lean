@@ -19,7 +19,7 @@ family of linear maps `A_i : V₀ → V₁` and `B_i : V₁ → V₀`. The prepr
 
 * `Quiver.Kronecker.DoubledRep k ι V₀ V₁`: the maps `A_i`, `B_i`;
 * `DoubledRep.IsPreprojective`: the two relations;
-* `DoubledRep.IsNilpotent`: every path of some fixed length acts by zero;
+* `DoubledRep.IsNilpotent`: every path of length at least some `n` acts by zero;
 * `DoubledRep.Hom M N`: the morphisms, pairs of linear maps intertwining the arrows, as a
   `k`-subspace; `dim End M` is `finrank k (Hom M M)`;
 * `DoubledRep.subreps M`: the subrepresentations, pairs of subspaces `(U₀, U₁)` with
@@ -92,9 +92,10 @@ lemma arrow_inl_apply (M : DoubledRep k ι V₀ V₁) (i : ι) (x : V₀ × V₁
 lemma arrow_inr_apply (M : DoubledRep k ι V₀ V₁) (i : ι) (x : V₀ × V₁) :
     M.arrow (.inr i) x = (M.B i x.2, 0) := rfl
 
-/-- A representation is nilpotent when every path of some fixed length `n` acts by zero. -/
+/-- A representation is nilpotent when every path of length at least some `n` acts by zero: the
+product of the arrows along any word `w` with `n ≤ w.length` vanishes. -/
 def IsNilpotent (M : DoubledRep k ι V₀ V₁) : Prop :=
-  ∃ n : ℕ, ∀ w : Fin n → ι ⊕ ι, (List.ofFn fun j ↦ M.arrow (w j)).prod = 0
+  ∃ n : ℕ, ∀ w : List (ι ⊕ ι), n ≤ w.length → (w.map M.arrow).prod = 0
 
 section Hom
 
