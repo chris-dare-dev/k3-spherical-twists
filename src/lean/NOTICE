@@ -1,22 +1,23 @@
 k3-spherical-twists
 Copyright (c) 2026 Christopher Dare
 
-The repository is licensed under the MIT License in LICENSE, except for the
-material listed below.
+The repository is licensed under the MIT License in its root LICENSE file,
+except for the material listed below. Paths are relative to src/lean, the Lean
+project that contains this file.
 
 Apache-2.0 material in the Lean proofs
 ======================================
 
-Five files of src/lean/K3Twists/ were copied from derived-alg-geo-lean, where
+Five files of K3Twists/ were copied from derived-alg-geo-lean, where
 they began as textual adaptations of mattrobball/BridgelandStability at
 revision 9e48f23a382ba117b63076a33e0e775389fef1ba and were then rewritten
 against that repository's own stability-condition API:
 
-- src/lean/K3Twists/CategoryTheory/Triangulated/PostnikovTower.lean
-- src/lean/K3Twists/CategoryTheory/Triangulated/StabilityCondition/Weak/Foundation/Slicing.lean
-- src/lean/K3Twists/CategoryTheory/Triangulated/StabilityCondition/Weak/Foundation/IntervalCategory.lean
-- src/lean/K3Twists/CategoryTheory/Triangulated/StabilityCondition/Foundation/PreStabilityCondition.lean
-- src/lean/K3Twists/CategoryTheory/Triangulated/StabilityCondition/Foundation/StabilityCondition.lean
+- K3Twists/CategoryTheory/Triangulated/PostnikovTower.lean
+- K3Twists/CategoryTheory/Triangulated/StabilityCondition/Weak/Foundation/Slicing.lean
+- K3Twists/CategoryTheory/Triangulated/StabilityCondition/Weak/Foundation/IntervalCategory.lean
+- K3Twists/CategoryTheory/Triangulated/StabilityCondition/Foundation/PreStabilityCondition.lean
+- K3Twists/CategoryTheory/Triangulated/StabilityCondition/Foundation/StabilityCondition.lean
 
 Their MIT headers cover the authored changes. Portions originating in the
 upstream work remain Copyright (c) 2026 Mathlib Contributors under the
