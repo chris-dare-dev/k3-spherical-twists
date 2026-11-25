@@ -40,6 +40,7 @@ import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.S
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.PhaseBounds
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.Uniqueness
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
+import K3Twists.GroupTheory.Commutator.ForkWord
 import K3Twists.LinearAlgebra.BilinearForm.Hyperbolic
 import K3Twists.LinearAlgebra.BilinearForm.Reflection
 import K3Twists.LinearAlgebra.Lattice.Arithmetic.TorsionFree
