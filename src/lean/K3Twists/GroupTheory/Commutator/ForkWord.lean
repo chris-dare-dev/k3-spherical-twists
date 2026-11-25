@@ -16,11 +16,11 @@ iterated commutators
   `W₀ = H`,  `W_i = ⁅W_{i-1}, L_i⁆ = W_{i-1} L_i W_{i-1}⁻¹ L_i⁻¹`.
 
 Each `W_i` (`i ≥ 1`) is conjugate to the two-letter word `H L_i⁻¹`, by
-`D_i = L₁⁻¹ L₂⁻¹ ⋯ L_i⁻¹`. For spherical twists `H = T_A` and `L_i = T_{B_i}` with `A` meeting each
-`B_i` once and the `B_i` mutually orthogonal (a fork of `A₂` configurations), the twists satisfy
-these relations (Seidel–Thomas, arXiv:math/0001043, Theorem 1.3), so every fork word is conjugate
-to the `A₂` period `T_A T_{B_i}⁻¹`; growth rates are conjugacy invariants, so all fork words grow
-like that period.
+`D_i = L₁⁻¹ L₂⁻¹ ⋯ L_i⁻¹`. For spherical twists `H = T_A` and `L_i = T_{B_i}` of spherical objects
+with `dim Ext^*(A, B_i) = 1` and `Ext^*(B_i, B_j) = 0` for `i ≠ j` (a fork of `A₂`
+configurations), the twists satisfy these relations (Seidel–Thomas, arXiv:math/0001043), so every
+fork word is conjugate to the `A₂` period `T_A T_{B_i}⁻¹`; growth rates are conjugacy invariants,
+so all fork words grow like that period.
 
 ## Main definitions
 
