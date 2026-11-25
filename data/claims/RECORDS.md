@@ -2378,8 +2378,8 @@ Zero or tangent map k[−1] → k, with an unmapped k[−1] target summand
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `hn_arrow/cone-split` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 0 | not re-run |  |
-| `hn_arrow/cone-u` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 1 | not re-run |  |
+| `hn_arrow/cone-split` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 0 | ok, 2026-11-25, `6dd936f`, 0.624 s | arrow yes, lower_length 1, quotient yes, radical_length 0, uncorrected_defect 1, upper_length 2, zero_rejected yes |
+| `hn_arrow/cone-u` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 1 | ok, 2026-11-25, `6dd936f`, 0.652 s | arrow yes, lower_length 1, quotient yes, radical_length 1, uncorrected_defect 1, upper_length 2, zero_rejected yes |
 
 <a name="claim-punctual-fibre-arrows"></a>
 
@@ -2389,10 +2389,10 @@ Socle inclusion k → fib(Dₐ → k → Dᵦ) over the given fibre
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `hn_arrow/fibre-uu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | not re-run |  |
-| `hn_arrow/fibre-uv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 1, quotient yes | not re-run |  |
-| `hn_arrow/fibre-vu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda -1, quotient yes | not re-run |  |
-| `hn_arrow/fibre-vv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | not re-run |  |
+| `hn_arrow/fibre-uu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | ok, 2026-11-25, `6dd936f`, 0.632 s | arrow yes, lower_length 1, quotient yes, uncorrected_defect 1, upper_length 1, yoneda 0, zero_rejected yes |
+| `hn_arrow/fibre-uv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 1, quotient yes | ok, 2026-11-25, `6dd936f`, 0.63 s | arrow yes, lower_length 1, quotient yes, uncorrected_defect 1, upper_length 1, yoneda 1, zero_rejected yes |
+| `hn_arrow/fibre-vu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda -1, quotient yes | ok, 2026-11-25, `6dd936f`, 0.607 s | arrow yes, lower_length 1, quotient yes, uncorrected_defect 1, upper_length 1, yoneda -1, zero_rejected yes |
+| `hn_arrow/fibre-vv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | ok, 2026-11-25, `6dd936f`, 0.627 s | arrow yes, lower_length 1, quotient yes, uncorrected_defect 1, upper_length 1, yoneda 0, zero_rejected yes |
 
 <a name="claim-quartic-point-cut-arrows"></a>
 
@@ -2402,5 +2402,5 @@ T_O(kₓ) and T_O⁻¹(Iₓ[1]) at the strict cut above phase 1
 
 | Task | Batches | Predicted | Record | Computed |
 |---|---|---|---|---|
-| `hn_arrow/ideal-inverse/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero yes, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso no, twist_map_identified yes | not re-run |  |
-| `hn_arrow/point-forward/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero no, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso yes, twist_map_identified yes | not re-run |  |
+| `hn_arrow/ideal-inverse/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero yes, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso no, twist_map_identified yes | ok, 2026-11-25, `6dd936f`, 1.695 s | arrow yes, cut_is_iso no, cut_is_zero yes, quotient yes, twist_map_identified yes, uncorrected_rejected yes |
+| `hn_arrow/point-forward/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero no, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso yes, twist_map_identified yes | ok, 2026-11-25, `6dd936f`, 1.7 s | arrow yes, cut_is_iso yes, cut_is_zero no, quotient yes, twist_map_identified yes, uncorrected_rejected yes |

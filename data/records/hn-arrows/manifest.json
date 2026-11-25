@@ -1,0 +1,243 @@
+{
+ "batch": "hn-arrows",
+ "run_id": "f79e7ddd537c47f3a40d51d2c0e6a812",
+ "schema_version": 1,
+ "tasks": [
+  {
+   "case": "cone-split",
+   "check": {},
+   "check_id": "531ab63d1102dc3adca83f5329b15873b4e306e82e597570577c4beaefc23f54",
+   "comparison": "equals",
+   "computation_id": "1f32b86ba890ba9d0d9ded4cdf50b1c8996caec6e9d7e420df69c0b34c78b814",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/cone-split",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "radical_length": 0,
+    "uncorrected_defect": 1,
+    "upper_length": 2,
+    "zero_rejected": true
+   },
+   "record_id": "7396b564adac4653a9db42a0439b9b0f",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "cone-u",
+   "check": {},
+   "check_id": "4a95db4290499fbe6607abf4a277a07937454f9fa744663ea55230348446310f",
+   "comparison": "equals",
+   "computation_id": "cc7e544c08feefc0cf97728af3ba9aeb3a39f4f045b01a2ec03906f85ea2674a",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/cone-u",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "radical_length": 1,
+    "uncorrected_defect": 1,
+    "upper_length": 2,
+    "zero_rejected": true
+   },
+   "record_id": "a538b2d37aed4c20942512949e4451b1",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "fibre-uu",
+   "check": {},
+   "check_id": "b9a360fd1f0c5fd1f9dd25fb8a96b57f156e2c4875a00dae3bdd36988a490827",
+   "comparison": "equals",
+   "computation_id": "f6eca25f98cba4cc751e3f9f33182d18a89791e63ba1aa910736b66e8de5467d",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/fibre-uu",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "uncorrected_defect": 1,
+    "upper_length": 1,
+    "yoneda": 0,
+    "zero_rejected": true
+   },
+   "record_id": "f9e394a2ea7b40bc9f5cd2f9d82b14f0",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "fibre-uv",
+   "check": {},
+   "check_id": "f3f1e9129d727a5be3f768bf5c7c93880860825503dc3193bfa3e9aca7f5f0af",
+   "comparison": "equals",
+   "computation_id": "94761f0cec8e1485049c1f72dafe54326a443ae2da96a8d1500d81929518ccab",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/fibre-uv",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "uncorrected_defect": 1,
+    "upper_length": 1,
+    "yoneda": 1,
+    "zero_rejected": true
+   },
+   "record_id": "ed6472942d1a4c01882d6c2187c96b87",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "fibre-vu",
+   "check": {},
+   "check_id": "54c55c99110a181a32ed1c51bc032c6372b3f60c98c5b75790ffaca7dca31325",
+   "comparison": "equals",
+   "computation_id": "b9710f187f071e05b590810ab1979ddd4f066d18e35a5a6a97becdebacbf89e8",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/fibre-vu",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "uncorrected_defect": 1,
+    "upper_length": 1,
+    "yoneda": -1,
+    "zero_rejected": true
+   },
+   "record_id": "848573f6ec5d47768fd092103c47aa84",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "fibre-vv",
+   "check": {},
+   "check_id": "fd7559a0545adda1cdeca97fd5f2b01d2703455492c45b678e588392c195d640",
+   "comparison": "equals",
+   "computation_id": "98d8d9b3ede7bf6d4c821b0a4dcf7b8a06bfdc166f078750c4260e2c1fa42083",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/fibre-vv",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "lower_length": 1,
+    "quotient": true,
+    "uncorrected_defect": 1,
+    "upper_length": 1,
+    "yoneda": 0,
+    "zero_rejected": true
+   },
+   "record_id": "61b053c18dae4199bd7c7d4caa575d1b",
+   "requirements": [],
+   "set": 0
+  },
+  {
+   "case": "point-forward",
+   "check": {},
+   "check_id": "ac2fde6e9b8f12d6b4e51fb3c043b73f0656ca5a62fcb4155dbfb438ab44b548",
+   "comparison": "equals",
+   "computation_id": "de3531a0f0c9d3fb0263244584ec58d5d8f43d5f51e1bb5b03e6dc98289d2cac",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/point-forward/quartic_with_line-d2-p32003-s1",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "cut_is_iso": true,
+    "cut_is_zero": false,
+    "quotient": true,
+    "twist_map_identified": true,
+    "uncorrected_rejected": true
+   },
+   "record_id": "b736fc1e33844dd9b94ecaf7fc7de6c2",
+   "requirements": [],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "family": "quartic_with_line",
+    "seed": 1,
+    "special_quadric": false
+   }
+  },
+  {
+   "case": "ideal-inverse",
+   "check": {},
+   "check_id": "e2cd202b02a21d1f98f79d9ebefac8c5715ae64ea24f4ac64cd685fa7b82c7f1",
+   "comparison": "equals",
+   "computation_id": "b6f0d477bb5841f590c0cfb0db6ba569a1244f4a981ac5a5ca6416df641e66ba",
+   "cost": 1,
+   "group": "HN arrows",
+   "id": "hn_arrow/ideal-inverse/quartic_with_line-d2-p32003-s1",
+   "kind": "hn_arrow",
+   "kind_version": 1,
+   "limits": {
+    "memory_mb": 700,
+    "time_seconds": 90
+   },
+   "predicted": {
+    "arrow": true,
+    "cut_is_iso": false,
+    "cut_is_zero": true,
+    "quotient": true,
+    "twist_map_identified": true,
+    "uncorrected_rejected": true
+   },
+   "record_id": "57331f3ec50b4ffa9e5cfbbe91684ad7",
+   "requirements": [],
+   "set": 0,
+   "surface": {
+    "characteristic": 32003,
+    "d": 2,
+    "family": "quartic_with_line",
+    "seed": 1,
+    "special_quadric": false
+   }
+  }
+ ]
+}
