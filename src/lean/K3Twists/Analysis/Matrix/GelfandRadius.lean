@@ -30,6 +30,10 @@ and with the spectral radius, and gives certificates for it, without Perron–Fr
   `Matrix.norm_pow_le_of_mulVec_le` (a subinvariant vector `L v ≤ ρ v` with `v ≥ m > 0` gives
   `‖Lᵏ‖ ≤ (‖v‖ / m) ρᵏ`), `Matrix.gelfandRadius_le_of_mulVec_le`, and the lower bound
   `Matrix.le_gelfandRadius_of_smul_le_mulVec` (`t v ≤ L v` with `0 ≤ v ≠ 0`).
+* Variational upper bounds: `Matrix.limsup_rpow_inv_le_of_le_mul` (if `X (n + q) ≤ X n L`
+  entrywise for nonnegative matrices, `q ≥ 1`, then `limsup ‖X n‖^{1/n} ≤ gelfandRadius(L)^{1/q}`)
+  and `Matrix.limsup_gelfandRadius_rpow_inv_le` (if `b_n^{1/n} → λ ≥ 1` and
+  `‖L q‖ ≤ 1 + A ∑_{k<q} b_k`, then `limsup gelfandRadius(L q)^{1/q} ≤ λ`).
 * `Matrix.gelfandRadius_eq_of_det_eq_one`: a real `2 × 2` matrix of determinant one and trace
   `l + l⁻¹` with `l > 1` has Gelfand radius `l`; the proof uses only the Chebyshev form of its
   powers and the trace, no eigenvector.
@@ -267,6 +271,175 @@ theorem le_gelfandRadius_of_smul_le_mulVec {L : Matrix ι ι ℝ} (hL : ∀ i j,
     _ ≤ ‖L ^ k‖ ^ (k : ℝ)⁻¹ := Real.rpow_le_rpow (pow_nonneg ht0 k) (hpow k) (by positivity)
 
 end Certificate
+
+/-! ### Variational upper bounds -/
+
+section Variational
+
+/-- The `ℓ∞` operator norm is monotone on matrices with nonnegative entries. -/
+lemma norm_le_norm_of_nonneg_of_apply_le {κ ι : Type*} [Fintype κ] [Fintype ι]
+    {Y Z : Matrix κ ι ℝ} (hY : ∀ i j, 0 ≤ Y i j) (h : ∀ i j, Y i j ≤ Z i j) : ‖Y‖ ≤ ‖Z‖ := by
+  rw [linfty_opNorm_def, linfty_opNorm_def, NNReal.coe_le_coe]
+  refine Finset.sup_mono_fun fun i _ => Finset.sum_le_sum fun j _ => ?_
+  rw [← NNReal.coe_le_coe, coe_nnNorm, coe_nnNorm, Real.norm_of_nonneg (hY i j),
+    Real.norm_of_nonneg ((hY i j).trans (h i j))]
+  exact h i j
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- **Domination by a fixed matrix.** If `L ≥ 0` and `X (n + q) ≤ X n L` entrywise for every
+`n`, then `X (r + k q) ≤ X r Lᵏ` entrywise. -/
+lemma apply_le_mul_pow_of_le_mul {X : ℕ → Matrix ι ι ℝ} {L : Matrix ι ι ℝ}
+    (hL : ∀ i j, 0 ≤ L i j) {q : ℕ} (hdom : ∀ n i j, X (n + q) i j ≤ (X n * L) i j) (r k : ℕ) :
+    ∀ i j, X (r + k * q) i j ≤ (X r * L ^ k) i j := by
+  induction k with
+  | zero => intro i j; simp
+  | succ k ih =>
+    intro i j
+    calc X (r + (k + 1) * q) i j = X (r + k * q + q) i j := by rw [add_mul, one_mul, add_assoc]
+      _ ≤ (X (r + k * q) * L) i j := hdom _ i j
+      _ ≤ (X r * L ^ k * L) i j := by
+          rw [Matrix.mul_apply, Matrix.mul_apply]
+          exact Finset.sum_le_sum fun l _ => mul_le_mul_of_nonneg_right (ih i l) (hL l j)
+      _ = (X r * L ^ (k + 1)) i j := by rw [Matrix.mul_assoc, ← pow_succ]
+
+/-- **Variational upper bound, exponential form.** Let `X n ≥ 0` and `L ≥ 0` be real matrices
+with `X (n + q) ≤ X n L` entrywise for every `n`, where `q ≥ 1`. Then for every
+`R > gelfandRadius(L)^{1/q}` there is `K` with `‖X n‖ ≤ K Rⁿ` for all `n`. -/
+theorem exists_norm_le_mul_pow_of_le_mul {X : ℕ → Matrix ι ι ℝ} (hX : ∀ n i j, 0 ≤ X n i j)
+    {L : Matrix ι ι ℝ} (hL : ∀ i j, 0 ≤ L i j) {q : ℕ} (hq : q ≠ 0)
+    (hdom : ∀ n i j, X (n + q) i j ≤ (X n * L) i j) {R : ℝ}
+    (hR : gelfandRadius L ^ (q : ℝ)⁻¹ < R) : ∃ K, ∀ n, ‖X n‖ ≤ K * R ^ n := by
+  have hR0 : 0 < R := lt_of_le_of_lt (by positivity) hR
+  have hRq : gelfandRadius L < R ^ q := by
+    have h := Real.rpow_lt_rpow (by positivity) hR (by positivity : (0 : ℝ) < q)
+    rwa [← Real.rpow_mul (gelfandRadius_nonneg L), inv_mul_cancel₀ (by exact_mod_cast hq),
+      Real.rpow_one, Real.rpow_natCast] at h
+  obtain ⟨D, hD, hLk⟩ := norm_pow_le_mul_pow_of_gelfandRadius_lt L hRq
+  set B := ∑ r ∈ Finset.range q, ‖X r‖ with hB
+  have hB0 : 0 ≤ B := Finset.sum_nonneg fun r _ => norm_nonneg _
+  set E := max 1 R⁻¹ with hE
+  refine ⟨B * D * E ^ q, fun n => ?_⟩
+  obtain ⟨r, k, hr, rfl⟩ : ∃ r k, r < q ∧ n = r + k * q :=
+    ⟨n % q, n / q, Nat.mod_lt n (Nat.pos_of_ne_zero hq), by
+      rw [Nat.mul_comm]; exact (Nat.mod_add_div n q).symm⟩
+  have h1 : ‖X (r + k * q)‖ ≤ ‖X r‖ * ‖L ^ k‖ :=
+    (norm_le_norm_of_nonneg_of_apply_le (hX _) (apply_le_mul_pow_of_le_mul hL hdom r k)).trans
+      (linfty_opNorm_mul _ _)
+  have h2 : ‖X r‖ ≤ B := Finset.single_le_sum (f := fun r => ‖X r‖)
+    (fun i _ => norm_nonneg _) (Finset.mem_range.2 hr)
+  have h3 : (R ^ q) ^ k ≤ E ^ q * R ^ (r + k * q) := by
+    have e : (R ^ q) ^ k = R⁻¹ ^ r * R ^ (r + k * q) := by
+      rw [pow_add, ← mul_assoc, inv_pow, inv_mul_cancel₀ (pow_ne_zero _ hR0.ne'), one_mul,
+        ← pow_mul, mul_comm k q]
+    rw [e]
+    gcongr
+    calc R⁻¹ ^ r ≤ E ^ r := pow_le_pow_left₀ (by positivity) (le_max_right _ _) r
+      _ ≤ E ^ q := pow_le_pow_right₀ (le_max_left _ _) hr.le
+  calc ‖X (r + k * q)‖ ≤ ‖X r‖ * ‖L ^ k‖ := h1
+    _ ≤ B * (D * (R ^ q) ^ k) := mul_le_mul h2 (hLk k) (norm_nonneg _) hB0
+    _ ≤ B * (D * (E ^ q * R ^ (r + k * q))) := by gcongr
+    _ = B * D * E ^ q * R ^ (r + k * q) := by ring
+
+/-- **Variational upper bound.** Let `X n ≥ 0` and `L ≥ 0` be real matrices with
+`X (n + q) ≤ X n L` entrywise for every `n`, where `q ≥ 1`. Then
+`limsup ‖X n‖^{1/n} ≤ gelfandRadius(L)^{1/q}`. -/
+theorem limsup_rpow_inv_le_of_le_mul {X : ℕ → Matrix ι ι ℝ} (hX : ∀ n i j, 0 ≤ X n i j)
+    {L : Matrix ι ι ℝ} (hL : ∀ i j, 0 ≤ L i j) {q : ℕ} (hq : q ≠ 0)
+    (hdom : ∀ n i j, X (n + q) i j ≤ (X n * L) i j) :
+    limsup (fun n : ℕ => ‖X n‖ ^ (n : ℝ)⁻¹) atTop ≤ gelfandRadius L ^ (q : ℝ)⁻¹ := by
+  refine le_of_forall_gt_imp_ge_of_dense fun R hR => ?_
+  obtain ⟨R₁, hR₁, hR₁R⟩ := exists_between hR
+  obtain ⟨K, hK⟩ := exists_norm_le_mul_pow_of_le_mul hX hL hq hdom hR₁
+  have hR₁0 : 0 < R₁ := lt_of_le_of_lt (by positivity) hR₁
+  have hK1 : 0 < max K 1 := lt_max_of_lt_right one_pos
+  have hlim : Tendsto (fun n : ℕ => max K 1 ^ (n : ℝ)⁻¹ * R₁) atTop (𝓝 R₁) := by
+    simpa using (Real.tendsto_const_rpow_inv hK1).mul_const R₁
+  have hev : ∀ᶠ n : ℕ in atTop, ‖X n‖ ^ (n : ℝ)⁻¹ ≤ R := by
+    filter_upwards [hlim.eventually (gt_mem_nhds hR₁R), eventually_ne_atTop 0] with n hn hn0
+    refine le_trans ?_ hn.le
+    calc ‖X n‖ ^ (n : ℝ)⁻¹ ≤ (max K 1 * R₁ ^ n) ^ (n : ℝ)⁻¹ :=
+          Real.rpow_le_rpow (norm_nonneg _)
+            ((hK n).trans (by gcongr; exact le_max_left _ _)) (by positivity)
+      _ = max K 1 ^ (n : ℝ)⁻¹ * R₁ := by
+          rw [Real.mul_rpow hK1.le (by positivity), Real.pow_rpow_inv_natCast hR₁0.le hn0]
+  exact limsup_le_of_le
+    (isCoboundedUnder_le_of_le atTop fun n => Real.rpow_nonneg (norm_nonneg _) _) hev
+
+/-- **Variational upper bound, the norm half.** Let `b n ≥ 0` with `b_n^{1/n} → λ ≥ 1`, and let
+`L q` be real matrices with `‖L q‖ ≤ 1 + A ∑_{k<q} b_k` for some `A ≥ 0`. Then
+`limsup gelfandRadius(L q)^{1/q} ≤ λ`. -/
+theorem limsup_gelfandRadius_rpow_inv_le {b : ℕ → ℝ} (hb : ∀ n, 0 ≤ b n) {lam : ℝ}
+    (hlam : 1 ≤ lam) (hlim : Tendsto (fun n : ℕ => b n ^ (n : ℝ)⁻¹) atTop (𝓝 lam)) {A : ℝ}
+    (hA : 0 ≤ A) {L : ℕ → Matrix ι ι ℝ} (hL : ∀ q, ‖L q‖ ≤ 1 + A * ∑ k ∈ Finset.range q, b k) :
+    limsup (fun q : ℕ => gelfandRadius (L q) ^ (q : ℝ)⁻¹) atTop ≤ lam := by
+  refine le_of_forall_gt_imp_ge_of_dense fun R hR => ?_
+  obtain ⟨R₁, hR₁, hR₁R⟩ := exists_between hR
+  have hR₁1 : 1 ≤ R₁ := hlam.trans hR₁.le
+  have hR₁0 : 0 < R₁ := one_pos.trans_le hR₁1
+  -- `b k ≤ R₁ᵏ` from some `N` on, so `b k ≤ C₀ + R₁ᵏ` for every `k`
+  obtain ⟨N, hN⟩ := eventually_atTop.1
+    ((hlim.eventually (gt_mem_nhds hR₁)).and (eventually_ne_atTop 0))
+  set C₀ := ∑ k ∈ Finset.range N, b k with hC₀
+  have hC₀0 : 0 ≤ C₀ := Finset.sum_nonneg fun k _ => hb k
+  have hbk : ∀ k, b k ≤ C₀ + R₁ ^ k := by
+    intro k
+    rcases lt_or_ge k N with hk | hk
+    · have := Finset.single_le_sum (f := b) (fun i _ => hb i) (Finset.mem_range.2 hk)
+      linarith [pow_nonneg hR₁0.le k]
+    · obtain ⟨h1, h2⟩ := hN k hk
+      have := (Real.rpow_inv_le_iff_of_pos (hb k) hR₁0.le
+        (by exact_mod_cast Nat.pos_of_ne_zero h2)).1 h1.le
+      rw [Real.rpow_natCast] at this
+      linarith
+  -- `‖L q‖ ≤ H q R₁^q` with `H q = 1 + A (C₀ + 1) q`
+  set c := A * (C₀ + 1) with hc
+  have hc0 : 0 ≤ c := by positivity
+  have hLq : ∀ q : ℕ, ‖L q‖ ≤ (1 + c * q) * R₁ ^ q := by
+    intro q
+    have hRq : 1 ≤ R₁ ^ q := one_le_pow₀ hR₁1
+    have hsum : ∑ k ∈ Finset.range q, b k ≤ q * (C₀ + R₁ ^ q) := by
+      calc ∑ k ∈ Finset.range q, b k ≤ ∑ _k ∈ Finset.range q, (C₀ + R₁ ^ q) :=
+            Finset.sum_le_sum fun k hk => (hbk k).trans (by
+              gcongr
+              exact (Finset.mem_range.1 hk).le)
+        _ = q * (C₀ + R₁ ^ q) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    calc ‖L q‖ ≤ 1 + A * (q * (C₀ + R₁ ^ q)) := (hL q).trans (by gcongr)
+      _ ≤ (1 + c * q) * R₁ ^ q := by
+          rw [hc]
+          have hq0 : (0 : ℝ) ≤ q := Nat.cast_nonneg q
+          have : A * q * C₀ ≤ A * q * C₀ * R₁ ^ q :=
+            le_mul_of_one_le_right (by positivity) hRq
+          nlinarith
+  -- `(1 + c q)^{1/q} → 1`
+  have hpoly : Tendsto (fun q : ℕ => (1 + c * q) ^ (q : ℝ)⁻¹) atTop (𝓝 1) := by
+    have h := Real.tendsto_rpow_inv_of_log_div (H := fun q : ℕ => 1 + c * q)
+      (fun q => by positivity)
+      (Real.tendsto_log_div_zero_of_poly (A := 1) (B := c) (fun q => by
+        simp only [le_add_iff_nonneg_right]; positivity) (fun q => by
+          have hq : (q : ℝ) ≤ (q : ℝ) ^ 2 := by
+            rcases Nat.eq_zero_or_pos q with h0 | h0
+            · simp [h0]
+            · have : (1 : ℝ) ≤ q := by exact_mod_cast h0
+              nlinarith
+          simp only [add_le_add_iff_left]
+          exact mul_le_mul_of_nonneg_left hq hc0))
+    rwa [Real.exp_zero] at h
+  have hlim' : Tendsto (fun q : ℕ => (1 + c * q) ^ (q : ℝ)⁻¹ * R₁) atTop (𝓝 R₁) := by
+    simpa using hpoly.mul_const R₁
+  have hev : ∀ᶠ q : ℕ in atTop, gelfandRadius (L q) ^ (q : ℝ)⁻¹ ≤ R := by
+    filter_upwards [hlim'.eventually (gt_mem_nhds hR₁R), eventually_ne_atTop 0] with q hq hq0
+    refine le_trans ?_ hq.le
+    calc gelfandRadius (L q) ^ (q : ℝ)⁻¹ ≤ ((1 + c * q) * R₁ ^ q) ^ (q : ℝ)⁻¹ :=
+          Real.rpow_le_rpow (gelfandRadius_nonneg _) ((gelfandRadius_le_norm _).trans (hLq q))
+            (by positivity)
+      _ = (1 + c * q) ^ (q : ℝ)⁻¹ * R₁ := by
+          rw [Real.mul_rpow (by positivity) (by positivity),
+            Real.pow_rpow_inv_natCast hR₁0.le hq0]
+  exact limsup_le_of_le
+    (isCoboundedUnder_le_of_le atTop fun q => Real.rpow_nonneg (gelfandRadius_nonneg _) _) hev
+
+end Variational
 
 /-! ### The `2 × 2` case -/
 
