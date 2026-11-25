@@ -32,7 +32,22 @@ on the wall group that carries the point assumes `e(M) = 2`, that is
   preprojective relation at vertex `0` is `sumB ∘ evalA = 0`, so the ranks satisfy
   `rk A + rk B ≤ g` (the orthogonality of the two spaces of classes for the Serre pairing), and
   nilpotence gives `evalA ∘ sumB = 0`, so `rk A + rk B ≤ p`;
-* `finrank_End_ge`: `dim End M ≥ 1 + (p - rk B)(p - rk A)`;
+* `endOf_surjective'`, `finrank_End_eq`: every endomorphism is a scalar plus a map
+  `V/⟨B_i 1⟩ → ⋂ ker A_i`, so `dim End M = 1 + (p - rk B)(p - rk A)` exactly, for every
+  representation with a line at vertex `1` and no relation at all; `finrank_End_ge` is a
+  corollary;
+* `oneCopy_identity`: **the one-copy identity** `dim End M + p(g - p) = 1 + ab + p(g - a - b)`
+  with `a = rk A`, `b = rk B`, again with no relation; `oneCopy`: with the preprojective relation,
+  `dim End M + p(g - p) = c` splits as `ab + p(g - a - b) = c - 1` with both terms nonnegative;
+* `oneCopy_one` (`c = 1`, `U` isotropic): `ab = 0` and `a + b = g`, from the preprojective
+  relation alone; `twoExtensions_rank'`, `twoExtensions'`: the rank dichotomy and the
+  classification of the classes without nilpotence, which enters only for `p ≥ g`;
+* `oneCopy_two` (`c = 2`, `U` spherical, `p ≥ 2`): `a = b = 1` and `g = 2`, with no nilpotence;
+  `oneCopy_two_rankOne`: then `A_i = α_i φ`, `B_i 1 = β_i w` with `∑ α_i β_i = 0` and `φ(w) = 0`;
+  `oneCopy_of_rankOne`: conversely such data give `e(M) = 2` at `g = 2`;
+  `oneCopy_two_range_evalA`: the classes `A_i` span a line `kα`, an invariant of `M`;
+* `oneCopy_riemannRoch`: `e(M) - e(U) = 2(ab + p(g - a - b))` from Riemann–Roch for `U` and `M`,
+  a ring identity in free integers (see its docstring for how it differs from the HN defect);
 * `twoExtensions_rank`, `twoExtensions`: **the lemma on the wall group that carries the
   point.** If `dim End M + p(g - p) = 1` and `p > 0`, then `p ≥ g` and either every `B_i` vanishes
   and the `A_i` are linearly independent, so that `M = S^{p-g} ⊕ T_S U` (`T_S U` the universal
@@ -46,6 +61,18 @@ on the wall group that carries the point assumes `e(M) = 2`, that is
 * `twoExtensions_table`: the table of the lemma. For `S^k ⊕ T_S U` the HN quotients are `U, S^p`
   where `U` is higher and `S^k, T_S U` where `S` is higher; for `S^k ⊕ T_S⁻¹ U` they are
   `T_S⁻¹ U, S^k` and `S^p, U`. Zero terms are omitted when `k = p - g = 0`.
+
+## One copy of a spherical simple
+
+When `U` is spherical (`v(U)² = -2`), Riemann–Roch reads `e(M) = 2` as
+`dim End M + p(g - p) = 2`, the case `c = 2` of `oneCopy`. The same model then describes a wall
+with two spherical simples `S`, `U` of one phase and `dim Ext¹(U, S) = 2`, and the wall objects in
+which `U` occurs once. For `p ≥ 2` the semirigid ones have `g = 2` and classes of rank one, a line
+`kα` of classes `A_i` and the orthogonal line of classes `B_i` (`oneCopy_two_rankOne`); conversely
+every such rank-one datum is semirigid (`oneCopy_of_rankOne`). Not formalized here: that such an
+`M` is `M_α ⊕ S^{p-2}` with `M_α` the length-three object of the line, and that its isomorphism
+class is determined by the line (the transitivity of `GL(V)` on pairs `(φ, w)` with `φ(w) = 0`);
+and the absence of semirigid wall objects with multiplicities `(2, 2)`.
 
 ## Compared with the article's proof
 
@@ -188,13 +215,58 @@ lemma endOf_injective : Function.Injective M.endOf := by
       LinearMap.zero_apply] at this
     exact Subtype.ext this
 
-/-- `dim End M ≥ 1 + (p - rk B)(p - rk A)`: the scalars, and the maps `V/⟨B_i 1⟩ → ⋂ ker A_i`. -/
+/-- **Every endomorphism is `(c + f, c)`** with `c` a scalar and `f : V/⟨B_i 1⟩ → ⋂ ker A_i`.
+No relation is used, neither the preprojective relations nor nilpotence: the vertex-one space is a
+line, so an endomorphism acts there by a scalar `c`, and `f₀ - c` kills every `B_i 1` and lands in
+every `ker A_i`. -/
+theorem endOf_surjective' (f : (V →ₗ[k] V) × (k →ₗ[k] k)) (hf : f ∈ Hom M M) :
+    ∃ p, M.endOf p = f := by
+  obtain ⟨f₀, f₁⟩ := f
+  set c : k := f₁ 1 with hc
+  have hf₁ : ∀ t, f₁ t = c * t := fun t ↦ by
+    rw [show t = t • (1 : k) by simp, map_smul, smul_eq_mul, smul_eq_mul, mul_one, mul_comm]
+  let g : V →ₗ[k] V := f₀ - c • LinearMap.id
+  have hA : ∀ i v, M.A i (g v) = 0 := fun i v ↦ by
+    have := LinearMap.congr_fun (hf i).1 v
+    simp only [LinearMap.comp_apply] at this
+    simp only [g, LinearMap.sub_apply, LinearMap.smul_apply, LinearMap.id_apply, map_sub,
+      map_smul, ← this, hf₁, smul_eq_mul, sub_self]
+  have hB : ∀ i t, g (M.B i t) = 0 := fun i t ↦ by
+    have := LinearMap.congr_fun (hf i).2 t
+    simp only [LinearMap.comp_apply] at this
+    simp only [g, LinearMap.sub_apply, LinearMap.smul_apply, LinearMap.id_apply, this, hf₁]
+    rw [← smul_eq_mul, map_smul, sub_self]
+  have hker : ∀ v, g v ∈ LinearMap.ker M.evalA := fun v ↦ by
+    rw [LinearMap.mem_ker]; funext i; simp [hA]
+  have hrange : LinearMap.range M.sumB ≤ LinearMap.ker (LinearMap.codRestrict _ g hker) := by
+    rw [LinearMap.ker_codRestrict]
+    rintro _ ⟨t, rfl⟩
+    rw [LinearMap.mem_ker, sumB_apply, map_sum]
+    exact Finset.sum_eq_zero fun i _ ↦ by rw [map_smul, hB, smul_zero]
+  refine ⟨(c, (LinearMap.range M.sumB).liftQ (LinearMap.codRestrict _ g hker) hrange), ?_⟩
+  refine Prod.ext (LinearMap.ext fun v ↦ ?_) (LinearMap.ext fun t ↦ ?_)
+  · rw [endOf_fst_apply]
+    simp [g]
+  · rw [endOf_snd_apply, smul_eq_mul, hf₁]
+
+/-- **The exact endomorphism count**: `dim End M = 1 + (p - rk B)(p - rk A)` for every
+representation with a line at vertex one and `V` finite-dimensional, with no relation. -/
+theorem finrank_End_eq [FiniteDimensional k V] : finrank k (Hom M M) =
+    1 + finrank k (V ⧸ LinearMap.range M.sumB) * finrank k (LinearMap.ker M.evalA) := by
+  let φ := LinearMap.codRestrict (Hom M M) M.endOf M.endOf_mem
+  have hinj : Function.Injective φ := fun x y h ↦ M.endOf_injective (congrArg Subtype.val h)
+  have hsurj : Function.Surjective φ := fun ⟨f, hf⟩ ↦ by
+    obtain ⟨p, hp⟩ := M.endOf_surjective' f hf
+    exact ⟨p, Subtype.ext hp⟩
+  have := (LinearEquiv.ofBijective φ ⟨hinj, hsurj⟩).finrank_eq
+  rw [Module.finrank_prod, Module.finrank_self, Module.finrank_linearMap] at this
+  omega
+
+/-- `dim End M ≥ 1 + (p - rk B)(p - rk A)`: the scalars, and the maps `V/⟨B_i 1⟩ → ⋂ ker A_i`.
+A corollary of the exact count `finrank_End_eq`. -/
 theorem finrank_End_ge [FiniteDimensional k V] : 1 + finrank k (V ⧸ LinearMap.range M.sumB) *
-    finrank k (LinearMap.ker M.evalA) ≤ finrank k (Hom M M) := by
-  have := LinearMap.finrank_le_finrank_of_injective
-    (f := LinearMap.codRestrict (Hom M M) M.endOf M.endOf_mem) (fun x y h ↦
-      M.endOf_injective (congrArg Subtype.val h))
-  rwa [Module.finrank_prod, Module.finrank_self, Module.finrank_linearMap] at this
+    finrank k (LinearMap.ker M.evalA) ≤ finrank k (Hom M M) :=
+  M.finrank_End_eq.ge
 
 end Endomorphisms
 
@@ -224,12 +296,132 @@ lemma rank_add_le_finrank (hM : M.IsNilpotent) :
   have h3 := Submodule.finrank_mono h2
   omega
 
+/-- **The one-copy identity**: with `a = rk A`, `b = rk B`, `p = dim V` and `g = |ι|`,
+`dim End M + p(g - p) = 1 + ab + p(g - a - b)`. No relation is used. The left side is
+`e(M)/2` up to the constant `c_U - 1` (see `oneCopy`). -/
+theorem oneCopy_identity :
+    (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) =
+      1 + finrank k (LinearMap.range M.evalA) * finrank k (LinearMap.range M.sumB) +
+        finrank k V * (Fintype.card ι - finrank k (LinearMap.range M.evalA) -
+          finrank k (LinearMap.range M.sumB)) := by
+  have hq := Submodule.finrank_quotient_add_finrank (LinearMap.range M.sumB)
+  have hk := LinearMap.finrank_range_add_finrank_ker M.evalA
+  have hq₁ : (finrank k (V ⧸ LinearMap.range M.sumB) : ℤ) =
+      finrank k V - finrank k (LinearMap.range M.sumB) := by omega
+  have hq₂ : (finrank k (LinearMap.ker M.evalA) : ℤ) =
+      finrank k V - finrank k (LinearMap.range M.evalA) := by omega
+  rw [M.finrank_End_eq]
+  push_cast
+  rw [hq₁, hq₂]
+  ring
+
+/-- **The one-copy lemma for any `c`.** Let `U` occur once and `S` `p` times, with
+`dim End M + p(g - p) = c`. By Riemann–Roch this is `e(M) = 2` for `c = 1 - v(U)²/2`, so
+`c = 1` for `U` isotropic and `c = 2` for `U` spherical. With the
+preprojective relation, both terms of `ab + p(g - a - b) = c - 1` are nonnegative. -/
+theorem oneCopy (hpre : M.IsPreprojective) (c : ℤ)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = c) :
+    (finrank k (LinearMap.range M.evalA) : ℤ) * finrank k (LinearMap.range M.sumB) +
+        finrank k V * (Fintype.card ι - finrank k (LinearMap.range M.evalA) -
+          finrank k (LinearMap.range M.sumB)) = c - 1 ∧
+      0 ≤ (Fintype.card ι : ℤ) - finrank k (LinearMap.range M.evalA) -
+          finrank k (LinearMap.range M.sumB) := by
+  have := M.oneCopy_identity
+  have h1 := M.rank_add_le_card hpre
+  exact ⟨by linarith, by omega⟩
+
+/-- **`c = 1`** (`U` isotropic): `ab = 0` and `a + b = g` when `p > 0`, from the preprojective
+relation alone; nilpotence is not used. -/
+theorem oneCopy_one (hpre : M.IsPreprojective)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 1)
+    (hp : 0 < finrank k V) :
+    finrank k (LinearMap.range M.evalA) * finrank k (LinearMap.range M.sumB) = 0 ∧
+      finrank k (LinearMap.range M.evalA) + finrank k (LinearMap.range M.sumB) =
+        Fintype.card ι := by
+  obtain ⟨h, hg⟩ := M.oneCopy hpre 1 he
+  set a := finrank k (LinearMap.range M.evalA)
+  set b := finrank k (LinearMap.range M.sumB)
+  set p := finrank k V
+  set g := Fintype.card ι
+  have hab : (0 : ℤ) ≤ a * b := by positivity
+  have hpg : (0 : ℤ) ≤ p * (g - a - b) := mul_nonneg (by positivity) hg
+  have h0 : (a : ℤ) * b = 0 := by linarith
+  have h0' : (p : ℤ) * (g - a - b) = 0 := by linarith
+  refine ⟨by exact_mod_cast h0, ?_⟩
+  rcases mul_eq_zero.mp h0' with h | h
+  · omega
+  · omega
+
+/-- **`c = 2`, `p ≥ 2`** (`U` spherical, at least two copies of `S`): `a = b = 1` and `g = 2`,
+with no nilpotence. The exact count is needed here: the inequality `finrank_End_ge` leaves
+`ab + p(g - a - b) ≤ 1`, which `(a, b, g, p) = (2, 0, 2, 2)` satisfies. -/
+theorem oneCopy_two (hpre : M.IsPreprojective)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 2)
+    (hp : 2 ≤ finrank k V) :
+    finrank k (LinearMap.range M.evalA) = 1 ∧ finrank k (LinearMap.range M.sumB) = 1 ∧
+      Fintype.card ι = 2 := by
+  obtain ⟨h, hg⟩ := M.oneCopy hpre 2 he
+  set a := finrank k (LinearMap.range M.evalA)
+  set b := finrank k (LinearMap.range M.sumB)
+  set p := finrank k V
+  set g := Fintype.card ι
+  have hab : (0 : ℤ) ≤ a * b := by positivity
+  have hpg : (0 : ℤ) ≤ p * (g - a - b) := mul_nonneg (by positivity) hg
+  -- `p(g - a - b) ≤ 1` and `p ≥ 2` force `g = a + b`, then `ab = 1`.
+  have hgab : (g : ℤ) - a - b = 0 := by
+    by_contra hne
+    have : (1 : ℤ) ≤ g - a - b := by omega
+    have : (2 : ℤ) ≤ p * (g - a - b) := by
+      calc (2 : ℤ) ≤ p * 1 := by omega
+        _ ≤ p * (g - a - b) := by gcongr
+    linarith
+  rw [hgab, mul_zero, add_zero] at h
+  have hab1 : a * b = 1 := by
+    have : (a : ℤ) * b = 1 := by linarith
+    exact_mod_cast this
+  refine ⟨Nat.eq_one_of_mul_eq_one_right hab1, Nat.eq_one_of_mul_eq_one_left hab1, ?_⟩
+  have := Nat.eq_one_of_mul_eq_one_right hab1
+  have := Nat.eq_one_of_mul_eq_one_left hab1
+  omega
+
+/-- **Riemann–Roch for the one-copy object, as a ring identity.** If `e(U) = 2 + u²` and
+`e(M) = 2 dim End M + v(M)²` with `v(M)² = u² + 2p(g - p)`, then
+`e(M) - e(U) = 2(ab + p(g - a - b))`. The integers `eM`, `eU`, `u2` are free and the two
+Riemann–Roch equations are assumptions; no triangle and no budget enters. This is the Mukai
+defect of the two-step tower `(U, S^p)` only when `U` is a subobject (`b = 0`) or a quotient
+(`a = 0`) of `M`, the case `c = 1`. In general the HN defect differs: on the side where `U` is
+higher the HN filtration is `hnUHigher`, with first factor of dimension `(b, 1)`, and Riemann–Roch
+for the factors gives `2(ab + p(g - a - b) - b(g - b))`; on the side where `S` is higher it is
+`2(ab + p(g - a - b) - a(g - a))`. At `c = 2` both vanish (`a = b = 1`, `g = 2`). -/
+theorem oneCopy_riemannRoch (eM eU u2 : ℤ) (hU : eU = 2 + u2)
+    (hM : eM = 2 * finrank k (Hom M M) + (u2 + 2 * finrank k V * (Fintype.card ι - finrank k V))) :
+    eM - eU = 2 * (finrank k (LinearMap.range M.evalA) * finrank k (LinearMap.range M.sumB) +
+        finrank k V * (Fintype.card ι - finrank k (LinearMap.range M.evalA) -
+          finrank k (LinearMap.range M.sumB))) := by
+  have := M.oneCopy_identity
+  rw [hM, hU]
+  linear_combination 2 * this
+
+/-- **The rank dichotomy without nilpotence.** If `dim End M + p(g - p) = 1` and `p > 0`, the
+classes `A_i` and `B_i` have ranks `(g, 0)` or `(0, g)`; only the preprojective relation is
+used. -/
+theorem twoExtensions_rank' (hpre : M.IsPreprojective)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 1)
+    (hp : 0 < finrank k V) :
+    (finrank k (LinearMap.range M.sumB) = 0 ∧
+        finrank k (LinearMap.range M.evalA) = Fintype.card ι) ∨
+      (finrank k (LinearMap.range M.evalA) = 0 ∧
+        finrank k (LinearMap.range M.sumB) = Fintype.card ι) := by
+  obtain ⟨h0, hg⟩ := M.oneCopy_one hpre he hp
+  rcases Nat.mul_eq_zero.mp h0 with ha | hb
+  · exact Or.inr ⟨ha, by omega⟩
+  · exact Or.inl ⟨hb, by omega⟩
+
 /-- **The numerical core of the lemma on the wall group that carries the point.** For a
 nilpotent representation with the preprojective relations, of dimension vector `(p, 1)` with
 `p > 0` and `e(M) = 2`, that is `dim End M + p(g - p) = 1`: `p ≥ g`, and the classes `A_i` and
-`B_i` have ranks `(g, 0)` or `(0, g)`. With `a = rk A`, `b = rk B`, the bound
-`dim End M ≥ 1 + (p - a)(p - b)` and the identity `(p - a)(p - b) + p(g - p) = ab + p(g - a - b)`
-leave `ab = 0` and `a + b = g`, as `twoExtensions_numerics` does in the draft's notation. -/
+`B_i` have ranks `(g, 0)` or `(0, g)`. The rank dichotomy is `twoExtensions_rank'`, from the
+preprojective relation alone; nilpotence enters only for `p ≥ g`, through `a + b ≤ p`. -/
 theorem twoExtensions_rank (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
     (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 1)
     (hp : 0 < finrank k V) :
@@ -238,55 +430,22 @@ theorem twoExtensions_rank (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
           finrank k (LinearMap.range M.evalA) = Fintype.card ι) ∨
         (finrank k (LinearMap.range M.evalA) = 0 ∧
           finrank k (LinearMap.range M.sumB) = Fintype.card ι)) := by
-  have h1 := M.rank_add_le_card hpre
+  obtain ⟨_, hg⟩ := M.oneCopy_one hpre he hp
   have h2 := M.rank_add_le_finrank hnil
-  have h3 := M.finrank_End_ge
-  have hq := Submodule.finrank_quotient_add_finrank (LinearMap.range M.sumB)
-  have hk := LinearMap.finrank_range_add_finrank_ker M.evalA
-  set p := finrank k V
-  set g := Fintype.card ι
-  set a := finrank k (LinearMap.range M.evalA)
-  set b := finrank k (LinearMap.range M.sumB)
-  set q₁ := finrank k (V ⧸ LinearMap.range M.sumB)
-  set q₂ := finrank k (LinearMap.ker M.evalA)
-  -- `(p - b)(p - a) + p(g - p) = ab + p(g - a - b)`, and both terms are nonnegative.
-  have hE : (1 : ℤ) + q₁ * q₂ ≤ finrank k (Hom M M) := by exact_mod_cast h3
-  have hq₁ : (q₁ : ℤ) = p - b := by omega
-  have hq₂ : (q₂ : ℤ) = p - a := by omega
-  have hsum : (a : ℤ) * b + p * (g - a - b) ≤ 0 := by
-    rw [hq₁, hq₂] at hE
-    nlinarith
-  have hpos : (0 : ℤ) ≤ p * (g - a - b) := mul_nonneg (by positivity) (by omega)
-  have hab : (a : ℤ) * b = 0 := by
-    have : (0 : ℤ) ≤ a * b := by positivity
-    linarith
-  have hg : a + b = g := by
-    have : (0 : ℤ) ≤ a * b := by positivity
-    have h' : (p : ℤ) * (g - a - b) = 0 := by linarith
-    rcases mul_eq_zero.mp h' with h | h
-    · omega
-    · omega
-  refine ⟨by omega, ?_⟩
-  rcases mul_eq_zero.mp hab with ha | hb
-  · exact Or.inr ⟨by exact_mod_cast ha, by omega⟩
-  · exact Or.inl ⟨by exact_mod_cast hb, by omega⟩
+  exact ⟨by omega, M.twoExtensions_rank' hpre he hp⟩
 
-/-- **The lemma on the wall group that carries the point.** Let `M` be a nilpotent
-representation with the preprojective relations, of dimension vector `(p, 1)` with `p > 0`,
-satisfying `e(M) = 2`, that is `dim End M + p(g - p) = 1`. Then `p ≥ g`, and either every `B_i`
-vanishes and the `A_i` are linearly independent (`M = S^{p-g} ⊕ T_S U`), or every `A_i` vanishes
-and the `B_i 1` are linearly independent (`M = S^{p-g} ⊕ T_S⁻¹ U`). -/
-theorem twoExtensions (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
+/-- **The classes of the lemma on the wall group that carries the point, without nilpotence.**
+If `dim End M + p(g - p) = 1` and `p > 0`, either every `B_i` vanishes and the `A_i` are linearly
+independent, or every `A_i` vanishes and the `B_i 1` are linearly independent. -/
+theorem twoExtensions' (hpre : M.IsPreprojective)
     (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 1)
     (hp : 0 < finrank k V) :
-    Fintype.card ι ≤ finrank k V ∧
-      (((∀ i, M.B i = 0) ∧ LinearIndependent k M.A) ∨
-        ((∀ i, M.A i = 0) ∧ LinearIndependent k fun i ↦ M.B i 1)) := by
+    ((∀ i, M.B i = 0) ∧ LinearIndependent k M.A) ∨
+      ((∀ i, M.A i = 0) ∧ LinearIndependent k fun i ↦ M.B i 1) := by
   classical
-  obtain ⟨hgp, h⟩ := M.twoExtensions_rank hpre hnil he hp
+  have h := M.twoExtensions_rank' hpre he hp
   have hk' := LinearMap.finrank_range_add_finrank_ker M.sumB
   rw [Module.finrank_pi] at hk'
-  refine ⟨hgp, ?_⟩
   rcases h with ⟨hb, ha⟩ | ⟨ha, hb⟩
   · -- No `B`: the classes `A_i` span a `g`-dimensional space.
     left
@@ -321,7 +480,161 @@ theorem twoExtensions (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
       rw [hker, Submodule.mem_bot] at this
       exact fun i ↦ congrFun this i
 
+/-- **The lemma on the wall group that carries the point.** Let `M` be a nilpotent
+representation with the preprojective relations, of dimension vector `(p, 1)` with `p > 0`,
+satisfying `e(M) = 2`, that is `dim End M + p(g - p) = 1`. Then `p ≥ g`, and either every `B_i`
+vanishes and the `A_i` are linearly independent (`M = S^{p-g} ⊕ T_S U`), or every `A_i` vanishes
+and the `B_i 1` are linearly independent (`M = S^{p-g} ⊕ T_S⁻¹ U`). Nilpotence is used only for
+`p ≥ g` (`twoExtensions'`). -/
+theorem twoExtensions (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 1)
+    (hp : 0 < finrank k V) :
+    Fintype.card ι ≤ finrank k V ∧
+      (((∀ i, M.B i = 0) ∧ LinearIndependent k M.A) ∨
+        ((∀ i, M.A i = 0) ∧ LinearIndependent k fun i ↦ M.B i 1)) :=
+  ⟨(M.twoExtensions_rank hpre hnil he hp).1, M.twoExtensions' hpre he hp⟩
+
 end Classification
+
+/-! ### One copy of a spherical simple: the rank-one normal form -/
+
+section RankOne
+
+variable [FiniteDimensional k V]
+
+/-- **The rank-one normal form at `c = 2`.** Let `U` be spherical, occurring once, and `S` occur
+`p ≥ 2` times, with `e(M) = 2`, that is `dim End M + p(g - p) = 2`. Then `g = 2`, and there are a
+nonzero functional `φ` on `V`, a nonzero vector `w ∈ V` and nonzero `α, β : ι → k` with
+`A_i = α_i φ`, `B_i 1 = β_i w`, `∑ α_i β_i = 0` (the preprojective relation) and `φ(w) = 0`
+(nilpotence). So the classes `A_i` span the line `kα` and the `B_i` the line `kβ`, with
+`β ⊥ α`. -/
+theorem oneCopy_two_rankOne (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 2)
+    (hp : 2 ≤ finrank k V) :
+    Fintype.card ι = 2 ∧ ∃ (φ : V →ₗ[k] k) (α : ι → k) (w : V) (β : ι → k),
+      φ ≠ 0 ∧ α ≠ 0 ∧ w ≠ 0 ∧ β ≠ 0 ∧ (∀ i v, M.A i v = α i * φ v) ∧
+        (∀ i, M.B i 1 = β i • w) ∧ ∑ i, α i * β i = 0 ∧ φ w = 0 := by
+  classical
+  obtain ⟨ha, hb, hg⟩ := M.oneCopy_two hpre he hp
+  refine ⟨hg, ?_⟩
+  -- the classes `A_i`: a line `kα`
+  obtain ⟨⟨α, hαr⟩, hα0, hαspan⟩ := finrank_eq_one_iff'.mp ha
+  have hα : α ≠ 0 := fun h ↦ hα0 (Subtype.ext h)
+  obtain ⟨i₀, hi₀⟩ : ∃ i, α i ≠ 0 := by
+    by_contra h
+    push Not at h
+    exact hα (funext h)
+  let φ : V →ₗ[k] k := (α i₀)⁻¹ • M.A i₀
+  have hA : ∀ i v, M.A i v = α i * φ v := by
+    intro i v
+    obtain ⟨c, hc⟩ := hαspan ⟨M.evalA v, LinearMap.mem_range_self _ v⟩
+    have hc' : c • α = M.evalA v := congrArg Subtype.val hc
+    have hi := congrFun hc' i
+    have hi₀' := congrFun hc' i₀
+    simp only [Pi.smul_apply, smul_eq_mul, evalA_apply] at hi hi₀'
+    simp only [φ, LinearMap.smul_apply, smul_eq_mul, ← hi, ← hi₀']
+    field_simp
+  -- the classes `B_i`: a line `kw`
+  obtain ⟨⟨w, hwr⟩, hw0, hwspan⟩ := finrank_eq_one_iff'.mp hb
+  have hw : w ≠ 0 := fun h ↦ hw0 (Subtype.ext h)
+  have hβex : ∀ i, ∃ c : k, c • w = M.B i 1 := fun i ↦ by
+    obtain ⟨c, hc⟩ := hwspan ⟨M.B i 1, M.B_mem_range_sumB i 1⟩
+    exact ⟨c, congrArg Subtype.val hc⟩
+  choose β hβ using hβex
+  have hB : ∀ i, M.B i 1 = β i • w := fun i ↦ (hβ i).symm
+  -- `φ ≠ 0` and `β ≠ 0`, since the ranks are one
+  obtain ⟨v₀, hv₀⟩ : ∃ v, φ v ≠ 0 := by
+    obtain ⟨v, hv⟩ := hαr
+    by_contra h
+    push Not at h
+    exact hα (by rw [← hv]; funext i; simp [hA, h])
+  have hφ : φ ≠ 0 := fun h ↦ hv₀ (by rw [h, LinearMap.zero_apply])
+  obtain ⟨j₀, hj₀⟩ : ∃ i, β i ≠ 0 := by
+    by_contra h
+    push Not at h
+    obtain ⟨t, ht⟩ := hwr
+    exact hw (by rw [← ht, sumB_apply]; simp [hB, h])
+  have hβ0 : β ≠ 0 := fun h ↦ hj₀ (by rw [h, Pi.zero_apply])
+  refine ⟨φ, α, w, β, hφ, hα, hw, hβ0, hA, hB, ?_, ?_⟩
+  · -- the preprojective relation at vertex zero, evaluated at `v₀`
+    have := LinearMap.congr_fun hpre.1 v₀
+    simp only [LinearMap.sum_apply, LinearMap.comp_apply, LinearMap.zero_apply] at this
+    have hsum : (φ v₀ * ∑ i, α i * β i) • w = 0 := by
+      rw [← this, Finset.mul_sum, Finset.sum_smul]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      rw [M.B_apply, hB, hA, smul_smul]
+      ring_nf
+    rcases smul_eq_zero.mp hsum with h | h
+    · exact (mul_eq_zero.mp h).resolve_left hv₀
+    · exact absurd h hw
+  · -- nilpotence: `A_{i₀} B_{j₀} = 0`
+    have := LinearMap.congr_fun (hnil.A_comp_B_eq_zero j₀ i₀) 1
+    rw [LinearMap.comp_apply, hB, map_smul, hA, LinearMap.zero_apply, smul_eq_mul] at this
+    rcases mul_eq_zero.mp this with h | h
+    · exact absurd h hj₀
+    · exact (mul_eq_zero.mp h).resolve_left hi₀
+
+/-- **The converse count.** A representation in rank-one form, `A_i = α_i φ` and `B_i 1 = β_i w`
+with `φ`, `α`, `w`, `β` nonzero, has `dim End M + p(g - p) = 2 + p(g - 2)`; for `g = 2` this is
+`e(M) = 2` with `U` spherical. No relation is used. -/
+theorem oneCopy_of_rankOne (φ : V →ₗ[k] k) (α : ι → k) (w : V) (β : ι → k) (hφ : φ ≠ 0)
+    (hα : α ≠ 0) (hw : w ≠ 0) (hβ : β ≠ 0) (hA : ∀ i v, M.A i v = α i * φ v)
+    (hB : ∀ i, M.B i 1 = β i • w) :
+    (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) =
+      2 + finrank k V * (Fintype.card ι - 2) := by
+  classical
+  have hrA : LinearMap.range M.evalA = k ∙ α := by
+    obtain ⟨v₀, hv₀⟩ : ∃ v, φ v ≠ 0 := by
+      by_contra h
+      push Not at h
+      exact hφ (LinearMap.ext h)
+    refine le_antisymm ?_ ?_
+    · rintro _ ⟨v, rfl⟩
+      exact Submodule.mem_span_singleton.mpr ⟨φ v, funext fun i ↦ by simp [hA, mul_comm]⟩
+    · rw [Submodule.span_singleton_le_iff_mem]
+      refine ⟨(φ v₀)⁻¹ • v₀, funext fun i ↦ ?_⟩
+      simp [hA, hv₀]
+  have hrB : LinearMap.range M.sumB = k ∙ w := by
+    obtain ⟨j₀, hj₀⟩ : ∃ i, β i ≠ 0 := by
+      by_contra h
+      push Not at h
+      exact hβ (funext h)
+    refine le_antisymm ?_ ?_
+    · rintro _ ⟨t, rfl⟩
+      rw [sumB_apply]
+      exact Submodule.sum_mem _ fun i _ ↦ Submodule.smul_mem _ _
+        (by rw [hB]; exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self w))
+    · rw [Submodule.span_singleton_le_iff_mem]
+      have := M.B_mem_range_sumB j₀ (β j₀)⁻¹
+      rwa [M.B_apply, hB, smul_smul, inv_mul_cancel₀ hj₀, one_smul] at this
+  have ha : finrank k (LinearMap.range M.evalA) = 1 := by rw [hrA, finrank_span_singleton hα]
+  have hb : finrank k (LinearMap.range M.sumB) = 1 := by rw [hrB, finrank_span_singleton hw]
+  have := M.oneCopy_identity
+  rw [ha, hb] at this
+  push_cast at this
+  linarith
+
+/-- **The line of a semirigid object.** At `c = 2` with `p ≥ 2`, the classes `A_i` span a line in
+`k^ι`: the image of `evalA`. An isomorphism of representations scales `evalA` by the scalar at
+vertex one, so the line is an invariant of `M`, and the line of the classes `B_i` is its
+orthogonal for `∑ α_i β_i` (`oneCopy_two_rankOne`). -/
+theorem oneCopy_two_range_evalA (hpre : M.IsPreprojective) (hnil : M.IsNilpotent)
+    (he : (finrank k (Hom M M) : ℤ) + finrank k V * (Fintype.card ι - finrank k V) = 2)
+    (hp : 2 ≤ finrank k V) :
+    ∃ α : ι → k, α ≠ 0 ∧ LinearMap.range M.evalA = k ∙ α := by
+  obtain ⟨-, φ, α, w, β, hφ, hα, hw, hβ, hA, hB, -, -⟩ := M.oneCopy_two_rankOne hpre hnil he hp
+  refine ⟨α, hα, le_antisymm ?_ ?_⟩
+  · rintro _ ⟨v, rfl⟩
+    exact Submodule.mem_span_singleton.mpr ⟨φ v, funext fun i ↦ by simp [hA, mul_comm]⟩
+  · obtain ⟨v₀, hv₀⟩ : ∃ v, φ v ≠ 0 := by
+      by_contra h
+      push Not at h
+      exact hφ (LinearMap.ext h)
+    rw [Submodule.span_singleton_le_iff_mem]
+    refine ⟨(φ v₀)⁻¹ • v₀, funext fun i ↦ ?_⟩
+    simp [hA, hv₀]
+
+end RankOne
 
 /-! ### The two sides of the wall -/
 
