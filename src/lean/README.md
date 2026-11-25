@@ -741,7 +741,6 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the exact endomorphism count and the one-copy lemma; the wall group that carries the point: classification and table of HN quotients; the rank-one form with one copy of a spherical simple | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/HomProfile.lean` | relabelling the arrows; the profile `dim Hom(A, -)` and its translates | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/FibreFunctorProfile.lean` | `Ext²` of the standard complex and its dimension; the fibre-functor profile of `RHom(A, -)` | `Quiver.Kronecker` |
-| `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the wall group that carries the point: classification and table of HN quotients | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Radical.lean` | the saturation and radical of the representations supported at vertex zero; the top HN step as a radical | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/RigidRep.lean` | the rigid representation of dimension `(g², g)` with arrows in both directions | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` | punctures, clear sight lines, the lattice arguments of visibility on the cover, the finite search | same |

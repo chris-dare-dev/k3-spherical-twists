@@ -1,7 +1,7 @@
 import K3Twists.Algebra.Category.ModuleCat.LinearDual.Basic
+import K3Twists.Algebra.Homology.DerivedCategory.AbelianHeart
 import K3Twists.Algebra.PoincareParity
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.AffineWeyl
-import K3Twists.Algebra.Homology.DerivedCategory.AbelianHeart
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.Braid
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.CurveWall
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.FramedMultiplier
@@ -28,8 +28,8 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.Visibility
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallMatrix
-import K3Twists.Analysis.Complex.QuadraticModulus
 import K3Twists.Analysis.Complex.Crofton
+import K3Twists.Analysis.Complex.QuadraticModulus
 import K3Twists.Analysis.Complex.Sector
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
 import K3Twists.Analysis.Convex.Birkhoff2
@@ -64,8 +64,8 @@ import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Budget
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Foundation.OneUnitOfWeight
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Foundation.PreStabilityCondition
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Foundation.StabilityCondition
-import K3Twists.CategoryTheory.Triangulated.StabilityCondition.SplitTower
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Mass
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.SplitTower
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.StabilitySpace
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Symmetry.Autoequivalence.Slicing.Artin
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Symmetry.Autoequivalence.Slicing.HarderNarasimhan
@@ -89,12 +89,12 @@ import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.S
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.Insertion
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.IntrinsicPhases
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.PhaseBounds
-import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.TStructure
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.ShortStep
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.TStructure
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.Uniqueness
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WeylTilt
 import K3Twists.CategoryTheory.Triangulated.TStructure.HeartAbelian
 import K3Twists.CategoryTheory.Triangulated.TStructure.Tilting
-import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WeylTilt
 import K3Twists.Combinatorics.DT.FramedMultiplier
 import K3Twists.Combinatorics.DT.Inversion
 import K3Twists.Combinatorics.DT.Quivers
@@ -116,11 +116,11 @@ import K3Twists.LinearAlgebra.BilinearForm.Hyperbolic
 import K3Twists.LinearAlgebra.BilinearForm.Reflection
 import K3Twists.LinearAlgebra.Dimension.ExactSequenceDefect
 import K3Twists.LinearAlgebra.Lattice.Arithmetic.TorsionFree
+import K3Twists.LinearAlgebra.Lattice.Arrangement
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Group
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Index
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.LengthZero
-import K3Twists.LinearAlgebra.Lattice.Arrangement
 import K3Twists.LinearAlgebra.Lattice.Mukai.Basic
 import K3Twists.LinearAlgebra.Lattice.Mukai.CentralCharge
 import K3Twists.LinearAlgebra.Lattice.Mukai.Eichler
@@ -137,8 +137,8 @@ import K3Twists.LinearAlgebra.Matrix.ZMatrix
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Integer
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Isotropic
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.SignCoherence
-import K3Twists.LinearAlgebra.RootSystem.Spherical
 import K3Twists.LinearAlgebra.PoincareDuality
+import K3Twists.LinearAlgebra.RootSystem.Spherical
 import K3Twists.Order.HarderNarasimhan
 import K3Twists.Order.HarderNarasimhan.Polytope
 import K3Twists.Order.IntervalClass
