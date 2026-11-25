@@ -113,6 +113,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | The Artin group of a Coxeter matrix (Mathlib has none) and its surjection onto the Coxeter group; the pure Artin group is the normal closure of the squares `σ_i²`; a representation whose generators are involutions factors through the Coxeter group and kills the pure Artin group | `CoxeterMatrix.ArtinGroup`, `toCoxeterGroup_surjective`, `pureArtinGroup_eq_normalClosure`, `exists_factor_of_sq`, `pure_mem_ker_of_sq` |
 | A braid relation of length `m` is one conjugation identity `u f(i') u⁻¹ = f(c)`, `u` the alternating word of length `m - 1`; a conjugation-equivariant `τ : X → G` turns one object identity per edge into the braid relations, for every Coxeter matrix; braid relations are closed under reversal, which gives the anti-automorphism `σ_i ↦ σ_i` | `CoxeterMatrix.braid_iff_conj`, `isBraidLiftable_of_equivariant`, `isBraidLiftable_op_iff`, `ArtinGroup.reverse` |
 | An Artin group acts on slicings through any family of exact autoequivalences whose classes satisfy its braid relations (from pairwise braid isomorphisms, or in the Seidel–Thomas form, arXiv:math/0001043, §2); two signed words with the same image in the Artin group are naturally isomorphic and carry HN filtrations to each other, with the same phases and isomorphic factors; the pure Artin group lands in the normal closure of the squared twists | `AutQuot.artinHom`, `AutQuot.isBraidLiftable_of_iso`, `AutQuot.isBraidLiftable_ofExt`, `AutQuot.nonempty_iso_of_ofSignedWord_eq`, `AutQuot.hn_of_ofSignedWord_eq`, `AutQuot.map_pureArtinGroup_le` |
+| A central element `z` (Mathlib's `CatCenter`) commuting with a letter: a faithful letter preserves annihilators, `Ann(ΦX) = Ann(X)`, and inverses of autoequivalences inherit `z`-linearity; `z` kills retracts of objects it kills; along a distinguished triangle `X → E → Y` with `Hom(X, Y[-1]) = 0`, `z_E = 0` gives `z_X = z_Y = 0`, so `z` kills every prefix and every factor of every HN filtration of `E` and both pieces of a truncation at a phase cut; `Ann(X)·Ann(Y) ⊆ Ann(E)` along any triangle. | `Functor.CommutesWithCenter`, `CatCenter.annihilator_map_eq`, `CatCenter.app_eq_zero_of_retract`, `CatCenter.app_obj₁_eq_zero`, `app_obj₃_eq_zero`, `HNFiltration.app_factor_eq_zero`, `Slicing.app_eq_zero_of_cut`, `CatCenter.annihilator_mul_le` |
 
 ## What is proved from stated inputs
 
@@ -335,6 +336,30 @@ reflections satisfy the same equivariant criterion and this identity, and `Art(A
 `W(A₂) = S₃` (table of the elliptic surface below). The configurations of Picard rank one and the
 two simples of a wall of pairing two all have `m = ∞`, with no edge identity to check.
 
+### Central annihilators along twist words
+
+`CentralAnnihilatorHypotheses` lists the inputs of the annihilator obstruction: a central element
+`z`, letters that commute with it, a seed killed by `z` and a target not killed by `z`. The field
+`letter_commutes` is the linearity criterion: for a twist at a centre `S`, `z_S = 0` and
+`Ext^{-1}(S, S) = 0` make `T_S^{±1}` commute with `z`. Its argument goes through the twist kernel,
+the cone of `S^∨ ⊠ S → 𝒪_Δ` (Seidel–Thomas, arXiv:math/0001043, §2), so it needs functorial cones;
+on objects, two completions of the same morphism of evaluation triangles need not agree. From the
+fields:
+
+| Assertion | Lean |
+|---|---|
+| For every word, every slicing and every HN filtration of the word applied to the seed, the target is not a retract (direct summand) of any factor, nor isomorphic to one | `CentralAnnihilatorHypotheses.not_retract_factor`, `not_iso_factor`, `app_word_seed` |
+
+The instance from real objects is `CentralAnnihilatorHypotheses.ofLinear`: the derived category
+of `R`-modules, `z` the multiplication by `t ∈ R`, any `R`-linear letters, a seed module killed by
+`t` and a target module not killed by `t`, in degree zero;
+[K3TwistsTest/CentralActionModel.lean](K3TwistsTest/CentralActionModel.lean) runs it with the
+shifts, `R/(t)` and `R`. The geometric instance, `Ô_{Y,y}` acting on the complexes supported on
+the exceptional locus of a contraction with the fibre twists as letters, `𝒪_x` as the seed and
+the curve with an embedded point `M_{d,x}` as the target (for `x` on a multiplicity-one component
+of the fundamental cycle and on no other curve), has no Lean instance: Mathlib has no derived
+category of coherent sheaves on a surface and no twist functors.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -525,6 +550,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
+| `Triangulated/CentralAction.lean` | central annihilators along twist words: `z`-linear letters, vanishing on HN factors and truncations, `CentralAnnihilatorHypotheses` (the linearity criterion as a field) and its instance on `D(R-Mod)` |
 
 Five of these files began as adaptations of mattrobball/BridgelandStability under Apache-2.0;
 their headers say so and [NOTICE](NOTICE), beside this README, carries the attribution and the
