@@ -3,12 +3,17 @@ name: tests
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# The owner's self-hosted runners serve only private CI copies of this repository, which set the
+# variable OWNER_CI_RUNS_ON to a runner label list such as ["self-hosted","owner-ci"]. There `lean`
+# runs on those runners and the other jobs are skipped. Here and in forks the variable is unset.
 jobs:
   lint:
+    if: ${{ !vars.OWNER_CI_RUNS_ON }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +28,7 @@ jobs:
         run: python3 .github/check_boxes.py
 
   fast-tests:
+    if: ${{ !vars.OWNER_CI_RUNS_ON }}
     runs-on: ubuntu-latest
     container: ubuntu:26.04
     timeout-minutes: 20
@@ -56,6 +62,7 @@ jobs:
 
   # The package tests that compute Ext groups: under two minutes on a desktop, 0.5 GB at most.
   slow-tests:
+    if: ${{ !vars.OWNER_CI_RUNS_ON }}
     runs-on: ubuntu-latest
     container: ubuntu:26.04
     timeout-minutes: 30
@@ -71,10 +78,20 @@ jobs:
   # The Lean proofs under src/lean: a warning (a `sorry`, say) fails the build; then the test
   # library, Batteries' linters, the generated umbrella, the axiom audit and the style check.
   lean:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Not the trust boundary: a pull request can edit this line. The boundary is that no runner is
+    # registered to this public repository, so a job asking for `self-hosted` here stays queued.
+    runs-on: ${{ vars.OWNER_CI_RUNS_ON && fromJSON(vars.OWNER_CI_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: ${{ vars.OWNER_CI_RUNS_ON && 60 || 30 }}
     steps:
+      # `clean: false` keeps src/lean/.lake between runs on a self-hosted runner; the next step does
+      # the rest of what checkout's clean would have done.
       - uses: actions/checkout@v4
+        with:
+          clean: false
+      - name: Reset the tree, keeping .lake
+        run: |
+          git reset --hard
+          git clean -ffdx -e .lake
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: src/lean
