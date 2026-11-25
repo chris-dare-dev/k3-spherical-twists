@@ -10,12 +10,11 @@ import K3Twists.CategoryTheory.Triangulated.GrothendieckGroup.Basic
 import Mathlib.Analysis.Complex.Exponential
 
 /-!
-# Owner-authored pre-stability conditions
+# Pre-stability conditions
 
 A pre-stability condition consists of a slicing and a central charge whose
 value on every nonzero semistable object lies on the positive ray determined
-by its phase. Local finiteness is deliberately deferred to the next ownership
-slice.
+by its phase. Local finiteness is added separately, in `StabilityCondition.lean`.
 -/
 
 noncomputable section
@@ -38,7 +37,7 @@ class map `v : K₀ C → Λ`.
 
 Ordinary prestability is a strict refinement of weak prestability.  The named
 parent projection makes that relationship part of the Lean type rather than a
-downstream compatibility adapter. -/
+separate conversion. -/
 structure WithClassMap (v : K₀ C →+ Λ)
     extends toWeak : WeakStabilityCondition.WeakPreStabilityCondition (C := C) v where
   /-- A nonzero semistable object's charge lies on its positive phase ray. -/

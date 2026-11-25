@@ -22,8 +22,8 @@ For pseudoprojective objects the paper asserts an isomorphism of graded vector
 spaces only.  No multiplication or truncated-polynomial algebra structure is
 part of the definition here.
 
-As throughout the repository, vanishing is stated as `∀ f, f = 0`; applying
-`IsZero` to the bare type of morphisms would make the predicate uninhabitable.
+Vanishing is stated as `∀ f, f = 0`; applying `IsZero` to the bare type of
+morphisms would make the predicate uninhabitable.
 -/
 
 universe w v u

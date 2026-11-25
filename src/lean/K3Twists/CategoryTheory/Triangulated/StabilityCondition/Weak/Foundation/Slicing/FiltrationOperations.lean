@@ -5,11 +5,10 @@ Released under the MIT license.
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.PhaseBounds
 
 /-!
-# Operations on repository-owned HN filtrations
+# Operations on HN filtrations
 
 This module supplies the elementary filtration constructors and transports
-needed by phase truncations.  It remains on the Mathlib-only side of the
-ownership boundary.
+needed by phase truncations.
 -/
 
 noncomputable section
@@ -279,7 +278,7 @@ def HNFiltration.ofTriangleThirdZero
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- Assemble an owner HN filtration across a distinguished triangle when all
+/-- Assemble an HN filtration across a distinguished triangle when all
 phases of the quotient filtration are strictly below all phases of the
 subobject filtration. The output retains any common strict lower phase bound. -/
 theorem HNFiltration.exists_of_distinguished_triangle
@@ -517,7 +516,7 @@ theorem HNFiltration.exists_of_distinguished_triangle_phase_bounds
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- Split a generic owner HN filtration at a real cutoff. The upper term has
+/-- Split a generic HN filtration at a real cutoff. The upper term has
 all phases above the cutoff, while the quotient term has all phases at most
 the cutoff. The construction also records the phase bounds needed for later
 filtration assembly. -/

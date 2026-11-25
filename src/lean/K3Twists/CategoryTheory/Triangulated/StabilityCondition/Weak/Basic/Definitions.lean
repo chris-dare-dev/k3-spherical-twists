@@ -10,7 +10,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 /-!
 # Weak stability: the weak prestability condition
 
-Definition 14.1 of arXiv:1902.08184v4 on the abstract layer: a slicing and a central charge
+Definition 14.1 of arXiv:1902.08184v4 for a pretriangulated category: a slicing and a central charge
 whose nonzero semistable objects have charge on the closed ray `ℝ_{≥0}·e^{iπφ}` at integer phases
 `φ` and on the open ray elsewhere. Ordinary prestability (`Foundation/PreStabilityCondition.lean`)
 extends this structure.
@@ -22,11 +22,10 @@ extends this structure.
 
 ## Implementation notes
 
-This file is the first part of derived-alg-geo-lean's file of the same path, which goes on to
-Definitions 14.2 and 14.3 (weak stability functions on the heart of a t-structure and the
-zero-charge subcategory). Those need the abelian stability layer of
-`CategoryTheory/Abelian/Stability/` and are not copied here; the prestability and stability
-conditions of `Foundation/` need only this structure.
+Only Definition 14.1 is formalized. Definitions 14.2 and 14.3 (weak stability functions on the
+heart of a t-structure and the zero-charge subcategory) would need stability functions on an
+abelian category; the prestability and stability conditions of `Foundation/` need only this
+structure.
 
 ## References
 

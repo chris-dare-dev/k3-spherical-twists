@@ -17,7 +17,7 @@ natural linear equivalences
 The pointwise equivalences and their two naturality equations are the fields of
 `SerreFunctorData`.  This is data by the mathematical nature of a Serre
 functor, not a `...Data` wrapper meaning that an unproved theorem has silently
-been postulated.  Geometric consumers may later supply such data explicitly.
+been postulated.
 
 ## Which notion this is: a *right* Serre functor
 
@@ -26,7 +26,7 @@ else**.  It does not ask that `S` be an equivalence, so what it defines is
 Reiten--Van den Bergh's *right* Serre functor, not the Serre functor of
 Bondal--Kapranov and Huybrechts, who additionally require `S` to be a `k`-linear
 autoequivalence.  That extra clause is `SerreCategoryData.serreIsEquivalence`
-below, and the geometric consumers take that stronger package.
+below.
 
 The weaker notion is the useful one to state theorems from, and the split is
 deliberate: everything proved here holds for a right Serre functor, and a
@@ -97,11 +97,7 @@ abbrev HasRightSerreFunctor : Prop := Nonempty (SerreFunctorData k C)
 
 This is the Bondal--Kapranov / Huybrechts notion: `SerreFunctorData` supplies
 the duality, and `serreIsEquivalence` supplies the clause that makes it a Serre
-functor rather than only a right one.
-
-This is the common categorical package used by geometric residual categories.
-The stronger `EnriquesCategoryHypotheses` adds a specified relation between the
-square of the Serre functor and a shift. -/
+functor rather than only a right one. -/
 structure SerreCategoryData where
   /-- The chosen Serre functor and duality. -/
   serre : SerreFunctorData k C

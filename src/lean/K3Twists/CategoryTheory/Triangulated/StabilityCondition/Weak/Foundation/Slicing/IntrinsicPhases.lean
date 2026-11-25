@@ -5,11 +5,11 @@ Released under the MIT license.
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.BoundaryFactors
 
 /-!
-# Intrinsic phases of owner slicings
+# Intrinsic phases of slicings
 
 The extremal phases of a nonzero object are independent of the HN filtration
 used to compute them.  This module establishes that uniqueness and defines the
-repository-owned intrinsic highest and lowest phases.
+intrinsic highest and lowest phases.
 -/
 
 noncomputable section
