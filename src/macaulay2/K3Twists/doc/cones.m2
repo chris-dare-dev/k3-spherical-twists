@@ -112,3 +112,63 @@ doc ///
             j = signedCutInclusion(R#"complex", R#"chainMap", 1, 1);
             target j === R#"complex"
 ///
+
+doc ///
+    Key
+        CurveWallMark
+        curveWallMark
+        (curveWallMark, DivisorClass, DivisorClass, List, List)
+        curveWallIdealCut
+        (curveWallIdealCut, CurveWallMark, DivisorClass, RingElement, ComplexMap)
+    Headline
+        compute the phase-one boundary of a shifted rank-one ideal at a single curve wall
+    Usage
+        W = curveWallMark(H, C, {b, den}, {x, y})
+        cut = curveWallIdealCut(W, L, n, f)
+    Description
+        Text
+            Use the geometric Tramel--Xia two-tilt heart on a smooth projective K3.
+            The nef class H contracts precisely the marked smooth rational curve C of
+            square -2. The marking specifies this geometric lift. Supply an integral H,
+            beta = b/den, and z = x + iy with exact rational coordinates. The constructor
+            checks the numerical strip and positivity and recovers k = floor(beta.C)-1.
+            Effectivity of C and the contracted locus are geometric input.
+
+            L is the divisor class of the double dual of the ideal. On an affine chart
+            trivialize L and use a degree-zero equation n for C. Supply a surjection f
+            from the free line to a finite-length sheaf Q, as complexes in degree zero.
+            The kernel is I and cone f represents I[1]. The method applies at H.L < -y.
+            The number m of divisor additions is max(0, floor((L.C-k-1)/2)).
+            The inclusion has target cone f. Its source represents L(mC)/I, the entire
+            phase-one subobject. The projection to L(mC)[1] is multiplication by n^m
+            in degree one. The maps commute with compatible changes of local frames.
+            The returned keys are "curveSteps", "tailDivisor", "inclusion" and "projection".
+        Example
+            NS = markedDivisorLattice(QQ, {"C","F"}, matrix{{-2,1},{1,0}});
+            v = (a,b) -> divisorClass(NS,{a,b});
+            W = curveWallMark(v(1,2),v(1,0),{v(-1,0),4},{2,-1});
+            S = QQ[s,n,Degrees=>{0,0}];
+            P = S^1/ideal(s,n);
+            f = map(complex P,complex S^1,hashTable {0=>map(P,S^1,{{1}})});
+            cut = curveWallIdealCut(W,v(-2,0),n,f);
+            (cut#"curveSteps",cut#"tailDivisor"#"coordinates",ann HH_0 source cut#"inclusion")
+///
+
+doc ///
+    Key
+        curveTorsionPreimage
+        (curveTorsionPreimage, Complex, RingElement)
+    Headline
+        lift the divisor-supported torsion of degree-zero homology into its complex
+    Usage
+        j = curveTorsionPreimage(E, n)
+    Description
+        Text
+            For E in nonnegative homological degrees, project E to its degree-zero
+            homology modulo the elements killed by powers of n. The degreewise kernel
+            is a homotopy fibre, so its inclusion lifts the torsion to E. Saturating the
+            relations of a presentation also works with a nonfree bottom term. Higher
+            differentials stay in the kernel, including the attaching map. To identify
+            j as an HN inclusion one needs the phase order of the high piece, the
+            torsion and the exterior quotient at the given marking.
+///

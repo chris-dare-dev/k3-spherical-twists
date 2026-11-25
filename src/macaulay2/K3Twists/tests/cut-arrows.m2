@@ -56,3 +56,52 @@ TEST ///
         assert(Y#"complex" == (cone Y#"chainMap")[1]);
         ))
 ///
+
+TEST ///
+    needsPackage "Complexes";
+    NS = markedDivisorLattice(QQ,{"C","F"},matrix{{-2,1},{1,0}});
+    v = (a,b) -> divisorClass(NS,{a,b});
+    wall = a -> curveWallMark(v(1,2),v(1,0),{v(a,0),4},{2,-1});
+    S = QQ[s,n,Degrees=>{0,0}];
+    p = ideal(s,n);
+    eval = I -> map(complex(S^1/I),complex(S^1),hashTable {0=>map(S^1/I,S^1,{{1}})});
+    -- Same evaluation on different lifts of the curve degree and in different strips.
+    scan({{-1,-2,0,2},{-3,-2,0,1},{-1,-1,0,1},{-1,0,0,0},{-1,2,0,0}}, t -> (
+        (a,b,c,m) := toSequence t;
+        f := eval(p^2);
+        cut := curveWallIdealCut(wall a,v(b,c),n,f);
+        j := cut#"inclusion";
+        g := cut#"projection";
+        assert(cut#"curveSteps" == m and cut#"tailDivisor"#"coordinates" == {b+m,c});
+        assert(target j == cone f and ann HH_0 source j == n^m*p^2);
+        assert(isComplexMorphism j and isComplexMorphism g and g_1 == n^m*id_(S^1));
+        comparison := map(target g,cone j,hashTable {1=>(id_(S^1) | g_1)});
+        assert(certifiesCutSquare(comparison,id_(target g),comparison,id_(target g)));
+        ));
+    emptyEval = map(complex(S^0),complex(S^1),0);
+    emptyCut = curveWallIdealCut(wall(-1),v(0,0),n,emptyEval);
+    assert(HH_0 source emptyCut#"inclusion" == 0);
+    offCurve = curveWallIdealCut(wall(-1),v(-2,0),1_S,eval p);
+    assert(ann HH_0 source offCurve#"inclusion" == p);
+    assert(try (wall 0; false) else true);
+    assert(try (curveWallIdealCut(wall(-1),v(0,1),n,eval p); false) else true);
+    assert(try (curveWallIdealCut(wall(-1),v(0,0),0_S,eval p); false) else true);
+    assert(try (curveWallIdealCut(wall(-1),v(0,0),n,eval ideal n); false) else true);
+    assert(try (curveWallIdealCut(wall(-1),v(0,0),n,0*(eval p)); false) else true);
+///
+
+TEST ///
+    needsPackage "Complexes";
+    S = QQ[s,n,Degrees=>{0,0}];
+    T = S^1/ideal(n^2);
+    V = S^1/ideal(s);
+    E = complex(T ++ V);
+    j = curveTorsionPreimage(E,n);
+    assert(target j === E and isComplexMorphism j);
+    assert(ann HH_0 source j == ideal(n^2) and ann HH_0 cone j == ideal(s));
+    assert(HH_0 source curveTorsionPreimage(complex V,n) == 0);
+    assert(HH_0 cone curveTorsionPreimage(complex T,n) == 0);
+    F = complex(S^1,Base=>1);
+    assert(curveTorsionPreimage(F,n) == id_F);
+    assert(try (curveTorsionPreimage(complex(S^1,Base=>-1),n); false) else true);
+///
