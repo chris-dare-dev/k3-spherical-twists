@@ -5,6 +5,7 @@ Released under the MIT license.
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.CentralCharge
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
 import K3Twists.LinearAlgebra.Lattice.Mukai.ProjectiveModel
+import K3Twists.LinearAlgebra.Lattice.Mukai.Support
 import Mathlib.Analysis.Normed.Affine.Convex
 import Mathlib.Data.Set.Finite.Lemmas
 import Mathlib.Order.Interval.Set.Infinite
@@ -37,7 +38,10 @@ lifts to its marking). This file proves the lattice and geometric part of it fro
 ## Punctures and visibility
 
 * `puncture d δ = (c/r, s/(dr))`; it lies at height `1/(dr²)` above the parabola, and `Z_p(δ)`
-  vanishes exactly at `p = puncture d δ`;
+  vanishes exactly at `p = puncture d δ`. The height is the completed square of
+  `Lattice/Mukai/Support.lean` in rank one (`re_div_rank_eq_height`): `Z_p` is a
+  `GL₂⁺(ℝ)`-translate of the normalized charge with `x = dt`, `β = 0`, `H = 1`, `a = 2db`
+  (`modelCharge_eq_normalizedCharge`), whose `δ` is `2d·height(p)`;
 * `SegmentClear d p δ`: the closed segment from `p` to the puncture of `δ` meets no other puncture;
   `RayClear d p`: the upward ray from `p`, the geodesic ray to the cusp at infinity of the point
   class, meets no puncture; `CuspClear d p m`: the segment from `p` to the finite cusp `(m, m²)`
@@ -65,7 +69,10 @@ lifts to its marking). This file proves the lattice and geometric part of it fro
 * `height_obstacle_ge`, `obstacle_rank_sq_le`: an obstacle on the segment to a root of rank `r`
   has rank `r'` with `r'² ≤ max(r², 1/(d h))`, where `h = t - b²` is the height of `p`; its
   abscissa lies between those of the two ends (`obstacle_abs_c_le`);
-* `finite_obstacles`: so only finitely many roots can obstruct a segment;
+* `finite_obstacles`: so only finitely many roots can obstruct a segment. It is the rank-one
+  shadow of the completed square: an obstacle vanishes at its puncture `q` on the segment, where
+  the completed square gives `r'² = 2/δ(q) = 1/(d·height(q))`, and concavity of the height
+  bounds `δ(q)` below along the segment;
 * `cusp_obstacle_rank_le`, `ray_obstacle_rank_sq_le`: the bounds `r' ≤ e|b - m|/(d h)` for the
   segment to a finite cusp `m = c₀/e` and `d r'² h ≤ 1` for the upward ray;
 * `rank_eq_of_slope_eq`: on a vertical sight line through a cusp `c₀/e` in lowest terms, a root
@@ -253,13 +260,101 @@ def puncture (d : ℤ) (δ : MukaiVector ℤ) : ℝ × ℝ := toModel d δ.toRea
 lemma puncture_eq (d : ℤ) (δ : MukaiVector ℤ) :
     puncture d δ = ((δ.c : ℝ) / δ.r, (δ.s : ℝ) / (d * δ.r)) := rfl
 
+/-! ### The completed square in rank one
+
+At the point `p = (b, t)` the normalized charge of `Lattice/Mukai/Support.lean` has the rank-one
+data `x = dt`, `β = 0`, `H = 1` (so `H² = 2d`) and `a = 2db`: its real part is `drt - s` and its
+imaginary part `2d(c - rb)`. The central charge `Z_p` is its `GL₂⁺(ℝ)`-translate
+(`modelCharge_eq_normalizedCharge`), and the completed square reads
+`(drt - s)/r = d·height(p) - 1/r²` on roots with `c = rb` (`re_div_rank_eq_height`), the
+transverse part `u` being zero in rank one. -/
+
+/-- The real part of the normalized charge at `p` in rank one: `drt - s`. -/
+lemma re_normalizedCharge_rankOne (d : ℝ) (p : ℝ × ℝ) (v : MukaiVector ℝ) :
+    (Mukai.normalizedCharge (Mukai.rankOneForm d) (d * p.2) 0 1 (2 * d * p.1)
+      v.toMukaiLattice).re = d * v.r * p.2 - v.s := by
+  rw [Mukai.re_normalizedCharge]
+  simp only [toMukaiLattice, map_zero, LinearMap.zero_apply, add_zero]
+  ring
+
+/-- The imaginary part of the normalized charge at `p` in rank one: `2d(c - rb)`. -/
+lemma im_normalizedCharge_rankOne (d : ℝ) (p : ℝ × ℝ) (v : MukaiVector ℝ) :
+    (Mukai.normalizedCharge (Mukai.rankOneForm d) (d * p.2) 0 1 (2 * d * p.1)
+      v.toMukaiLattice).im = 2 * d * (v.c - v.r * p.1) := by
+  rw [Mukai.im_normalizedCharge]
+  simp only [toMukaiLattice, Mukai.rankOneForm_apply]
+  ring
+
+/-- **The central charge is a `GL₂⁺(ℝ)`-translate of the normalized charge.** Above the parabola,
+`Re Z_p = Re Z' + b Im Z'` and `Im Z_p = a Im Z'` with `a = √(t - b²)`, for the normalized charge
+`Z'` at `p`. -/
+theorem modelCharge_eq_normalizedCharge (d : ℝ) {p : ℝ × ℝ} (hp : p.1 ^ 2 ≤ p.2)
+    (v : MukaiVector ℝ) :
+    modelCharge d p v =
+      ⟨(Mukai.normalizedCharge (Mukai.rankOneForm d) (d * p.2) 0 1 (2 * d * p.1)
+          v.toMukaiLattice).re + p.1 * (Mukai.normalizedCharge (Mukai.rankOneForm d) (d * p.2)
+          0 1 (2 * d * p.1) v.toMukaiLattice).im,
+        Real.sqrt (p.2 - p.1 ^ 2) * (Mukai.normalizedCharge (Mukai.rankOneForm d) (d * p.2) 0 1
+          (2 * d * p.1) v.toMukaiLattice).im⟩ := by
+  apply Complex.ext
+  · rw [re_modelCharge d hp, re_normalizedCharge_rankOne, im_normalizedCharge_rankOne]
+    ring
+  · rw [im_modelCharge, im_normalizedCharge_rankOne]
+    ring
+
+/-- **The completed square in Picard rank one.** For a real root `v = (r, c, s)` with `r ≠ 0`
+whose slope `c/r` is the abscissa `b` of `p = (b, t)`, the real part `drt - s` of the normalized
+charge at `p` satisfies `(drt - s)/r = d·height(p) - 1/r²`: the case `u = β = 0` of
+`Mukai.re_normalizedCharge_div_rank`, with `δ = 2d·height(p)`. -/
+theorem re_div_rank_eq_height {d : ℝ} (hd : d ≠ 0) {v : MukaiVector ℝ} (hv : IsRoot d v)
+    (hr : v.r ≠ 0) {p : ℝ × ℝ} (hc : v.c = v.r * p.1) :
+    (d * v.r * p.2 - v.s) / v.r = d * height p - 1 / v.r ^ 2 := by
+  have hb : ∀ y z : ℝ, Mukai.rankOneForm d y z = Mukai.rankOneForm d z y := fun y z => by
+    simp only [Mukai.rankOneForm_apply]
+    ring
+  have hH : Mukai.rankOneForm d 1 1 ≠ 0 := by
+    rw [Mukai.rankOneForm_one_one]
+    exact mul_ne_zero two_ne_zero hd
+  have hv' : Mukai.selfPairing (Mukai.rankOneForm d) v.toMukaiLattice = -2 := by
+    have h := hv
+    unfold IsRoot pairing at h
+    simp only [toMukaiLattice, Mukai.selfPairing_mk, Mukai.rankOneForm_apply]
+    linear_combination h
+  have him : Mukai.rankOneForm d 1 v.toMukaiLattice.2.1 = 2 * d * p.1 * v.toMukaiLattice.1 := by
+    simp only [toMukaiLattice, Mukai.rankOneForm_apply, hc]
+    ring
+  have hβ : Mukai.rankOneForm d 0 1 = 0 := by simp
+  have h := Mukai.re_normalizedCharge_div_rank (x := d * p.2) hb hH hβ hv' hr him
+  rw [re_normalizedCharge_rankOne] at h
+  change (d * v.r * p.2 - v.s) / v.r = _ at h
+  rw [h, Mukai.normalizedDelta, Mukai.perpPart, height]
+  simp only [toMukaiLattice, Mukai.rankOneForm_apply, map_zero, hc, smul_eq_mul, mul_one,
+    sub_zero]
+  field_simp
+  ring
+
 variable {d : ℤ}
 
-/-- The puncture of a root of nonzero rank lies at height `1/(dr²)` above the parabola. -/
+/-- The puncture of a root of nonzero rank lies at height `1/(dr²)` above the parabola. This is
+the rank-one completed square (`re_div_rank_eq_height`) at the puncture, where the charge of the
+root vanishes. -/
 lemma height_puncture (hd : 0 < d) {δ : MukaiVector ℤ} (hδ : IsRoot d δ) (hr : δ.r ≠ 0) :
     height (puncture d δ) = 1 / (d * (δ.r : ℝ) ^ 2) := by
   have hd' : (d : ℝ) ≠ 0 := by exact_mod_cast hd.ne'
-  exact height_toModel_of_isRoot hd' (isRoot_toReal.mpr hδ) (by simpa using hr)
+  have hr' : (δ.r : ℝ) ≠ 0 := by exact_mod_cast hr
+  have h := re_div_rank_eq_height hd' (isRoot_toReal.mpr hδ) (by simpa using hr)
+    (p := puncture d δ) (by simp only [toReal_r, toReal_c, puncture_eq]; field_simp)
+  simp only [toReal_r, toReal_s, puncture_eq] at h
+  have h0 : ((d : ℝ) * δ.r * (δ.s / (d * δ.r)) - δ.s) / δ.r = 0 := by
+    field_simp
+    ring
+  rw [h0] at h
+  rw [puncture_eq, eq_div_iff (mul_ne_zero hd' (pow_ne_zero 2 hr'))]
+  have h1 : (d : ℝ) * height ((δ.c : ℝ) / δ.r, (δ.s : ℝ) / (d * δ.r)) = 1 / (δ.r : ℝ) ^ 2 := by
+    linarith
+  calc height ((δ.c : ℝ) / δ.r, (δ.s : ℝ) / (d * δ.r)) * (d * (δ.r : ℝ) ^ 2)
+      = (d * height ((δ.c : ℝ) / δ.r, (δ.s : ℝ) / (d * δ.r))) * (δ.r : ℝ) ^ 2 := by ring
+    _ = 1 := by rw [h1]; field_simp
 
 lemma puncture_mem (hd : 0 < d) {δ : MukaiVector ℤ} (hδ : IsRoot d δ) (hr : δ.r ≠ 0) :
     (puncture d δ).1 ^ 2 < (puncture d δ).2 := by
@@ -634,7 +729,13 @@ lemma injOn_rank_c (d : ℤ) :
   exact mul_left_cancel₀ hr.ne' (hδ.trans hδ'.symm)
 
 /-- **The finite search.** Only finitely many roots of positive rank have their puncture on the
-segment from a point `p` above the parabola to the puncture of a root. -/
+segment from a point `p` above the parabola to the puncture of a root.
+
+This is the rank-one shadow of the completed square and the root test of
+`Lattice/Mukai/Support.lean`: the charge of an obstacle vanishes at its puncture `q`, where the
+completed square (`height_puncture`) gives `r'² = 1/(d·height(q))`, the rank bound `r² ≤ 2/δ` of
+the root test with `δ = 2d·height(q)`; concavity of the height along the segment bounds it below
+(`obstacle_rank_sq_le`), and the abscissa is bounded by the ends (`obstacle_abs_c_le`). -/
 theorem finite_obstacles (hd : 0 < d) {p : ℝ × ℝ} (hp : 0 < height p) {δ : MukaiVector ℤ}
     (hδ : IsRoot d δ) (hr : δ.r ≠ 0) :
     {δ' : MukaiVector ℤ | IsRoot d δ' ∧ 0 < δ'.r ∧
