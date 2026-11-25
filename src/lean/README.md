@@ -75,6 +75,8 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | HN filtrations concatenate along a triangle when their phases are separated; an HN filtration whose factors carry HN filtrations with separated phases refines to one with their factors, counted additively | `HNFiltration.exists_concat`, `HNFiltration.exists_refinement` |
 | Exactly one factor carrying the point survives a wall crossing from its local inputs, a finite path of walls, and a letter | `WallCrossing.carriesOnce`, `Leg.carriesOnce`, `TriEquiv.carriesOnce_map` |
 | Evaluation of one phase, in any slicing: `Hom(S, M) ≅ Hom(S, D)` for the top quotient `M → D → C` and `S` of phases at least `φ` (and dually at the bottom); a residual of phases at most `φ` with no maps from `P(φ)` has phases below `φ`; the fibre of `D → D_final` is `M → D`; one evaluation step keeps the lower tail `C` | `Slicing.comp_bijective_of_top`, `Slicing.comp_bijective_of_bottom`, `Slicing.ltProp_of_leProp_of_hom_eq_zero`, `Slicing.exists_iso_top`, `Slicing.exists_evaluation_step` |
+| A coreflection `ε : D ⟶ R` into a class `P` (`D` in `P`, and every map from an object of `P` to `R` factors uniquely through `ε`) is the partial right adjoint of the inclusion at `R`, unique up to isomorphism over `R`. In an abelian category it is a monomorphism if `P` is closed under subobjects or under quotients, and then the largest subobject in `P`; it exists if `P` contains zero, is closed under quotients and extensions and `R` is Noetherian, or if `C` is well-powered with coproducts and `P` is closed under quotients and coproducts. `t(R)` is the supremum of the images of the maps from a generator; `Ext¹(-, K₀)` is left exact on `P` when `t(K₀) = 0`; a test class and a potential that drops on kernels give a torsion pair `(⊥F, F)` (Dickson, Trans. Amer. Math. Soc. 121 (1966)) | `ObjectProperty.IsCoreflection`, `rightAdjointObjIsDefined_ι_iff`, `isLeftAdjoint_ι_iff`, `IsCoreflection.isoOfIsCoreflection`, `IsCoreflection.mono_of_subobjects`, `IsCoreflection.mono_of_quotients`, `IsCoreflection.isGreatest`, `exists_isGreatest_subobject`, `isLeftAdjoint_ι_of_isNoetherianObject`, `isGreatest_sSup`, `isLUB_imageSubobject_of_generator`, `mk₀_comp_injective_of_rightOrthogonal`, `torsionTheory_of_potential` |
+| In a slicing, the top quotient `M → D` of the evaluation lemma is the coreflection of `D` into the objects of phases at least `t`, so it is unique over `D`; every object has a coreflection into the objects of phases above `t`, so their inclusion is a left adjoint | `Slicing.isCoreflection_geProp_of_top`, `Slicing.isoOfTop`, `Slicing.exists_isCoreflection_gtProp`, `Slicing.isLeftAdjoint_ι_gtProp` |
 
 ## What is proved from stated inputs
 
@@ -238,6 +240,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two and its two HN filtrations | `AlgebraicGeometry.K3` |
 | `CategoryTheory/Abelian/Uniserial.lean` | the subobjects of nonsplit extensions of simple objects | `CategoryTheory` |
 | `CategoryTheory/Abelian/TorsionTheory/Saturation.lean` | the interval class on the subobjects of an object of a class closed under quotients and extensions; its radical and saturation | `CategoryTheory.ObjectProperty` |
+| `CategoryTheory/ObjectProperty/Coreflection.lean` | coreflections into a class of objects; the partial right adjoint of its inclusion | `CategoryTheory.ObjectProperty` |
+| `CategoryTheory/Abelian/TorsionTheory/Radical.lean` | the radical as a coreflection: monic counit, existence on Noetherian objects or from coproducts, generators, `Ext¹`, a torsion pair from a potential | `CategoryTheory.ObjectProperty` |
 | `RingTheory/Polynomial/Basic.lean` | multiplication by `X` enlarges every nonzero finite-dimensional subspace of `K[X]` | `Polynomial` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
@@ -294,6 +298,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/HarderNarasimhan.lean` | HN filtrations along an exact autoequivalence |
 | `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall, a path of walls and a letter |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
+| `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
 
 Five of these files began as adaptations of mattrobball/BridgelandStability under Apache-2.0;
 their headers say so and [NOTICE](NOTICE), beside this README, carries the attribution and the
