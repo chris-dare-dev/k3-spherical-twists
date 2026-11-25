@@ -58,6 +58,10 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | `dim Ext¹(X, Y) = dim Hom(X, Y) + dim Hom(Y, X) - (x, y)`, `(x, y) = 2x₀y₀ + 2x₁y₁ - g(x₀y₁ + x₁y₀)` (Crawley-Boevey, Amer. J. Math. 122 (2000), Lemma 1), from the duality of the two differentials under the trace pairing; Mukai's inequality with its defect, `e(N) = e(A) + e(B) + 2 dim Ext¹(B, A)/(End(A)ξ + ξ End(B))` when `Hom(A, B) = 0` (Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5), so both ends of a rigid extension are rigid; the rigid example has `Ext¹ = 0` | `finrank_Ext1`, `dualMap_d₀₁_comp_tracePairing₁`, `finrank_Ext1_extension`, `finrank_Ext1_add_le`, `rigid_of_rigid_extension`, `subsingleton_Ext1_rigidRep` |
 | Fekete with a constant: the rate exists, each block certifies `ρ ≤ (K H_k)^{1/k}`, and the bounds converge | `exists_rate_of_submul`, `pow_rate_le` |
 | Transfer of rates between comparable sequences, uniformly in parameters; `o(n)` errors; polynomial growth has rate one; the rate per letter of a periodic word | `tendsto_rpow_inv_of_bounds`, `tendstoUniformly_rpow_inv_of_bounds`, `tendsto_log_div_of_bound`, `tendsto_log_div_zero_of_poly`, `tendsto_log_div_of_period` |
+| Fekete's lemma with a gap and no monotonicity: `ℓ(m) + ℓ(n) ≤ ℓ(m + n + D)` with bounded certificates gives `ℓ(N)/N → sup_{q ≥ 1} ℓ(q)/(q + D)` (the supremum must start at `q = 1`); lower certificates for every `q + D > 0`, upper certificates from a block bound; for positive `P` with `c P_m · c P_n ≤ c P_{m+n+D}` and `P_{n+q} ≤ K(q) P_n`, `log(c P_q)/(q + D) ≤ lim log P_N / N ≤ log K(q)/q`; `⌊N/p⌋/N → 1/p` | `tendsto_div_of_superadd_gap`, `le_of_superadd_gap`, `le_div_of_block`, `fekete_sandwich`, `tendsto_natDiv_div` |
+| Padding with a one-sided step bound: `x_n ≥ c > 0` and `x_n ≤ L x_{n+1}` give `x` the rate of an attained running maximum; with `x_n ≤ K A_n` and `A_n ≤ K(n + 1) B_n` the exact-length rate is the rate of `A` | `tendsto_log_div_of_runningMax`, `tendsto_log_exact_of_coupled` |
+| `m^n 2^{⌈√n⌉}` is submultiplicative with rate `m`, loses at least `2^{(2 - √2)√k - 1}` under doubling, and has no polynomial envelope `B(1 + n)^s m^n` | `sqrtWitness_add_le`, `tendsto_sqrtWitness`, `sqrtWitness_doubling`, `not_exists_poly_envelope_sqrtWitness` |
+| Fork words `W_0 = H`, `W_i = ⁅W_{i-1}, L_i⁆` with commuting `L_i` and `H L_i H = L_i H L_i` are conjugate to `H L_i⁻¹` by `L_1⁻¹ ⋯ L_i⁻¹` | `forkWord_succ_eq_conj` |
 | The algebra of Lemma A.1: the slope estimate `V(E) ≤ aR + d^{-1/2}√(Rm)` and the absorption of the square root | `piece_bound`, `slope_bound_of_le`, `fixedTest_of_generic` |
 | The Koszul bound `7^s` and the constant `K = 5(2 + 36ν)(2 + 25ν)⁸7⁴⁶` | `koszul_bound`, `diag_constant` |
 | A standard word has `H_n = 18 + 12ν + 9du²n²` | `standard_H_formula` |
@@ -226,7 +230,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 
 | Module under `K3Twists/` | Job | Namespace |
 |---|---|---|
-| `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences | `Real` |
+| `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences: Fekete with a constant and with a gap, padding, a submultiplicative sequence without polynomial envelope | `Real` |
+| `GroupTheory/Commutator/ForkWord.lean` | fork words are conjugate to a two-letter period | root |
 | `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3: pairing, roots, reflections, punctures | `MukaiVector` |
 | `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai extension `ℤ ⊕ N ⊕ ℤ` of a bilinear lattice and its reflections, copied from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
