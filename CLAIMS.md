@@ -76,7 +76,7 @@ Each of the first five rows is one dependent batch: a task builds the marked qua
 
 ## What the tasks do not cover
 
-- **Stability.** The tasks compute sheaf cohomology and Ext groups. Nothing here tests Bridgeland stability, which most statements of the study behind this repository are about.
+- **Stability.** The tasks compute sheaf cohomology and Ext groups. Nothing here tests Bridgeland stability, which most statements of the study behind this repository are about. The point-cone and inverse-cancellation records above provide starting examples for checking the attaching map of a Harder–Narasimhan cut. [Arrow-level coverage tracker](https://github.com/chris-dare-dev/k3-spherical-twists/issues/99)
 - **Other fields, other seeds.** Every task of the batch files uses the field with 32003 elements and seed 1. The Picard rank of the surfaces is not determined; the numbers compared do not depend on it.
 - **The dimensions of Ext for a pair.** Only the Euler characteristic of a pair is predicted.
 - **Pairs of large rank.** The time of a pair grows quickly with the ranks of the two sheaves; `data/batches/ext-table.toml` gives a pair between a quarter of an hour and four hours, by the rank of the sheaf Hom(E, F), and a pair that needs more ends `timeout`. The table of pairs says how many of its tasks have a record.
