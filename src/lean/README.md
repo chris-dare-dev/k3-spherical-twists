@@ -113,6 +113,8 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | The Artin group of a Coxeter matrix (Mathlib has none) and its surjection onto the Coxeter group; the pure Artin group is the normal closure of the squares `σ_i²`; a representation whose generators are involutions factors through the Coxeter group and kills the pure Artin group | `CoxeterMatrix.ArtinGroup`, `toCoxeterGroup_surjective`, `pureArtinGroup_eq_normalClosure`, `exists_factor_of_sq`, `pure_mem_ker_of_sq` |
 | A braid relation of length `m` is one conjugation identity `u f(i') u⁻¹ = f(c)`, `u` the alternating word of length `m - 1`; a conjugation-equivariant `τ : X → G` turns one object identity per edge into the braid relations, for every Coxeter matrix; braid relations are closed under reversal, which gives the anti-automorphism `σ_i ↦ σ_i` | `CoxeterMatrix.braid_iff_conj`, `isBraidLiftable_of_equivariant`, `isBraidLiftable_op_iff`, `ArtinGroup.reverse` |
 | An Artin group acts on slicings through any family of exact autoequivalences whose classes satisfy its braid relations (from pairwise braid isomorphisms, or in the Seidel–Thomas form, arXiv:math/0001043, §2); two signed words with the same image in the Artin group are naturally isomorphic and carry HN filtrations to each other, with the same phases and isomorphic factors; the pure Artin group lands in the normal closure of the squared twists | `AutQuot.artinHom`, `AutQuot.isBraidLiftable_of_iso`, `AutQuot.isBraidLiftable_ofExt`, `AutQuot.nonempty_iso_of_ofSignedWord_eq`, `AutQuot.hn_of_ofSignedWord_eq`, `AutQuot.map_pureArtinGroup_le` |
+| Vectors of norm `-2` with pairings `e i j ∈ ℕ` under a symmetric form give the reflection representation `W(ofExt e) →* GL(Λ)` (for `Λ = ℤ^B` the geometric representation of the Weyl group of the generalized Cartan matrix `2 - e`), with `ρ_s ρ_t ρ_s = ρ_{ρ_s t}`; root-positive words (every prefix root a nonempty sum of simple roots); root-positivity transfers along any map matching the Gram matrices, and on `ℤ^B` it is a finite check. Tits' positivity theorem (reduced iff root-positive) is stated, not proved | `CoxeterMatrix.reflectionRep`, `BilinearForm.reflect_reflect_reflect`, `BilinearForm.IsRootPositive`, `BilinearForm.IsRootPositive.of_rootForm`, `CoxeterMatrix.isRootPositive_rootForm_iff`, `CoxeterMatrix.CoxeterPositivity` |
+| A finite set mapped into itself by each `ρ(s_i)` except at one point bounds lengths from below: the number of its elements `ρ(w)` moves out is at most `ℓ(w)`. The word `[0] ++ [1, 0] ++ ⋯ ++ [n-1, …, 0]` has length `n(n+1)/2`; for `n ≤ 6` it is a reduced, root-positive word of `w₀` in `W(A_n)` with `w₀(α_i) = -α_{n-1-i}` (by computation) | `CoxeterSystem.inversionCount_le_length`, `CoxeterSystem.isReduced_of_length_le_inversionCount`, `CoxeterMatrix.longestWordA`, `CoxeterMatrix.isReduced_longestWordA`, `CoxeterMatrix.isRootPositive_longestWordA`, `CoxeterMatrix.stdWord_longestWordA` |
 
 ## What is proved from stated inputs
 
@@ -335,6 +337,37 @@ reflections satisfy the same equivariant criterion and this identity, and `Art(A
 `W(A₂) = S₃` (table of the elliptic surface below). The configurations of Picard rank one and the
 two simples of a wall of pairing two all have `m = ∞`, with no edge identity to check.
 
+### Weyl-indexed galleries of tilts
+
+`WeylGalleryHypotheses` takes a t-structure with heart `A`, a `TwistConjugation.Configuration`
+of spherical objects `S_i` that are simple in `A`, and:
+- the sign of the class: a class map, additive on triangles, on which `T_i` acts by the
+  reflection in `cl(S_i)`, and a cone containing the classes of the nonzero objects of `A` and no
+  pair `v, -v`;
+- the simple tilt `T_i A = ⟨S_i^⊥ ∩ A, S_i[-1]⟩` (the `2`-Calabi–Yau case, `T_S S ≅ S[-1]`);
+- tilt composition: tilting the lower tilt at a torsion class `T` at a simple object `X` of
+  `T^⊥ ∩ A` is the lower tilt at `Filt(T ∪ {X})` (hearts between `A[-1]` and `A` are tilts of
+  `A`: Happel–Reiten–Smalø; Woolf, arXiv:0909.0552);
+- `C` Serre in `A`: objects of `A` in the thick subcategory of the `S_i` are filtered by them.
+
+Tilts are properties of objects (`WeylGallery.lowerTilt`), with no claim that they are hearts.
+For `F_ω = T_{i₁} ⋯ T_{i_k}` and `T_ω = A ∩ F_ω A[1]`, by one induction on root-positive words:
+
+| Statement | Lean |
+|---|---|
+| `T_ω` is a torsion class of `A` and `F_ω A = ⟨T_ω^⊥ ∩ A, T_ω[-1]⟩` | `WeylGalleryHypotheses.isTorsionClass_torsionOf`, `WeylGalleryHypotheses.heartOf_eq_lowerTilt` |
+| If `ω i` is root-positive, `F_ω S_i` is simple in `F_ω A`, of class `ω(α_i) > 0`, lies in `A ∩ T_ω^⊥`, and `T_{ω i} = Filt(T_ω ∪ {F_ω S_i})` | `WeylGalleryHypotheses.F_obj_mem`, `WeylGalleryHypotheses.torsionOf_append_singleton` |
+| With linearly independent classes: `T_i S_i ≅ S_i[-1]`, and `F_{u i} S_i ≅ S_j[-1]` when `u(α_i) = α_j`; at the reduced words of `w₀` ending in each letter, `F_{w₀} S_i ≅ S_{π i}[-1]` | `WeylGalleryHypotheses.twist_obj_self`, `WeylGalleryHypotheses.F_obj_iso_shift`, `WeylGalleryHypotheses.longest_obj_iso_shift` |
+| The Garside bound: a concatenation of `m` root-positive words sends `A` into the window `[A[-m], A]`, so `A[-(k+m)] ≤ Δ^k x₁ ⋯ x_m A ≤ A` | `WeylGalleryHypotheses.heartOf_flatten_le_window` |
+| The left edge as the dual theorem: `A` is the lower tilt of `F_ω⁻¹ A` at `F_ω⁻¹ T_ω` | `WeylGalleryHypotheses.heart_eq_lowerTilt_image_symm` |
+| Words with the same Artin image give the same heart; each step is the twist along the new simple object, `τ(F_ω S_i) = [F_{ω i}] [F_ω]⁻¹` | `WeylGalleryHypotheses.heartOf_eq_of_eq`, `WeylGalleryHypotheses.twist_F_obj`, `WeylGalleryHypotheses.image_heartOf_of_twist` |
+
+[K3TwistsTest/WeylGalleryModel.lean](K3TwistsTest/WeylGalleryModel.lean) gives a consistency model
+with no simple objects and checks that non-reduced words are not root-positive. No instance comes
+from geometry: the twists, the simple tilt and tilt composition need the derived category of a K3
+surface with twist functors and tilts of its hearts. The class-level inputs are instantiated on
+the `A₂` configuration `𝒪_X[1]`, `𝒪_C` of an elliptic K3 surface (table below).
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -378,6 +411,7 @@ On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕
 | Near the wall phases follow `B`-fractions: `j/(2j + 1)` (for `𝒪_C(j)`) increases below `1/2`, `j/(2j - 1)` (for `T_A 𝒪_C(j)`) decreases above it, and a subobject in the section-evaluation argument has fraction at most `j/(2j + 1)` | `cross_restrictedCharge`, `curveSheaf_fraction_strictMono`, `twistCurveSheaf_fraction`, `subobject_fraction_le` |
 | `exp h_cat(T_{𝒪_C} T_{𝒪_C(2)}) = (4² - 2 + √(4⁴ - 4·4²))/2 = 7 + 4√3` (Barbacovi–Kim, arXiv:2107.06079), while points off `C` are fixed | `barbacoviKim_four`, `barbacoviKim_four_root` |
 | `v(𝒪_X[1])` and `v(𝒪_C)` pair to `1`, an `A₂` configuration: reflections in roots are conjugation-equivariant under isometries, `ρ_{v(𝒪_C)} ρ_{v(𝒪_X)} v(𝒪_C) = v(𝒪_X[1])` (the class of `T_{𝒪_C} T_{𝒪_X} 𝒪_C ≅ 𝒪_X[1]`), so `Art(A₂)` acts on the Mukai lattice, through `W(A₂)`, and every pure braid acts trivially | `reflection_smul`, `a2_edge`, `a2Hom`, `exists_factor_a2Hom`, `a2Hom_eq_one_of_mem_pureArtinGroup` |
+| The classes `v(𝒪_X[1])`, `v(𝒪_C)` have Gram matrix `A₂` in the Mukai sign and are linearly independent; the reduced words `[0, 1, 0]`, `[1, 0, 1]` of `w₀` are root-positive on them (prefix roots `α₀, α₀ + α₁, α₁`), equal in `Art(A₂)`, and `w₀(α_i) = -α_{1-i}`: the class-level inputs of `F_{w₀} 𝒪_X[1] ≅ 𝒪_C[-1]` and `F_{w₀} 𝒪_C ≅ 𝒪_X` | `mukaiForm_a2Class`, `linearIndependent_a2`, `isRootPositive_a2_longest`, `prefixRoots_a2_longest`, `ofSignedWord_a2_longest`, `reflectWord_a2_longest`, `a2_longest_inputs` |
 
 ## The framed multiplier
 
@@ -484,6 +518,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/MukaiCharge.lean` | the charge of the curve wall as a Mukai charge and a `GL₂⁺(ℝ)`-translate of an exponential charge | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/Braid.lean` | the `A₂` configuration `𝒪_X[1]`, `𝒪_C` on classes: the Artin group acting on the Mukai lattice through the Coxeter group | same |
 | `GroupTheory/Coxeter/ArtinGroup.lean` | the Artin group of a Coxeter matrix, the pure Artin group, braid relations from one conjugation identity per edge | `CoxeterMatrix` |
+| `GroupTheory/Coxeter/GeometricRepresentation.lean` | the reflection representation of `W(ofExt e)`, root-positive words, lengths from a finite root set, explicit longest words of `A_n` | `CoxeterMatrix`, `BilinearForm`, `CoxeterSystem` |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/WeylGallery.lean` | the `A₂` Weyl gallery on classes: root-positive reduced words of `w₀` on `v(𝒪_X[1])`, `v(𝒪_C)` | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/FramedMultiplier.lean` | the framed multiplier of the curve wall and of a point, from the classes of the lattice | same |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
@@ -525,6 +561,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
+| `Triangulated/StabilityCondition/WeylTilt.lean` | lower tilts, simple objects and torsion classes as properties of objects; `WeylGalleryHypotheses` and the Weyl-gallery induction on root-positive words |
 
 Five of these files began as adaptations of mattrobball/BridgelandStability under Apache-2.0;
 their headers say so and [NOTICE](NOTICE), beside this README, carries the attribution and the
