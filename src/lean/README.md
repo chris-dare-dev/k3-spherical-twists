@@ -239,6 +239,36 @@ From these, Lean proves the induction on the length of the word:
 with a nonzero semistable object (the empty word, no walls); it shows the fields are consistent
 relative to such a slicing, which Mathlib cannot yet construct.
 
+### The split tower theorem
+
+`SplitTowerHypotheses` states the tower theorem as the Mukai budget plus transport of a carrier,
+step by step. The objects and letters are those of `TowerHypotheses`; the wall inputs are replaced
+by a Mukai budget, four slice fields linking the carrier predicates to `e` for semistable objects
+(no budget `1`; rigid implies spherical, Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.6; a carrier is
+not spherical; a semistable object with `e = 2` is a carrier or spherical), and paths of transport
+steps (`CarrierStep`, `CarrierPath`). A step carries, for each phase, a matrix standing for the Gram
+matrix of the stable spheres of that phase, and the field that a lost carrier forces an isotropic
+sum with natural coefficients in one phase; the anisotropy of every step is a field. **Transport is
+assumed per step**: with free Gram matrices an anisotropic step exists exactly when carriers are
+transported. What drops out is the octahedral proof of transport: `IsTriangulated`, wall slicings,
+outgoing flags, the sphericity of letters and uniqueness of HN filtrations. The slice fields are
+used, not needed: they hold for the budget predicates `e = 2`, `e = 0`. `TowerHypotheses` and its
+theorem are kept as they are.
+
+| Assertion | Lean |
+|---|---|
+| For `e(E) = 2`, at every slicing every HN filtration of `E` has at most one carrier factor and its other factors spherical; then carrying the point once is existence of a carrier | `SliceFields.atMostOnce`, `SliceFields.carriesOnce_iff_hasCarrier` |
+| An anisotropic step or path keeps a carrier; an anisotropic step exists iff carriers are transported | `CarrierStep.keep`, `CarrierPath.keep`, `CarrierStep.exists_anisotropic_iff` |
+| **The split tower theorem**: at the target exactly one HN factor of `W 𝒪_x` carries the point, once, and every other factor is spherical; with uniqueness of HN filtrations, the same for every HN filtration with nonzero factors | `SplitTowerHypotheses.tower`, `SplitTowerHypotheses.tower_forall` |
+| At a slicing where `E` carries the point once, the outgoing factors of a non-carrier factor are rigid, spherical and not carriers (not their nonzero-ness, nor the existence and ordering of outgoing flags); at most once holds at a wall with no incoming hypothesis | `outgoing_noncarrier`, `wall_atMostOnce` |
+| `TowerHypotheses`, with a budget, the slice fields, `e(𝒪_x) = 2` and `e` invariant under the letters, give `SplitTowerHypotheses` with empty Gram matrices (the old `final_target` becomes the last step), and the two theorems agree | `SplitTowerHypotheses.ofTowerHypotheses`, `SplitTowerHypotheses.tower_ofTowerHypotheses` |
+
+[K3TwistsTest/SplitTowerModel.lean](K3TwistsTest/SplitTowerModel.lean) builds an instance with
+`e(𝒪_x) = 2` from a slicing with a nonzero semistable object and a budget of value `2` on it with no
+semistable object of budget `1` (on a 2-Calabi–Yau category, from Riemann–Roch for a simple object
+of isotropic class), and keeps the vacuity statements as tests: a step with free Gram matrices
+exists between any two slicings.
+
 ### Rigid wall objects from their incoming flag
 
 `OpenOrbitHypotheses` is the one step of the uniqueness in the draft's proposition on rigid wall
@@ -436,6 +466,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `LinearAlgebra/Lattice/Mukai/Eichler.lean` | the Mukai quadratic form, `⊗𝒪(D)` as an Eichler transvection, the wall of a `(-2)`-curve | `Mukai` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
 | `LinearAlgebra/Matrix/ZMatrix.lean`, `Matrix/ZMatrix/Integer.lean`, `Matrix/ZMatrix/Isotropic.lean` | symmetric Z-matrices: the ground-state identity, the M-matrix criterion, the affine kernel, integer certificates, isotropic sums of spheres, the wall matrix of a family and the Tits identity | `Matrix`, `LinearMap.BilinForm` |
+| `LinearAlgebra/Lattice/Mukai/SphericalConfiguration.lean` | isotropic sums with natural coefficients of a Gram matrix of spheres, for any index type; independence of sign and indexing; anisotropy is not closed under orthogonal sums | `Matrix` |
 | `LinearAlgebra/Matrix/Cartan/Basic.lean` | finite-type Cartan matrices from certificates; `E₆`, `E₇`, `E₈`, `Ẽ₈` | `Matrix`, `CartanMatrix` |
 | `Combinatorics/Quiver/Kronecker/CartanMatrix.lean` | the wall matrix `[[2, -g], [-g, 2]]` of two spheres and its trichotomy | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallMatrix.lean` | the wall matrix of two spherical simples in Picard rank one | `AlgebraicGeometry.K3.PicardRankOne` |
@@ -522,6 +553,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall and a letter |
 | `Triangulated/StabilityCondition/Budget.lean` | `MukaiBudget` (`e : C → ℕ`, invariant under isomorphism, Mukai's lemma: Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5) and the Mukai budget lemma along Hom-orthogonal towers and HN filtrations |
 | `Triangulated/StabilityCondition/Tower.lean` | carrying the point once as at most once plus existence; a path of walls (`Leg`); `TowerHypotheses` and the tower theorem, also through the budget |
+| `Triangulated/StabilityCondition/SplitTower.lean` | the slice fields, transport steps and paths, `SplitTowerHypotheses` and the split tower theorem; the old inputs give the new ones |
 | `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
