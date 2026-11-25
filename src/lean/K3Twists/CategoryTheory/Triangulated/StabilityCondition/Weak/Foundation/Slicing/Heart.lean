@@ -7,6 +7,7 @@ import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Foundation.PreSta
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.IntrinsicPhases
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.TStructure
 import K3Twists.CategoryTheory.Triangulated.TStructure.HeartAbelian
+import K3Twists.CategoryTheory.Triangulated.TStructure.Tilting
 
 /-!
 # The heart of a slicing as an abelian category
@@ -35,6 +36,17 @@ interval `P((a, a+1))` (`Slicing.heartFree`).
   (`Slicing.weight_eq_zero_iff_of_heartProp`).
 * `PreStabilityCondition.WithClassMap.isSerreClass_heartTop`: for a prestability condition the
   charge is `w = Im(e^{-iπa} Z)`.
+* `PreStabilityCondition.WithClassMap.charge_mem_of_heartProp`: the central charge is a stability
+  function on `P((0, 1])`.
+* `PreStabilityCondition.WithClassMap.heart_eq_of_le`: a heart in degrees `[0, 1]` of
+  `P((0, 1])` (in hypothesis form: `P(> 0) ⊆ D^{≤0} ⊆ P(> -1)` for its t-structure) on which the
+  central charge is a stability function is `P((0, 1])`. The proof goes through the converse of
+  the tilting theorem (`TStructure.exists_distTriang_heart_of_le`).
+* `PreStabilityCondition.WithClassMap.heartProp_eq_of_im_eq`: two prestability conditions with the
+  same `Im Z`, whose hearts are related as above, and with `Re Z < 0` on the phase-one objects of
+  the second, have the same heart `P((0, 1])` and the same phase-one objects in it. This is the
+  algebraic step of the constancy of the heart along a path at fixed `Im Z`; the topological step
+  (that nearby stability conditions satisfy the hypotheses) is not proved here.
 
 ## Implementation notes
 
@@ -260,6 +272,23 @@ theorem Slicing.torsionTheory_heartTop (s : Slicing C) (a : ℝ) :
     ⟨X₃, s.intervalProp_le_heartProp C a X₃ hX₃⟩, ObjectProperty.homMk f,
     ObjectProperty.homMk g, _, HeartCat.shortExact_of_distTriang (δ := h) hT, hX₁, hX₃⟩
 
+/-! ### The t-structures of one slicing at nearby base points -/
+
+/-- For `b ≤ a + 1`, `P(> a + 1) ⊆ P(> b)`: the aisle of the t-structure at `a` shifted by one lies
+in the aisle at `b`. -/
+theorem Slicing.toTStructure_le_neg_one_le (s : Slicing C) {a b : ℝ} (h : b ≤ a + 1) :
+    (s.toTStructure C a).le (-1) ≤ (s.toTStructure C b).le 0 := by
+  simp only [Slicing.toTStructure_le]
+  exact s.gtProp_anti C (by push_cast; linarith)
+
+/-- For `a ≤ b`, `P(> b) ⊆ P(> a)`. With `Slicing.toTStructure_le_neg_one_le`, the heart
+`P((b, b+1])` lies in degrees `[-1, 0]` of `P((a, a+1])` for `a ≤ b ≤ a + 1`, so the converse of
+the tilting theorem (`TStructure.mem_heart_iff_of_le`) presents it as a tilt. -/
+theorem Slicing.toTStructure_le_le (s : Slicing C) {a b : ℝ} (h : a ≤ b) :
+    (s.toTStructure C b).le 0 ≤ (s.toTStructure C a).le 0 := by
+  simp only [Slicing.toTStructure_le]
+  exact s.gtProp_anti C (by push_cast; linarith)
+
 /-! ### The Serre property, given a charge -/
 
 section Charge
@@ -406,6 +435,144 @@ theorem heartTop_hereditary (σ : WithClassMap C v) (a : ℝ) :
     (σ.slicing.heartTop C a).IsClosedUnderSubobjects :=
   have := σ.isSerreClass_heartTop a
   inferInstance
+
+/-! ### Hearts in degrees `[0, 1]` -/
+
+omit [IsTriangulated C] in
+theorem heartWeight_zero_apply (σ : WithClassMap C v) (E : C) :
+    σ.heartWeight 0 (K₀.of C E) = (σ.charge E).im := by
+  simp [heartWeight, charge, classOf]
+
+omit [IsTriangulated C] in
+/-- The central charge of a prestability condition is a stability function on `P((0, 1])`: a
+nonzero object has `Im Z > 0`, or `Im Z = 0` and `Re Z < 0` (then it lies in `P(1)`). -/
+theorem charge_mem_of_heartProp (σ : WithClassMap C v) {E : C}
+    (hE : σ.slicing.heartProp C 0 E) (hZ : ¬IsZero E) :
+    0 < (σ.charge E).im ∨ ((σ.charge E).im = 0 ∧ (σ.charge E).re < 0) := by
+  have hpos := fun φ (E : C) (h₁ : 0 < φ) (h₂ : φ < 0 + 1) hP hE =>
+    σ.heartWeight_pos (a := 0) (φ := φ) (E := E) h₁ h₂ hP hE
+  have htop := fun (E : C) (hP : σ.slicing.P (0 + 1) E) => σ.heartWeight_eq_zero_of_top hP
+  have hnonneg := σ.slicing.weight_nonneg_of_heartProp _ hpos htop hE
+  rw [heartWeight_zero_apply] at hnonneg
+  rcases hnonneg.lt_or_eq with hlt | heq
+  · exact Or.inl hlt
+  refine Or.inr ⟨heq.symm, ?_⟩
+  have hP : σ.slicing.P (0 + 1) E := (σ.slicing.weight_eq_zero_iff_of_heartProp _ hpos htop hE).1
+    (by rw [heartWeight_zero_apply, ← heq])
+  obtain ⟨m, hm, hZE⟩ := σ.compat _ E hP hZ
+  have : Complex.exp (((Real.pi * (0 + 1) : ℝ) : ℂ) * Complex.I) = -1 := by
+    simp
+  rw [hZE, this]
+  simp [hm]
+
+/-- **A heart in degrees `[0, 1]` on which `Z` is a stability function is `P((0, 1])`.** Let `t'`
+be a t-structure with `P(> 0) ⊆ D_{t'}^{≤ 0} ⊆ P(> -1)`, i.e. lying in degrees `[0, 1]` of the
+t-structure of `σ` at `0`, and suppose the central charge of `σ` is a stability function on the
+heart of `t'`. Then that heart is `P((0, 1])`. The proof is the converse of the tilting theorem:
+`P((0, 1])` is the tilt of the heart `A'` of `t'` at a torsion pair whose torsion-free part `F`
+satisfies `F ⊆ A'` and `F⟦1⟧ ⊆ P((0, 1])`, so `Z` and `-Z` are both stability functions on `F`,
+which forces `F = 0`. -/
+theorem heart_eq_of_le (σ : WithClassMap C v) (t' : TStructure C)
+    (h₁ : (σ.slicing.toTStructure C 0).le 0 ≤ t'.le 0)
+    (h₂ : t'.le 0 ≤ (σ.slicing.toTStructure C 0).le 1)
+    (hZ : ∀ E, t'.heart E → ¬IsZero E →
+      0 < (σ.charge E).im ∨ ((σ.charge E).im = 0 ∧ (σ.charge E).re < 0)) :
+    t'.heart = σ.slicing.heartProp C 0 := by
+  set t := σ.slicing.toTStructure C 0 with ht
+  have h₁' : t'.le (-1) ≤ t.le 0 := by simpa using TStructure.le_add_le_add h₂ (-1)
+  have hge : t'.ge 0 ≤ t.ge 0 := by
+    simpa using TStructure.ge_le_ge_of_le (TStructure.le_add_le_add h₁ (-1))
+  -- the torsion-free part of the tilt is zero
+  have key : ∀ F, t'.heart F → t.ge 1 F → IsZero F := by
+    intro F hF hF₁
+    by_contra hFZ
+    have hFle : t.IsLE F 1 := ⟨h₂ _ hF.1⟩
+    have hFge : t.IsGE F 1 := ⟨hF₁⟩
+    have hle : t.IsLE (F⟦(1 : ℤ)⟧) 0 := t.isLE_shift F 1 1 0
+    have hge' : t.IsGE (F⟦(1 : ℤ)⟧) 0 := t.isGE_shift F 1 1 0
+    have hheart : σ.slicing.heartProp C 0 (F⟦(1 : ℤ)⟧) :=
+      (σ.slicing.toTStructure_mem_heart_iff C 0 _).1 ⟨hle.le, hge'.ge⟩
+    have hFZ' : ¬IsZero (F⟦(1 : ℤ)⟧) := fun h => hFZ (by
+      have := (shiftFunctor C (-1 : ℤ)).map_isZero h
+      exact this.of_iso ((shiftFunctorCompIsoId C (1 : ℤ) (-1) (by omega)).app F).symm)
+    have hneg : σ.charge (F⟦(1 : ℤ)⟧) = -σ.charge F := by
+      simp [charge, classOf_shift_one]
+    have h₁F := hZ F hF hFZ
+    have h₂F := σ.charge_mem_of_heartProp hheart hFZ'
+    rw [hneg, Complex.neg_im, Complex.neg_re] at h₂F
+    rcases h₁F with h | ⟨h, h'⟩ <;> rcases h₂F with k | ⟨k, k'⟩ <;> linarith
+  ext E
+  constructor
+  · intro hE
+    obtain ⟨X₁, X₃, f, g, h, hT, -, hX₁, hX₃, hX₃'⟩ :=
+      TStructure.exists_distTriang_heart_of_le h₁' h₁ hE
+    have hf : IsIso f := (Triangle.isZero₃_iff_isIso₁ _ hT).1 (key X₃ hX₃ hX₃')
+    rw [← σ.slicing.toTStructure_mem_heart_iff C 0]
+    exact ⟨(t.le 0).prop_of_iso (asIso f) hX₁, hge _ hE.2⟩
+  · intro hE
+    rw [← σ.slicing.toTStructure_mem_heart_iff C 0] at hE
+    have hEle' : t'.IsLE E 0 := ⟨h₁ _ hE.1⟩
+    have hE' := (TStructure.mem_heart_iff_of_le h₁' h₁ E).1 hE
+    obtain ⟨-, hEge', -, hK⟩ := hE'
+    have hEge' : t'.IsGE E (-1) := ⟨hEge'⟩
+    let K := (t'.truncLT 0).obj E
+    have hT := t'.triangleLTGE_distinguished 0 E
+    have hKle : t'.IsLE K (-1) := t'.isLE_truncLT_obj ..
+    have hKge : t'.IsGE K (-1) := by
+      apply t'.isGE₂ _ (inv_rot_of_distTriang _ hT) (-1)
+      · change t'.IsGE (((t'.truncGE 0).obj E)⟦(-1 : ℤ)⟧) (-1)
+        have : t'.IsGE (((t'.truncGE 0).obj E)⟦(-1 : ℤ)⟧) 1 := t'.isGE_shift _ 0 (-1) 1
+        exact t'.isGE_of_ge _ (-1) 1
+      · exact hEge'
+    have hKt : t.IsGE K 0 := ⟨hK⟩
+    have hG : t'.heart (K⟦(-1 : ℤ)⟧) :=
+      ⟨(t'.isLE_shift K (-1) (-1) 0).le, (t'.isGE_shift K (-1) (-1) 0).ge⟩
+    have hG₁ : t.ge 1 (K⟦(-1 : ℤ)⟧) := (t.isGE_shift K 0 (-1) 1).ge
+    have hKZ : IsZero K := by
+      have := (shiftFunctor C (1 : ℤ)).map_isZero (key _ hG hG₁)
+      exact this.of_iso ((shiftFunctorCompIsoId C (-1 : ℤ) 1 (by omega)).app K).symm
+    have hg : IsIso ((t'.truncGEπ 0).app E) :=
+      (Triangle.isZero₁_iff_isIso₂ _ hT).1 hKZ
+    have : t'.IsGE ((t'.truncGE 0).obj E) 0 := t'.isGE_truncGE_obj ..
+    exact ⟨hEle'.le, (t'.ge 0).prop_of_iso (asIso ((t'.truncGEπ 0).app E)).symm
+      (t'.ge_of_isGE _ 0)⟩
+
+/-- **The heart at fixed `Im Z`.** Let `σ` and `σ'` have the same imaginary part of the central
+charge, let the t-structure of `σ'` at `0` lie in degrees `[0, 1]` of that of `σ`, and let `Re Z`
+of `σ` be negative on the nonzero phase-one objects of `σ'`. Then `σ` and `σ'` have the same heart
+`P((0, 1])`. -/
+theorem heartProp_eq_of_im_eq (σ σ' : WithClassMap C v) (him : ∀ x, (σ.Z x).im = (σ'.Z x).im)
+    (h₁ : (σ.slicing.toTStructure C 0).le 0 ≤ (σ'.slicing.toTStructure C 0).le 0)
+    (h₂ : (σ'.slicing.toTStructure C 0).le 0 ≤ (σ.slicing.toTStructure C 0).le 1)
+    (hre : ∀ E, σ'.slicing.P (0 + 1) E → ¬IsZero E → (σ.charge E).re < 0) :
+    σ'.slicing.heartProp C 0 = σ.slicing.heartProp C 0 := by
+  rw [← σ'.slicing.toTStructure_heart C 0]
+  refine σ.heart_eq_of_le _ h₁ h₂ fun E hE hEZ => ?_
+  rw [σ'.slicing.toTStructure_mem_heart_iff] at hE
+  have him' : (σ.charge E).im = (σ'.charge E).im := him _
+  rcases σ'.charge_mem_of_heartProp hE hEZ with h | ⟨h, -⟩
+  · exact Or.inl (him' ▸ h)
+  · refine Or.inr ⟨him' ▸ h, hre E ?_ hEZ⟩
+    have hpos := fun φ (E : C) (h₁ : 0 < φ) (h₂ : φ < 0 + 1) hP hE =>
+      σ'.heartWeight_pos (a := 0) (φ := φ) (E := E) h₁ h₂ hP hE
+    have htop := fun (E : C) (hP : σ'.slicing.P (0 + 1) E) => σ'.heartWeight_eq_zero_of_top hP
+    exact (σ'.slicing.weight_eq_zero_iff_of_heartProp _ hpos htop hE).1
+      (by rw [heartWeight_zero_apply, h])
+
+omit [IsTriangulated C] in
+/-- With the same imaginary part of the central charge, two prestability conditions have the same
+phase-one objects in a common heart `P((0, 1])`: both are the objects with `Im Z = 0`. -/
+theorem phase_one_iff_of_im_eq (σ σ' : WithClassMap C v) (him : ∀ x, (σ.Z x).im = (σ'.Z x).im)
+    {E : C} (hE : σ.slicing.heartProp C 0 E) (hE' : σ'.slicing.heartProp C 0 E) :
+    σ.slicing.P (0 + 1) E ↔ σ'.slicing.P (0 + 1) E := by
+  have key : ∀ τ : WithClassMap C v, τ.slicing.heartProp C 0 E →
+      (τ.slicing.P (0 + 1) E ↔ (τ.charge E).im = 0) := fun τ hτ => by
+    rw [← heartWeight_zero_apply]
+    exact (τ.slicing.weight_eq_zero_iff_of_heartProp _
+      (fun φ E h₁ h₂ hP hE => τ.heartWeight_pos (a := 0) (φ := φ) (E := E) h₁ h₂ hP hE)
+      (fun E hP => τ.heartWeight_eq_zero_of_top hP) hτ).symm
+  rw [key σ hE, key σ' hE']
+  exact Iff.of_eq (congrArg (· = (0 : ℝ)) (him _))
 
 end PreStabilityCondition.WithClassMap
 
