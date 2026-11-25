@@ -428,8 +428,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `GroupTheory/GroupAction/CountCocycle.lean` | count cocycles: the growth sandwich, exact counts and rates on tight seeds | root |
 | `Order/Squeeze.lean` | the squeeze along a tight orbit, in any partial order | `Order` |
 | `LinearAlgebra/Matrix/SignRule.lean` | count and signed letters, the sign rule with the parity-graded form, word-level domination | `Matrix` |
-| `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3: pairing, roots, reflections, punctures | `MukaiVector` |
-| `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai extension `ℤ ⊕ N ⊕ ℤ` of a bilinear lattice and its reflections, copied from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
+| `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3 in coordinates: module structure, pairing, roots, punctures | `MukaiVector` |
+| `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai lattice `R ⊕ N ⊕ R` of a bilinear module over a commutative ring and its reflections (Mathlib's `Module.preReflection`), adapted from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
 | `LinearAlgebra/Lattice/Mukai/Slice.lean` | the slice of a class, the Picard-rank-one lattice as a Mukai lattice, exponential points and the slice lemma | `Mukai` |
 | `LinearAlgebra/Lattice/Mukai/CentralCharge.lean` | central charges `⟨Ω, -⟩`, the exponential chart and the half-turn of an isometry | `Mukai` |
 | `LinearAlgebra/BilinearForm/Eichler.lean`, `BilinearForm/Gram.lean` | Eichler transvections, products of two reflections, the Eichler homomorphism; the Gram matrix and the Tits identity | `BilinearForm` |
@@ -448,7 +448,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Combinatorics/DT/Quivers.lean` | the multiplier of the Jordan, type-`A_n` and affine Kronecker quivers | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
-| `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two and its two HN filtrations | `AlgebraicGeometry.K3` |
+| `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two, its two HN filtrations and that of the point | `AlgebraicGeometry.K3` |
 | `CategoryTheory/Abelian/Subobject/Valuation.lean` | additive functions are valuations on subobjects; modularity; the charge function of a stability function | `CategoryTheory.Subobject` |
 | `CategoryTheory/Abelian/Uniserial.lean` | the subobjects of nonsplit extensions of simple objects | `CategoryTheory` |
 | `CategoryTheory/Abelian/TorsionTheory/Saturation.lean` | the interval class on the subobjects of an object of a class closed under quotients and extensions; its radical and saturation | `CategoryTheory.ObjectProperty` |
@@ -461,11 +461,11 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerCountCocycle.lean` | the count cocycle of the Euler pairings with `𝒪_X` and `𝒪_X(H)`, and the failure of the sign rule for it | same |
-| `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem from its inputs | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem of the draft: deprecated aliases for `CategoryTheory/Triangulated/StabilityCondition/Tower.lean` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/RigidWall.lean` | the example of a rigid wall at `g = 3` | same |
-| `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations and the HN polygon in a lattice with a slope function | `Order.SlopeFunction` |
+| `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations in a lattice with a charge function: extremality, uniqueness, existence; slope functions as charge functions | `Order.ChargeFunction`, `Order.SlopeFunction` |
 | `Order/IntervalClass.lean` | interval classes on a lattice: the saturation closure operator, the radical, the nested formula, transport, the socle iteration | root (`IntervalClass`) |
-| `RepresentationTheory/Quiver/Kronecker/HarderNarasimhan.lean` | slope functions on subrepresentations, the two sides of a wall, the HN filtrations of the rigid representation | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/HarderNarasimhan.lean` | slope and charge functions on subrepresentations, existence, the two sides of a wall, the HN filtrations of the rigid representation | `Quiver.Kronecker` |
 | `Order/Valuation.lean` | valuations on a lattice: modularity, maximizers, Topkis's theorem, the chain lemma | `Order` |
 | `Order/HarderNarasimhan/Polytope.lean` | the HN polytope, with a vertical edge | `Order.ChargeFunction`, `Order.SlopeFunction` |
 | `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, isomorphisms, subrepresentations, dimension vectors, restrictions, quotients, subquotients, kernels and images | `Quiver.Kronecker` |
@@ -519,7 +519,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Insertion.lean` | the homotopy pullback, concatenation and refinement of HN filtrations |
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/HarderNarasimhan.lean` | HN filtrations along an exact autoequivalence |
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/Artin.lean` | Artin groups acting by autoequivalences; braid relations from the conjugation formula (`TwistConjugation`) |
-| `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall, a path of walls and a letter |
+| `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall and a letter |
 | `Triangulated/StabilityCondition/Budget.lean` | `MukaiBudget` (`e : C → ℕ`, invariant under isomorphism, Mukai's lemma: Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5) and the Mukai budget lemma along Hom-orthogonal towers and HN filtrations |
 | `Triangulated/StabilityCondition/Tower.lean` | carrying the point once as at most once plus existence; a path of walls (`Leg`); `TowerHypotheses` and the tower theorem, also through the budget |
 | `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
