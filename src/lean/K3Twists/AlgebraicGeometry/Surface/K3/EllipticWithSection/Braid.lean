@@ -49,7 +49,7 @@ open Mukai CoxeterSystem CoxeterMatrix
 /-! ### Isometries and reflections -/
 
 /-- The isometries of the Mukai lattice of `X`. -/
-def isometries : Subgroup (MukaiLattice NS ≃ₗ[ℤ] MukaiLattice NS) where
+def isometries : Subgroup (MukaiLattice ℤ NS ≃ₗ[ℤ] MukaiLattice ℤ NS) where
   carrier := {g | ∀ v w, pairing intersection (g v) (g w) = pairing intersection v w}
   one_mem' _ _ := rfl
   mul_mem' {g h} hg hh v w := (hg (h v) (h w)).trans (hh v w)
@@ -58,12 +58,12 @@ def isometries : Subgroup (MukaiLattice NS ≃ₗ[ℤ] MukaiLattice NS) where
     simp only [LinearEquiv.coe_inv, LinearEquiv.apply_symm_apply] at h ⊢
     exact h.symm
 
-theorem isometries_pairing (g : isometries) (v w : MukaiLattice NS) :
+theorem isometries_pairing (g : isometries) (v w : MukaiLattice ℤ NS) :
     pairing intersection (g.1 v) (g.1 w) = pairing intersection v w :=
   g.2 v w
 
 /-- The spherical classes `δ² = -2` of the Mukai lattice of `X`. -/
-abbrev Root : Type := {v : MukaiLattice NS // IsSpherical intersection v}
+abbrev Root : Type := {v : MukaiLattice ℤ NS // IsSpherical intersection v}
 
 /-- Isometries act on roots. -/
 instance : MulAction isometries Root where
@@ -79,14 +79,18 @@ instance : MulAction isometries Root where
 of the twist `T_S` of a spherical object of class `δ`. -/
 def reflection (δ : Root) : isometries :=
   ⟨reflectEquiv intersection δ.1 δ.2,
-    fun v w => pairing_reflect_reflect intersection intersection_comm δ.1 δ.2 v w⟩
+    fun v w => by
+      simpa using pairing_reflect_reflect intersection intersection_comm δ.1 δ.2 v w⟩
 
-@[simp] theorem reflection_apply (δ : Root) (v : MukaiLattice NS) :
-    (reflection δ).1 v = v + pairing intersection v δ.1 • δ.1 := rfl
+@[simp] theorem reflection_apply (δ : Root) (v : MukaiLattice ℤ NS) :
+    (reflection δ).1 v = v + pairing intersection v δ.1 • δ.1 := by
+  simp [reflection, reflect_apply]
 
 theorem reflection_sq (δ : Root) : reflection δ ^ 2 = 1 := by
   rw [sq]
   ext v : 2
+  change (reflection δ).1 ((reflection δ).1 v) = v
+  simp only [reflection, reflectEquiv_apply]
   exact reflect_reflect intersection δ.1 δ.2 v
 
 /-- **Reflections are conjugation-equivariant**: `ρ_{g δ} = g ρ_δ g⁻¹` for every isometry `g`.
@@ -97,8 +101,8 @@ theorem reflection_smul (g : isometries) (δ : Root) :
   have hg : g.1 (g.1⁻¹ v) = v := by simp
   have hp : pairing intersection (g.1⁻¹ v) δ.1 = pairing intersection v (g.1 δ.1) := by
     rw [← isometries_pairing g, hg]
-  change v + pairing intersection v (g.1 δ.1) • g.1 δ.1 = g.1 ((reflection δ).1 (g.1⁻¹ v))
-  rw [reflection_apply, map_add, map_zsmul, hg, hp]
+  change (reflection (g • δ)).1 v = g.1 ((reflection δ).1 (g.1⁻¹ v))
+  rw [reflection_apply, reflection_apply, coe_smul, map_add, map_zsmul, hg, hp]
 
 /-! ### The configuration -/
 

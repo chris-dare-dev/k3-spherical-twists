@@ -42,11 +42,11 @@ namespace EllipticWithSection
 open Mukai
 
 /-- The spherical simples `A = 𝒪_C` and `B = 𝒪_C(-1)[1]` of the curve wall, as a family. -/
-def curveWallSimples : Fin 2 → MukaiLattice NS := ![wallA, wallB]
+def curveWallSimples : Fin 2 → MukaiLattice ℤ NS := ![wallA, wallB]
 
 /-- **The wall matrix of the curve wall** is `[[2, -2], [-2, 2]]`. -/
 theorem wallMatrix_curveWall :
-    LinearMap.BilinForm.wallMatrix (pairingBilin intersection) curveWallSimples =
+    LinearMap.BilinForm.wallMatrix (mukaiForm intersection) curveWallSimples =
       cartanMatrix (2 : ℤ) := by
   ext i j
   fin_cases i <;> fin_cases j <;> simp [curveWallSimples, cartanMatrix, wallA, wallB]
@@ -57,20 +57,20 @@ matrix `A = [[2, -2], [-2, 2]]`; with `dotProduct_mulVec_cartanMatrix_eq_kroneck
 theorem selfPairing_wallClass_eq_neg_dotProduct (a b : ℤ) :
     selfPairing intersection (wallClass a b) = -(![a, b] ⬝ᵥ cartanMatrix (2 : ℤ) *ᵥ ![a, b]) := by
   rw [← wallMatrix_curveWall, ← LinearMap.BilinForm.apply_sum_smul_self]
-  simp only [Fin.sum_univ_two, curveWallSimples, cons_val_zero, cons_val_one, pairingBilin_apply]
+  simp only [Fin.sum_univ_two, curveWallSimples, cons_val_zero, cons_val_one, mukaiForm_apply]
   rfl
 
 /-- **The curve wall is of affine type**: its wall matrix is positive semidefinite and not
 positive definite. -/
 theorem curveWall_posSemidef_and_not_posDef :
-    (LinearMap.BilinForm.wallMatrix (pairingBilin intersection) curveWallSimples).PosSemidef ∧
-      ¬(LinearMap.BilinForm.wallMatrix (pairingBilin intersection) curveWallSimples).PosDef := by
+    (LinearMap.BilinForm.wallMatrix (mukaiForm intersection) curveWallSimples).PosSemidef ∧
+      ¬(LinearMap.BilinForm.wallMatrix (mukaiForm intersection) curveWallSimples).PosDef := by
   rw [wallMatrix_curveWall]
   simpa using (posSemidef_and_not_posDef_cartanMatrix_iff 2).mpr rfl
 
 /-- The null vector `(1, 1)` of the curve wall is the class of a point. -/
 theorem sum_curveWallSimples_null :
-    (LinearMap.BilinForm.wallMatrix (pairingBilin intersection) curveWallSimples) *ᵥ
+    (LinearMap.BilinForm.wallMatrix (mukaiForm intersection) curveWallSimples) *ᵥ
       (fun _ => 1) = 0 ∧
       ∑ i, (1 : ℤ) • curveWallSimples i = point := by
   rw [wallMatrix_curveWall]
@@ -94,7 +94,7 @@ theorem isIsotropic_wallClass_iff (a b : ℤ) :
 
 /-- `A + B = 𝒪_x` is an isotropic sum of the two spherical simples. -/
 theorem not_noIsotropicSphereSum_curveWall :
-    ¬(LinearMap.BilinForm.wallMatrix (pairingBilin intersection)
+    ¬(LinearMap.BilinForm.wallMatrix (mukaiForm intersection)
       curveWallSimples).NoIsotropicSphereSum := by
   rw [wallMatrix_curveWall]
   exact not_noIsotropicSphereSum_cartanMatrix_two

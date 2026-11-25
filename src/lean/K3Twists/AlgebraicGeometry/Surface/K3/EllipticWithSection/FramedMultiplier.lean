@@ -232,10 +232,10 @@ theorem point_ext_one : 2 * 1 + selfPairing intersection point = 2 := by
   norm_num
 
 /-- The framing of a point `𝒪_x` by an object of class `v`: `χ(E, 𝒪_x) = -⟨v, v(𝒪_x)⟩`. -/
-def pointFraming (v : MukaiLattice NS) : ℤ := -pairing intersection v point
+def pointFraming (v : MukaiLattice ℤ NS) : ℤ := -pairing intersection v point
 
 /-- `χ(E, 𝒪_x) = rk E`. -/
-theorem pointFraming_eq (v : MukaiLattice NS) : pointFraming v = v.1 := by
+theorem pointFraming_eq (v : MukaiLattice ℤ NS) : pointFraming v = v.1 := by
   obtain ⟨r, c, s⟩ := v
   simp [pointFraming]
 
@@ -248,11 +248,11 @@ theorem pointFraming_lineBundle_rankTwo (D : NS) :
 
 /-- The geometric framed series of a point framed by an object of class `v` of nonnegative rank:
 the Jordan quiver with framing `rk E`. -/
-noncomputable def pointMultiplier (v : MukaiLattice NS) : MvPowerSeries Unit R :=
+noncomputable def pointMultiplier (v : MukaiLattice ℤ NS) : MvPowerSeries Unit R :=
   Z (fun _ => (pointFraming v).toNat) jordanBPS
 
 /-- Its coefficient of `y` is `(-1)^{rk E} rk E` (with `rk E` read as `0` if it is negative). -/
-theorem coeff_pointMultiplier (v : MukaiLattice NS) :
+theorem coeff_pointMultiplier (v : MukaiLattice ℤ NS) :
     coeff (Finsupp.single () 1) (pointMultiplier (R := R) v) =
       (-1) ^ v.1.toNat * (v.1.toNat : R) := by
   rw [pointMultiplier, coeff_atom_jordan, pointFraming_eq]

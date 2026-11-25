@@ -13,7 +13,7 @@ import Mathlib.GroupTheory.Perm.Basic
 Let `X` be a K3 surface with `Pic X = ℤH`, `H² = 2d`, `d ≥ 1`. The spherical objects `𝒪_X` and
 `𝒪_X(H)` have Mukai vectors `v(𝒪_X) = (1, 0, 1)` and `v(𝒪_X(H)) = (1, 1, d + 1)`, and the twists
 `T_{𝒪_X}`, `T_{𝒪_X(H)}` act on the Mukai lattice by the reflections in these roots
-(`MukaiVector.reflect`). The count
+(`BilinearForm.reflect` of the Mukai form). The count
 
   `h(u, v) = |⟨u, v⟩| = |χ(U, V)|`
 
@@ -26,7 +26,7 @@ these real classes, with the group of isometries of the Mukai lattice acting:
 
 * (A1) the reflections, and all isometries, preserve the pairing;
 * (U) and (L) are `⟨u, T v⟩ = ⟨u, v⟩ + ⟨u, S⟩⟨S, v⟩` and the triangle inequality;
-* `T_S S = S[-1]` on classes is `MukaiVector.reflect_self`;
+* `T_S S = S[-1]` on classes is `BilinearForm.reflect_self`;
 * sphericity is `⟨S, S⟩ = -2`; symmetry is `⟨u, v⟩ = ⟨v, u⟩`;
 * directed connectivity within two letters is `|⟨v(𝒪_X), v(𝒪_X(H))⟩| = d + 2 ≥ 1`.
 
@@ -72,18 +72,20 @@ def mukaiIsometries : Subgroup (Equiv.Perm (MukaiVector ℤ)) where
 
 /-- The reflection in a root, as a permutation (it is an involution). -/
 def reflectPerm {δ : MukaiVector ℤ} (hδ : IsRoot d δ) : Equiv.Perm (MukaiVector ℤ) where
-  toFun := reflect d δ
-  invFun := reflect d δ
-  left_inv := reflect_reflect hδ
-  right_inv := reflect_reflect hδ
+  toFun := BilinearForm.reflect (mukaiForm d) δ
+  invFun := BilinearForm.reflect (mukaiForm d) δ
+  left_inv := BilinearForm.reflect_reflect (mukaiForm d) δ hδ
+  right_inv := BilinearForm.reflect_reflect (mukaiForm d) δ hδ
 
 /-- The reflection in a root, as an isometry: the action of the spherical twist with that
 class (and of its inverse). -/
 def reflectIsometry {δ : MukaiVector ℤ} (hδ : IsRoot d δ) : mukaiIsometries d :=
-  ⟨reflectPerm d hδ, fun u v => pairing_reflect hδ u v⟩
+  ⟨reflectPerm d hδ, fun u v => by
+    have h := BilinearForm.apply_reflect_reflect (mukaiForm d) (mukaiForm_comm d) δ hδ u v
+    rwa [mukaiForm_apply, mukaiForm_apply] at h⟩
 
 @[simp] lemma reflectIsometry_smul {δ : MukaiVector ℤ} (hδ : IsRoot d δ) (v : MukaiVector ℤ) :
-    reflectIsometry d hδ • v = reflect d δ v := rfl
+    reflectIsometry d hδ • v = BilinearForm.reflect (mukaiForm d) δ v := rfl
 
 lemma pairing_smul_isometry (g : mukaiIsometries d) (u v : MukaiVector ℤ) :
     pairing d (g • u) (g • v) = pairing d u v := g.2 u v
@@ -98,8 +100,9 @@ lemma lineCentre_root (i : Fin 2) : pairing d (lineCentre d i) (lineCentre d i) 
 
 /-- `⟨u, T_S v⟩ = ⟨u, v⟩ + ⟨u, S⟩⟨S, v⟩` for the reflection in `S`. -/
 lemma pairing_reflect_right (δ u v : MukaiVector ℤ) :
-    pairing d u (reflect d δ v) = pairing d u v + pairing d u δ * pairing d δ v := by
-  unfold reflect
+    pairing d u (BilinearForm.reflect (mukaiForm d) δ v) =
+      pairing d u v + pairing d u δ * pairing d δ v := by
+  rw [bilinearFormReflect_apply]
   rw [pairing_add_right, pairing_smul_right]
   ring
 
@@ -117,7 +120,8 @@ def eulerTwistSystem : HomTwistSystem (mukaiIsometries d) (MukaiVector ℤ) (Fin
     rw [← Int.natAbs_mul]
     exact Int.natAbs_add_le _ _
   h_twist_centre a u := by
-    simp only [reflectIsometry_smul, id, reflect_self (isRoot_lineCentre d a),
+    simp only [reflectIsometry_smul, id,
+      BilinearForm.reflect_self (mukaiForm d) _ (isRoot_lineCentre d a),
       pairing_neg_right, Int.natAbs_neg]
 
 lemma eulerTwistSystem_h (u v : MukaiVector ℤ) :
@@ -128,7 +132,8 @@ theorem eulerTwistSystem_lowerBound :
     (eulerTwistSystem d).toHomTwistSystem₀.LowerBound := by
   intro a u v
   change (pairing d u (lineCentre d a)).natAbs * (pairing d (lineCentre d a) v).natAbs ≤
-    (pairing d u v).natAbs + (pairing d u (reflect d (lineCentre d a) v)).natAbs
+    (pairing d u v).natAbs +
+      (pairing d u (BilinearForm.reflect (mukaiForm d) (lineCentre d a) v)).natAbs
   rw [pairing_reflect_right, ← Int.natAbs_mul]
   have := Int.natAbs_sub_le (pairing d u v + pairing d u (lineCentre d a) *
     pairing d (lineCentre d a) v) (pairing d u v)
@@ -167,7 +172,8 @@ theorem eulerTwistSystem_directedConnected (hd : 0 ≤ d) :
 
 /-- `|⟨v(𝒪_X), T_{𝒪_X(H)} v(𝒪_X)⟩| = (d + 2)² - 2`. -/
 lemma pairing_reflect_lineCentre :
-    pairing d (lineCentre d 0) (reflect d (lineCentre d 1) (lineCentre d 0)) =
+    pairing d (lineCentre d 0)
+        (BilinearForm.reflect (mukaiForm d) (lineCentre d 1) (lineCentre d 0)) =
       (d + 2) ^ 2 - 2 := by
   rw [pairing_reflect_right, lineCentre_root, pairing_lineCentre_zero_one, pairing_comm,
     pairing_lineCentre_zero_one]
@@ -191,7 +197,8 @@ theorem eulerTwistSystem_homExponent_pos (hd : 1 ≤ d) :
   have hP : (7 : ℝ) ≤ E.maxCount 1 := by
     have h := E.le_maxCount (q := 1) 0 0 [1] le_rfl
     have e : E.h (E.S 0) (E.word [1] • E.S 0) = ((d + 2) ^ 2 - 2).natAbs := by
-      change (pairing d (lineCentre d 0) (reflect d (lineCentre d 1) (lineCentre d 0))).natAbs = _
+      change (pairing d (lineCentre d 0)
+        (BilinearForm.reflect (mukaiForm d) (lineCentre d 1) (lineCentre d 0))).natAbs = _
       rw [pairing_reflect_lineCentre]
     rw [e] at h
     have h7 : 7 ≤ ((d + 2) ^ 2 - 2).natAbs := by
