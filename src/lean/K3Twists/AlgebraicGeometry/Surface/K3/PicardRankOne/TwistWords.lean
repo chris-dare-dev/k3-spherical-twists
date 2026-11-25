@@ -44,8 +44,9 @@ theorem standard_H_formula {R : Type*} [CommRing R] (d n u b : R) :
 reflections cancel. -/
 theorem theta_acts_trivially {R : Type*} [CommRing R] {d : R} {s b : MukaiVector R}
     (hs : MukaiVector.IsRoot d s) (hsb : b = s) (v : MukaiVector R) :
-    MukaiVector.reflect d s (MukaiVector.reflect d b v) = v := by
-  subst hsb; exact MukaiVector.reflect_reflect hs v
+    BilinearForm.reflect (MukaiVector.mukaiForm d) s
+      (BilinearForm.reflect (MukaiVector.mukaiForm d) b v) = v := by
+  rw [hsb]; exact BilinearForm.reflect_reflect (MukaiVector.mukaiForm d) s hs v
 
 /-- `h(S, B) = 1 + (q² - 1) + q² = 2q²` from `dim Hom^j(S, B) = 1, q² - 1, q²` (`j = 0, 1, 2`). -/
 lemma theta_hom_SB (q : ℤ) : 1 + (q ^ 2 - 1) + q ^ 2 = 2 * q ^ 2 := by ring
@@ -106,12 +107,14 @@ lemma pairing_O_L {R : Type*} [CommRing R] (d : R) :
 theorem psi_action {R : Type*} [CommRing R] (d : R) :
     let a := MukaiVector.lineBundle d 0
     let b := MukaiVector.lineBundle d 1
-    MukaiVector.reflect d a (MukaiVector.reflect d b a) = ((d + 2) ^ 2 - 1) • a + (-(d + 2)) • b ∧
-      MukaiVector.reflect d a (MukaiVector.reflect d b b) = (d + 2) • a + (-1 : R) • b ∧
+    let ρ := BilinearForm.reflect (MukaiVector.mukaiForm d)
+    ρ a (ρ b a) = ((d + 2) ^ 2 - 1) • a + (-(d + 2)) • b ∧
+      ρ a (ρ b b) = (d + 2) • a + (-1 : R) • b ∧
       ((d + 2) ^ 2 - 1) + (-1) = (d + 2) ^ 2 - 2 ∧
       ((d + 2) ^ 2 - 1) * (-1) - (d + 2) * (-(d + 2)) = 1 := by
   refine ⟨?_, ?_, by ring, by ring⟩ <;>
-    ext <;> simp [MukaiVector.reflect, MukaiVector.pairing, MukaiVector.lineBundle] <;> ring
+    ext <;> simp [MukaiVector.bilinearFormReflect_apply, MukaiVector.pairing,
+      MukaiVector.lineBundle] <;> ring
 
 /-- The trace `t = (d + 2)² - 2` exceeds `2` for `d ≥ 1`, so the characteristic polynomial
 `x² - tx + 1` has a root `ρ > 1` (and `ρ⁻¹ < 1`). -/

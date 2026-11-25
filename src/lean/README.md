@@ -24,10 +24,13 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 
 | Statement | Lean |
 |---|---|
-| A twist acts on Mukai vectors by the reflection in its root: an isometric involution with `T_Y Y = Y[-1]` on classes | `MukaiVector.reflect_reflect`, `MukaiVector.pairing_reflect`, `MukaiVector.reflect_self` |
+| One Mukai lattice `MukaiLattice R N = R × N × R` over any commutative ring, with the form `⟨(r, c, s), (r', c', s')⟩ = b(c, c') - rs' - r's`; the Picard-rank-one lattice is the Mukai lattice of `(R, 2dxy)`, and the slice `(r, c, s) ↦ (r, cℓ, s)` of a class with `ℓ² = 2d` is isometric over every ring | `Mukai.mukaiForm`, `MukaiVector.isometryEquivMukaiLattice`, `Mukai.slice`, `Mukai.mukaiForm_slice`, `Mukai.slice_reflect` |
+| A twist acts on Mukai vectors by the reflection in its root, which is Mathlib's `Module.preReflection` (`Module.reflection` at a root): an isometric involution with `T_Y Y = Y[-1]` on classes | `BilinearForm.reflectHom_eq_preReflection`, `BilinearForm.reflectEquiv_eq_reflection`, `BilinearForm.reflect_reflect`, `BilinearForm.apply_reflect_reflect`, `BilinearForm.reflect_self` |
+| The half-turn for any isometry: if `ρ` preserves the Mukai form, `Ω` is isotropic and `ρΩ` has rank `r ≠ 0`, then `ρΩ = r · e` with `e` an exponential point and `r · Z_e(ρv) = Z_Ω(v)`, for `Z_Ω = ⟨Ω, -⟩`; no inverse, involution or symmetry | `Mukai.mul_charge_of_apply_eq_smul`, `Mukai.isIsotropic_expChart`, `Mukai.charge_halfTurn_of_isometry` |
+| The slice lemma over any field: for `ℓ² = 2d` and `δ = (r, μℓ, s)` with `rs = dμ² + 1`, `ρ_δ(e^{zℓ}) = -dr²(z - μ/r)² e^{z'ℓ}` with `z' = μ/r - 1/(dr²(z - μ/r))`; `⟨δ, δ⟩ = -2` does not suffice in characteristic two | `Mukai.reflect_expSlice` |
 | The puncture of a root `(r, c, s)` is at height `1/(dr²)` above the parabola: `s/(dr) = (c/r)² + 1/(dr²)` | `MukaiVector.puncture_height` |
 | `Z_{b+ia}` vanishes on the kernel line `(1, b, d(b² + a²))` | `charge_kernel` |
-| The half-turn: `Z_{f(z)}(T_δ v) = -k Z_z(v)/(z - m)²` for `f(z) = m - k/(z - m)`, `m = c/r`, `k = 1/(dr²)`; `f` is an involution preserving the upper half-plane | `charge_halfTurn`, `halfTurn_halfTurn`, `im_halfTurn_pos` |
+| The half-turn: `Z_{f(z)}(T_δ v) = -k Z_z(v)/(z - m)²` for `f(z) = m - k/(z - m)`, `m = c/r`, `k = 1/(dr²)`; `f` is an involution preserving the upper half-plane; `Z_z = ⟨e^{zH}, -⟩` and `f(z)` is the slice coordinate of the image point `ρ_δ(e^{zH})` | `charge_halfTurn`, `halfTurn_halfTurn`, `im_halfTurn_pos`, `charge_eq_mukaiCharge`, `reflect_expSlice_halfTurn` |
 | The opening example at `d = 1`, `z = (1 + 4i)/3`: `m(T𝒪_x) = 19/9`, `m(T⁻¹𝒪_x) = 17/9`, one class for both, `m(Tⁿ𝒪_x) = 1 + 10n/9`, and the segment to the cusp of `T⁻¹𝒪_x` meets no puncture | `opening_mass_T`, `opening_mass_Tinv`, `opening_same_class`, `opening_mass_Tpow`, `opening_segment_clear` |
 | The projective model `(b, t) = (Re z, \|z\|²)` is a bijection of `ℍ` onto `t > b²` with `cosh d(z, w) = (t_z + t_w - 2b_z b_w)/(2 Im z Im w)`; semicircles on the real axis are its lines, and `d(z, w) + d(w, u) = d(z, u)` exactly when the image of `w` is on the straight segment | `UpperHalfPlane.range_projectiveModel`, `cosh_dist_eq`, `projectiveModel_snd_eq_iff`, `dist_add_dist_eq_iff` |
 | The Mukai form has signature `(2, 1)`; in the chart `(c/r, s/(dr))` its negative cone is `t > b²` and its isotropic lines are the parabola and `(0, 0, 1)`; the cone of two positive-rank vectors is the segment between their points | `MukaiVector.pairing_self_pos_of_pairing_structureSheaf_eq_zero`, `pairing_self_neg_iff`, `isIsotropic_iff`, `toModel_mem_segment_iff` |
@@ -205,7 +208,7 @@ On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕
 
 | Statement | Lean |
 |---|---|
-| The Mukai extension `ℤ ⊕ N ⊕ ℤ` of a symmetric bilinear lattice, its roots and reflections (copied from derived-alg-geo-lean) | `Mukai.pairing`, `Mukai.reflect_reflect`, `Mukai.pairing_reflect_reflect` |
+| The Mukai lattice `R ⊕ N ⊕ R` of a bilinear module, its roots and reflections (adapted from derived-alg-geo-lean) | `Mukai.pairing`, `Mukai.mukaiForm`, `Mukai.reflect_reflect`, `Mukai.pairing_reflect_reflect` |
 | `C² = -2`, `C·F = 1`, `F² = 0`; `H = C + 2F` has `H² = 2` and contracts `C` and only `C` | `intersection_curve_fibre`, `intersection_polarization`, `intersection_polarization_pos` |
 | The wall: `⟨v(A), v(B)⟩ = 2`, `v(A) + v(B) = v(𝒪_x)`, `v(aA + bB)² = -2(a - b)² = -2 q₂(a, b)` with `q₂` the Kronecker form | `pairing_wallA_wallB`, `wallA_add_wallB`, `selfPairing_wallClass_eq_kroneckerForm` |
 | Riemann–Roch on the wall: an `(m, 1)` object `D₀ ⊕ A^r` has `dim Ext¹ = 2(1 + pq) - 2(p + q - 1)² + 2r(2 - p - q)`, which is `2` only at `p = q = 1`; the class `(2, 2)` is isotropic | `ext_one_count`, `ext_one_count_eq_two_iff`, `selfPairing_wallClass_two_two` |
@@ -215,6 +218,7 @@ On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕
 | The parity argument: a root of odd rank and imaginary charge `2` is not the sum of two roots of imaginary charge `1`; so `𝒪_X(-C - F)[1]` and every line bundle of `H`-slope `3` are stable | `not_isSpherical_sub_of_odd_rank`, `not_split_tail_odd`, `not_split_slope_three` |
 | The words `T_{𝒪_X(-2C)}`, then `T_{𝒪_X(-C + 2F)}⁻¹`, then `T_{𝒪_X(-C + 3F)}⁻¹` applied to `𝒪_x`: the two-letter tower has charges `-4 - i`, `-7/2`, `19/2 + 4i` adding up to `2 + 3i`; the wall masses are `4 + √5`, `(7/2)(1 + √17)` and `3/2 + √41/4`; the third word has the class `(0, C + F, 3)` of `𝒪_{C+Γ}(C + 4F)` and of `𝒪_C(1) ⊕ 𝒪_Γ(x)` | `charge_twoLetter_tower`, `mass_oneLetter`, `mass_twoLetter`, `mass_threeLetter`, `reflect_threeLetter_point` |
 | Stable classes in charge coordinates: with `p = 4 Re Z`, `q = Im Z`, `v² ≥ -2` iff `(43r - 2(p + 2q))² + 43(4a - r - 2q)² ≤ 4(p + 2q)² + 172q² + 688` | `neg_two_le_selfPairing_iff` |
+| The charge of the curve wall is `Z = ⟨Ω, -⟩` with `Ω = (1, β + iH, -3 + i)` and `Ω² = 31/8 - 2i ≠ 0`; it is a `GL₂⁺(ℝ)`-translate of an exponential charge: `⟨exp(B + iω), v⟩ = Re Z(v) + (1/2 + i√43/4) Im Z(v)` for `B = C/4 + F`, `ω = (√43/4) H` | `charge_eq_mukaiCharge`, `selfPairing_chargeClass`, `isIsotropic_expClass`, `mukaiCharge_expClass` |
 | Near the wall phases follow `B`-fractions: `j/(2j + 1)` (for `𝒪_C(j)`) increases below `1/2`, `j/(2j - 1)` (for `T_A 𝒪_C(j)`) decreases above it, and a subobject in the section-evaluation argument has fraction at most `j/(2j + 1)` | `cross_restrictedCharge`, `curveSheaf_fraction_strictMono`, `twistCurveSheaf_fraction`, `subobject_fraction_le` |
 | `exp h_cat(T_{𝒪_C} T_{𝒪_C(2)}) = (4² - 2 + √(4⁴ - 4·4²))/2 = 7 + 4√3` (Barbacovi–Kim, arXiv:2107.06079), while points off `C` are fixed | `barbacoviKim_four`, `barbacoviKim_four_root` |
 
@@ -227,8 +231,10 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | Module under `K3Twists/` | Job | Namespace |
 |---|---|---|
 | `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences | `Real` |
-| `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3: pairing, roots, reflections, punctures | `MukaiVector` |
-| `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai extension `ℤ ⊕ N ⊕ ℤ` of a bilinear lattice and its reflections, copied from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
+| `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3 in coordinates: module structure, pairing, roots, punctures | `MukaiVector` |
+| `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai lattice `R ⊕ N ⊕ R` of a bilinear module over a commutative ring and its reflections (Mathlib's `Module.preReflection`), adapted from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
+| `LinearAlgebra/Lattice/Mukai/Slice.lean` | the slice of a class, the Picard-rank-one lattice as a Mukai lattice, exponential points and the slice lemma | `Mukai` |
+| `LinearAlgebra/Lattice/Mukai/CentralCharge.lean` | central charges `⟨Ω, -⟩`, the exponential chart and the half-turn of an isometry | `Mukai` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
@@ -253,6 +259,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `LinearAlgebra/Lattice/Mukai/ProjectiveModel.lean` | the signature, negative cone and projective model of the Mukai lattice; reverse Cauchy–Schwarz | `MukaiVector` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/Lattice.lean` | the Mukai lattice of an elliptic K3 with a section and the classes of its curve wall | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/CurveWall.lean` | the charge of the curve wall, its phases, and the parity argument for the tails | same |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/MukaiCharge.lean` | the charge of the curve wall as a Mukai charge and a `GL₂⁺(ℝ)`-translate of an exponential charge | same |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
 Mathlib's representations and subrepresentations, and keep the namespace `Quiver.Kronecker` of

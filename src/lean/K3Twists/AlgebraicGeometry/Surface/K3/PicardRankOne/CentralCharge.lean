@@ -2,7 +2,9 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.LinearAlgebra.Lattice.Mukai.CentralCharge
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
+import K3Twists.LinearAlgebra.Lattice.Mukai.Slice
 import Mathlib.Analysis.Complex.Norm
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.Real.Sqrt
@@ -22,10 +24,14 @@ geometry of the next wall:
 
 * `charge_kernel`: `Z_z` vanishes on the kernel line `κ = (1, b, d(b² + a²))`, which identifies
   the half-plane with the region `t > b²` of the projective model, `t = b² + a²`;
+* `charge_eq_mukaiCharge`: `Z_z` is the Mukai charge `Mukai.charge` at the exponential point
+  `e^{zH}` of the rank-one Mukai lattice, on the slice of `H`;
 * `charge_halfTurn`: for a spherical class `δ = (r, c, s)` of slope `m = c/r` and
   `k = 1/(dr²)`, the twist `T_δ` and the base map `f(z) = m - k/(z - m)` satisfy
   `Z_{f(z)}(T_δ v) = -k Z_z(v)/(z - m)²`; `f` is an involution of the upper half-plane
-  (`halfTurn_halfTurn`, `im_halfTurn`);
+  (`halfTurn_halfTurn`, `im_halfTurn`). The coordinate-free statement is
+  `Mukai.charge_halfTurn_of_isometry`, for any isometry; `f(z)` is the coordinate of the image
+  point `ρ_δ(e^{zH})` on the slice (`reflect_expSlice_halfTurn`);
 * the opening example at `d = 1`, `z = (1 + 4i)/3`: `Z(𝒪_x) = -1`,
   `Z(𝒪_X[1]) = -2/3 + 8i/9`, so `m(T𝒪_x) = 19/9` and `m(T⁻¹𝒪_x) = 17/9`, and
   `m(Tⁿ𝒪_x) = 1 + 10n/9`;
@@ -52,6 +58,13 @@ lemma charge_neg (d z : ℂ) (v : MukaiVector ℂ) : charge d z (-v) = -charge d
 lemma charge_smul (d z a : ℂ) (v : MukaiVector ℂ) : charge d z (a • v) = a * charge d z v := by
   simp only [charge, MukaiVector.smul_r, MukaiVector.smul_c, MukaiVector.smul_s]; ring
 
+/-- **The charge of Picard rank one is a Mukai charge.** `Z_z(v) = ⟪e^{zH}, v⟫` in the Mukai
+lattice `MukaiLattice ℂ ℂ` of the rank-one lattice `(ℂ, 2dxy)`, with `v` on the slice of `H`. -/
+theorem charge_eq_mukaiCharge (d z : ℂ) (v : MukaiVector ℂ) :
+    charge d z v =
+      Mukai.charge (Mukai.rankOneForm d) (Mukai.expSlice 1 d z) (Mukai.slice 1 v) := by
+  rw [Mukai.charge, Mukai.mukaiForm_expSlice_slice (Mukai.rankOneForm_one_one d), charge]
+
 /-- A point has central charge `-1` at every `z`: `Z_z(𝒪_x) = -1`. -/
 @[simp] lemma charge_point (d z : ℂ) : charge d z MukaiVector.point = -1 := by
   simp [charge, MukaiVector.point]
@@ -71,13 +84,29 @@ their lifts to the universal cover are the two inverse half-turns about the punc
 noncomputable def halfTurn (d : ℂ) (δ : MukaiVector ℂ) (z : ℂ) : ℂ :=
   δ.c / δ.r - 1 / (d * δ.r ^ 2) / (z - δ.c / δ.r)
 
+/-- **The image point of the half-turn.** For a root `δ` with `r ≠ 0` and `z` off its slope `m`,
+the reflection in the slice of `δ` sends `e^{zH}` to `-dr²(z - m)² · e^{f(z)H}`, where `f` is
+`halfTurn`. So `f(z)` is the coordinate, on the slice, of the exponential chart point of
+`ρ_δ(e^{zH})`, and `charge_halfTurn` is `Mukai.charge_halfTurn_of_isometry` read in this
+coordinate. -/
+theorem reflect_expSlice_halfTurn {d : ℂ} {δ : MukaiVector ℂ} (hδ : MukaiVector.IsRoot d δ)
+    (hd : d ≠ 0) (hr : δ.r ≠ 0) {z : ℂ} (hz : z ≠ δ.c / δ.r) :
+    Mukai.reflect (Mukai.rankOneForm d) (Mukai.slice 1 δ) (Mukai.expSlice 1 d z) =
+      (-(d * δ.r ^ 2 * (z - δ.c / δ.r) ^ 2)) • Mukai.expSlice 1 d (halfTurn d δ z) :=
+  Mukai.reflect_expSlice (Mukai.rankOneForm_one_one d) ((MukaiVector.isRoot_iff d δ).1 hδ) hr hd
+    hz
+
 /-- **The half-turn identity.** For a root `δ` with `r ≠ 0` and `z` off its slope,
 `Z_{f(z)}(T_δ v) = -k · Z_z(v) / (z - m)²`, where `f` is `halfTurn`, `m = c/r` and
 `k = 1/(dr²)`. So the twist carries the central charge at `z` to a rotated and rescaled central
-charge at `f(z)`. -/
+charge at `f(z)`.
+
+This is the explicit form, in the coordinate of the slice, of the coordinate-free half-turn
+`Mukai.charge_halfTurn_of_isometry` (see `reflect_expSlice_halfTurn`); the direct computation
+below is shorter than the route through the general statement. -/
 theorem charge_halfTurn {d : ℂ} {δ : MukaiVector ℂ} (hδ : MukaiVector.IsRoot d δ) (hd : d ≠ 0)
     (hr : δ.r ≠ 0) {z : ℂ} (hz : z ≠ δ.c / δ.r) (v : MukaiVector ℂ) :
-    charge d (halfTurn d δ z) (MukaiVector.reflect d δ v) =
+    charge d (halfTurn d δ z) (BilinearForm.reflect (MukaiVector.mukaiForm d) δ v) =
       -(1 / (d * δ.r ^ 2)) * charge d z v / (z - δ.c / δ.r) ^ 2 := by
   rw [MukaiVector.isRoot_iff] at hδ
   have hs : δ.s = (d * δ.c ^ 2 + 1) / δ.r := by
@@ -85,7 +114,8 @@ theorem charge_halfTurn {d : ℂ} {δ : MukaiVector ℂ} (hδ : MukaiVector.IsRo
     linear_combination hδ
   obtain ⟨w, rfl⟩ : ∃ w, z = δ.c / δ.r + w := ⟨z - δ.c / δ.r, by ring⟩
   have hw : w ≠ 0 := by rintro rfl; exact hz (add_zero _)
-  simp only [charge, halfTurn, MukaiVector.reflect, MukaiVector.pairing, MukaiVector.add_r,
+  simp only [charge, halfTurn, MukaiVector.bilinearFormReflect_apply, MukaiVector.pairing,
+    MukaiVector.add_r,
     MukaiVector.add_c, MukaiVector.add_s, MukaiVector.smul_r, MukaiVector.smul_c,
     MukaiVector.smul_s, hs, add_sub_cancel_left]
   field_simp
@@ -152,9 +182,11 @@ lemma opening_mass_Tinv : ‖charge 1 ζ MukaiVector.point + charge 1 ζ classS�
 /-- `T𝒪_x` and `T⁻¹𝒪_x` have the same Mukai vector, the reflection of `v(𝒪_x)` in `v(𝒪_X)`:
 `v(𝒪_x) + v(𝒪_X[1]) = (-1, 0, 0)`. Only the direction of the extension tells them apart. -/
 lemma opening_same_class :
-    MukaiVector.reflect (1 : ℂ) ⟨1, 0, 1⟩ MukaiVector.point = MukaiVector.point + classS ∧
+    BilinearForm.reflect (MukaiVector.mukaiForm (1 : ℂ)) ⟨1, 0, 1⟩ MukaiVector.point =
+        MukaiVector.point + classS ∧
       MukaiVector.point + classS = (⟨-1, 0, 0⟩ : MukaiVector ℂ) := by
-  constructor <;> ext <;> simp [MukaiVector.reflect, MukaiVector.pairing, MukaiVector.point, classS]
+  constructor <;> ext <;>
+    simp [MukaiVector.bilinearFormReflect_apply, MukaiVector.pairing, MukaiVector.point, classS]
 
 /-- `m_z(Tⁿ𝒪_x) = 1 + 10n/9`: the HN factors of `Tⁿ𝒪_x` at the base point are `𝒪_x` and the
 `n` shifts `𝒪_X[1 - j]`, `0 ≤ j < n`, each of mass `|Z(𝒪_X)| = 10/9`. -/
