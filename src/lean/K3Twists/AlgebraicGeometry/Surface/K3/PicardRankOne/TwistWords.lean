@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.LinearAlgebra.BilinearForm.Eichler
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import Mathlib.Algebra.BigOperators.Fin
@@ -20,7 +21,9 @@ import Mathlib.Analysis.Real.Sqrt
 * The word `Ψ = T_{𝒪_X} T_L` of the example with two rates: on the plane of `v(𝒪_X)` and `v(L)`
   it acts by a matrix of trace `(d + 2)² - 2` and determinant one (`psi_action`), with an
   eigenvalue `ρ > 1` (`psi_eigenvalue`), and its eigenlines are irrational because
-  `(d + 2)² - 4 = d(d + 4)` is not a square (`psi_discriminant_not_square`).
+  `(d + 2)² - 4 = d(d + 4)` is not a square (`psi_discriminant_not_square`). On the whole lattice
+  it satisfies the cubic `(Ψ - 1)(Ψ² - ((d + 2)² - 2)Ψ + 1) = 0` of two reflections
+  (`psi_cubic`).
 -/
 
 namespace AlgebraicGeometry.K3.PicardRankOne
@@ -115,6 +118,22 @@ theorem psi_action {R : Type*} [CommRing R] (d : R) :
   refine ⟨?_, ?_, by ring, by ring⟩ <;>
     ext <;> simp [MukaiVector.bilinearFormReflect_apply, MukaiVector.pairing,
       MukaiVector.lineBundle] <;> ring
+
+/-- **`Ψ` satisfies the cubic of two reflections** on the whole Mukai lattice: with
+`a = v(𝒪_X)` and `b = v(L)` of pairing `-(d + 2)`,
+`(Ψ - 1)(Ψ² - ((d + 2)² - 2)Ψ + 1) = 0` for `Ψ = T_{𝒪_X} T_L`. The quadratic factor is the
+characteristic polynomial of `psi_action` on the plane of `a` and `b`, and `Ψ` fixes the
+orthogonal complement of that plane. -/
+theorem psi_cubic {R : Type*} [CommRing R] (d : R) :
+    let Ψ := BilinearForm.reflectHom (MukaiVector.mukaiForm d) (MukaiVector.lineBundle d 0) *
+      BilinearForm.reflectHom (MukaiVector.mukaiForm d) (MukaiVector.lineBundle d 1)
+    (Ψ - 1) * (Ψ ^ 2 - ((d + 2) ^ 2 - 2) • Ψ + 1) = 0 := by
+  intro Ψ
+  have h := BilinearForm.reflectHom_mul_reflectHom_cubic (MukaiVector.mukaiForm d)
+    (MukaiVector.mukaiForm_comm d) (MukaiVector.isRoot_lineBundle d 1)
+    (MukaiVector.isRoot_lineBundle d 0)
+  rwa [MukaiVector.mukaiForm_apply, MukaiVector.pairing_lineBundle,
+    show (-(d * (1 - 0) ^ 2 + 2)) ^ 2 = (d + 2) ^ 2 by ring] at h
 
 /-- The trace `t = (d + 2)² - 2` exceeds `2` for `d ≥ 1`, so the characteristic polynomial
 `x² - tx + 1` has a root `ρ > 1` (and `ρ⁻¹ < 1`). -/
