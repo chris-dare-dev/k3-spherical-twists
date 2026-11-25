@@ -78,6 +78,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | From the proposition on rigid wall groups: for an extension `ξ` with middle term `N` and `Hom(A, B) = 0`, `v ↦ i v p` induces an injection `Ext¹(B, A)/(End(A)ξ + ξ End(B)) ↪ Ext¹(N, N)`; so `Ext¹(N, N) = 0` gives `Ext¹(B, A) = End(A)ξ + ξ End(B)` | `extQuotPushPull_injective`, `orbitSpan_eq_top`, `cocycles₁_le_orbitTangent` |
 | From the same proposition: a prefix `M_j` of an HN filtration has no maps to the next factor `M_{j+1}/M_j` (a nonzero map would give subobjects `K < M_j ≤ I` with `w(K) + w(I) = 2w(M_j)`, while `M_j` is the only maximizer of a weight `w`), and along such a flag the prefixes of a rigid representation are rigid | `Hom_restrict_subquotient_eq_bot`, `exists_subreps_of_mem_Hom`, `subsingleton_Ext1_restrict_of_chain` |
 | `dim Ext¹(X, Y) = dim Hom(X, Y) + dim Hom(Y, X) - (x, y)`, `(x, y) = 2x₀y₀ + 2x₁y₁ - g(x₀y₁ + x₁y₀)` (Crawley-Boevey, Amer. J. Math. 122 (2000), Lemma 1), from the duality of the two differentials under the trace pairing; Mukai's inequality with its defect, `e(N) = e(A) + e(B) + 2 dim Ext¹(B, A)/(End(A)ξ + ξ End(B))` when `Hom(A, B) = 0` (Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5), so both ends of a rigid extension are rigid; the rigid example has `Ext¹ = 0` | `finrank_Ext1`, `dualMap_d₀₁_comp_tracePairing₁`, `finrank_Ext1_extension`, `finrank_Ext1_add_le`, `rigid_of_rigid_extension`, `subsingleton_Ext1_rigidRep` |
+| The Mukai budget lemma in the quiver model: `e(X) = dim Ext¹(X, X)` is invariant under isomorphism and even, `e = 2 dim End + v²` (Riemann–Roch, `e = 2 + v²` only when `End = k`), and along a flag whose prefixes have no maps to the next subquotient, so along the HN filtration of every charge on either side of the wall, `∑ e(M_{j+1}/M_j) ≤ e(M)` | `DoubledRep.Iso.selfExtDim_eq`, `even_selfExtDim`, `selfExtDim_eq`, `selfExtDim_add_le`, `sum_selfExtDim_subquotient_le`, `sum_selfExtDim_le_of_hnFiltration` |
 | Fekete with a constant: the rate exists, each block certifies `ρ ≤ (K H_k)^{1/k}`, and the bounds converge | `exists_rate_of_submul`, `pow_rate_le` |
 | Transfer of rates between comparable sequences, uniformly in parameters; `o(n)` errors; polynomial growth has rate one; the rate per letter of a periodic word | `tendsto_rpow_inv_of_bounds`, `tendstoUniformly_rpow_inv_of_bounds`, `tendsto_log_div_of_bound`, `tendsto_log_div_zero_of_poly`, `tendsto_log_div_of_period` |
 | Fekete's lemma with a gap and no monotonicity: `ℓ(m) + ℓ(n) ≤ ℓ(m + n + D)` with bounded certificates gives `ℓ(N)/N → sup_{q ≥ 1} ℓ(q)/(q + D)` (the supremum must start at `q = 1`); lower certificates for every `q + D > 0`, upper certificates from a block bound; for positive `P` with `c P_m · c P_n ≤ c P_{m+n+D}` and `P_{n+q} ≤ K(q) P_n`, `log(c P_q)/(q + D) ≤ lim log P_N / N ≤ log K(q)/q`; `⌊N/p⌋/N → 1/p` | `tendsto_div_of_superadd_gap`, `le_of_superadd_gap`, `le_div_of_block`, `fekete_sandwich`, `tendsto_natDiv_div` |
@@ -104,6 +105,8 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | The homotopy pullback `B_i = B ×_M M_i` of the tower algorithm, from the octahedral axiom: `A → B_i → M_i`, `B_{i-1} → B_i → M_i/M_{i-1}` and the induced connecting map | `Pretriangulated.exists_pullback_triangles` |
 | HN filtrations concatenate along a triangle when their phases are separated; an HN filtration whose factors carry HN filtrations with separated phases refines to one with their factors, counted additively | `HNFiltration.exists_concat`, `HNFiltration.exists_refinement` |
 | Exactly one factor carrying the point survives a wall crossing from its local inputs, a finite path of walls, and a letter | `WallCrossing.carriesOnce`, `Leg.carriesOnce`, `TriEquiv.carriesOnce_map` |
+| Carrying the point once is "at most once" (at most one factor with `Pt`, each factor `Pt` or `Rg`) plus existence of a carrier | `HNFiltration.carriesOnce_iff`, `Slicing.carriesOnce_of_hasCarrier` |
+| `dim Hom(E, E⟦n⟧)` is invariant under isomorphism in any `k`-linear category, with no linearity of the shift; a `2`-spherical object has `Hom(E, E⟦1⟧) = 0` | `finrank_shiftHom_congr`, `selfExtDim_congr`, `selfExtDim_eq_zero_of_isSphericalObject` |
 | Evaluation of one phase, in any slicing: `Hom(S, M) ≅ Hom(S, D)` for the top quotient `M → D → C` and `S` of phases at least `φ` (and dually at the bottom); a residual of phases at most `φ` with no maps from `P(φ)` has phases below `φ`; the fibre of `D → D_final` is `M → D`; one evaluation step keeps the lower tail `C` | `Slicing.comp_bijective_of_top`, `Slicing.comp_bijective_of_bottom`, `Slicing.ltProp_of_leProp_of_hom_eq_zero`, `Slicing.exists_iso_top`, `Slicing.exists_evaluation_step` |
 | A coreflection `ε : D ⟶ R` into a class `P` (`D` in `P`, and every map from an object of `P` to `R` factors uniquely through `ε`) is the partial right adjoint of the inclusion at `R`, unique up to isomorphism over `R`. In an abelian category it is a monomorphism if `P` is closed under subobjects or under quotients, and then the largest subobject in `P`; it exists if `P` contains zero, is closed under quotients and extensions and `R` is Noetherian, or if `C` is well-powered with coproducts and `P` is closed under quotients and coproducts. `t(R)` is the supremum of the images of the maps from a generator; `Ext¹(-, K₀)` is left exact on `P` when `t(K₀) = 0`; a test class and a potential that drops on kernels give a torsion pair `(⊥F, F)` (Dickson, Trans. Amer. Math. Soc. 121 (1966)) | `ObjectProperty.IsCoreflection`, `rightAdjointObjIsDefined_ι_iff`, `isLeftAdjoint_ι_iff`, `IsCoreflection.isoOfIsCoreflection`, `IsCoreflection.mono_of_subobjects`, `IsCoreflection.mono_of_quotients`, `IsCoreflection.isGreatest`, `exists_isGreatest_subobject`, `isLeftAdjoint_ι_of_isNoetherianObject`, `isGreatest_sSup`, `isLUB_imageSubobject_of_generator`, `mk₀_comp_injective_of_rightOrthogonal`, `torsionTheory_of_potential` |
 | In a slicing, the top quotient `M → D` of the evaluation lemma is the coreflection of `D` into the objects of phases at least `t`, so it is unique over `D`; every object has a coreflection into the objects of phases above `t`, so their inclusion is a left adjoint | `Slicing.isCoreflection_geProp_of_top`, `Slicing.isoOfTop`, `Slicing.exists_isCoreflection_gtProp`, `Slicing.isLeftAdjoint_ι_gtProp` |
@@ -142,6 +145,7 @@ From these, Lean proves every assertion of the corollary:
 | The subobjects of `M` form the single chain `0 ⊂ A ⊂ P ⊂ M` | `PairingTwoWallHypotheses.subobject_M` |
 | Where `φ(A) < φ(B)`: `P` is stable and is the first HN step of `M`, with quotient `A` of smaller phase | `PairingTwoWallHypotheses.hn_of_phase_lt` |
 | Where `φ(B) < φ(A)`: `A` is the first HN step of `M`, with stable quotient `U` of smaller phase | `PairingTwoWallHypotheses.hn_of_phase_gt` |
+| Where `φ(B) < φ(A)`: the HN filtration of `P` is `0 ⊂ A ⊂ P`, with the two simple factors `A`, `B`; at a curve wall, `𝒪_x` with `x ∈ C` has the two rigid factors `𝒪_C`, `𝒪_C(-1)[1]` | `PairingTwoWallHypotheses.hn_P_of_phase_gt` |
 | On the wall `M` is semistable, with Jordan–Hölder factors `A`, `B`, `A` | `PairingTwoWallHypotheses.semistable_of_phase_eq` |
 | For a class map additive on short exact sequences, `[P] = [U] = [A] + [B]` and `[M] = 2[A] + [B]`; if `[A]`, `[B]` are spherical of pairing two, the wall matrix is `[[2, -2], [-2, 2]]`, `P` and `U` are isotropic and `M` is spherical | `PairingTwoWallHypotheses.cl_P`, `cl_M`, `cl_U`, `selfPairing_cl` |
 
@@ -171,9 +175,45 @@ From these, Lean proves the lemma:
 
 [K3TwistsTest/VisibilityModel.lean](K3TwistsTest/VisibilityModel.lean) meets the field list of `VisibilityHypotheses`, vacuously on the stability side: a model with stability conditions needs Bridgeland stability in Mathlib.
 
+### The Mukai budget
+
+`MukaiBudget` is a function `e` on the objects of a pretriangulated category with values in `ℕ`
+(nonnegativity is part of the interface: an integer-valued `e` with the other fields can be the
+constant `-1`), invariant under isomorphism, with Mukai's lemma `e(A) + e(B) ≤ e(D)` for every
+distinguished triangle `A → D → B → A⟦1⟧` with `Hom(A, B) = 0` (Bayer–Bridgeland,
+arXiv:1310.8266, Lemma 2.5). On a `k`-linear category, `e = dim Hom(E, E⟦1⟧)` is invariant under
+isomorphism by a theorem, so `MukaiBudget.ofSelfExtDim` asks only for Mukai's lemma.
+`TwoCYHypotheses` lists the 2-Calabi–Yau inputs for that `e`, with a class map `v : K₀ → Λ` and a
+bilinear form `q` in Mukai's sign (`χ = -q ∘ v`, spherical classes of square `-2`):
+Hom-finiteness, a Serre functor naturally isomorphic to `⟦2⟧` (Bondal–Kapranov; Huybrechts,
+*Fourier–Mukai transforms in algebraic geometry*, Ch. 3), Mukai's lemma, evenness of `e` (Serre
+duality and the even Mukai lattice), and Riemann–Roch `e = 2 + q(v, v)` for objects with `End = k`
+and no negative self-extensions only (Mukai; Huybrechts, *op. cit.*, Ch. 10). From these:
+
+| Assertion | Lean |
+|---|---|
+| **The Mukai budget lemma**: along every Postnikov tower whose triangles have no maps from sub to quotient, `∑ e(M_i) ≤ e(E)`; pairwise orthogonality of the factors gives that step condition, so the budget holds along every HN filtration of a phase predicate with Hom vanishing, at every slicing | `MukaiBudget.tower_sum_le`, `PostnikovTower.triangle_hom_eq_zero`, `MukaiBudget.hn_sum_le`, `MukaiBudget.slicing_sum_le` |
+| At most `⌊e(E)/2⌋` factors have `e ≠ 0` if none has `e = 1`; for `e(E) = 2` every factor has `e ∈ {0, 2}` and at most one has `e = 2`; a rigid object has rigid factors; `e(0) = 0` | `MukaiBudget.card_nonrigid_le`, `e_factor_eq_zero_or_two`, `eq_of_e_factor_ne_zero`, `rigid_factors`, `e_zero` |
+| For `e(E) = 2`, every HN filtration at every slicing has `e = 2` at most once and the other factors rigid, with no path, word, evenness or Picard rank; existence of the factor with `e = 2` is the vanishing of the defect `e(E) - ∑ e(M_i)`, which does not depend on the HN filtration with nonzero factors | `MukaiBudget.atMostOnce_e`, `exists_e_eq_two_iff`, `carriesOnce_e_iff`, `sum_e_eq_of_nonzero` |
+| On a 2-Calabi–Yau category: `dim Hom(E, E⟦2⟧) = dim End(E)`; a simple isotropic object has `e = 2`; a spherical object has `v² = -2`; the at-most-once and zero-defect statements with no hypothesis on the factors | `TwoCYHypotheses.finrank_shift_two`, `selfExtDim_eq_two_of_isotropic`, `sq_classOf_eq_neg_two`, `atMostOnce_e`, `carriesOnce_e_iff` |
+
+[K3TwistsTest/BudgetModel.lean](K3TwistsTest/BudgetModel.lean) checks consistency (`e = 0` on any
+pretriangulated category; `TwoCYHypotheses` on a category of zero objects) and keeps two refuted
+formulations as tests: an integer-valued budget without `e ≥ 0` (the constant `-1` breaks the
+budget on the empty tower of `0`), and Riemann–Roch on all objects (false at `0`, where `e = 0` and
+`v = 0`). Neither structure has an instance built from real objects: the library has no
+2-Calabi–Yau triangulated category, so Mukai's lemma for triangles (and the Serre functor) cannot be
+supplied. The real objects on which the budget is checked are the representations of the quiver
+model, where Mukai's inequality, evenness and Riemann–Roch are theorems for extensions in the heart
+of the wall (row "The Mukai budget lemma in the quiver model" above).
+[K3TwistsTest/PairingTwoWallTowerModel.lean](K3TwistsTest/PairingTwoWallTowerModel.lean) shows that
+existence is independent of the budget: a point with the two rigid HN factors of the curve wall
+has `e = 2` at most once and no carrier.
+
 ### The tower theorem
 
-`TowerHypotheses` lists what the tower theorem of the draft uses: `C` stands for `D^b(X)`, a
+`TowerHypotheses` (in `CategoryTheory.Triangulated`; the name under
+`AlgebraicGeometry.K3.PicardRankOne` is a deprecated alias) lists what the tower theorem of the draft uses: `C` stands for `D^b(X)`, a
 slicing for a stability condition, and each field cites its source:
 
 - `𝒪_x` is nonzero and stable at the geometric anchor `η` (Bayer–Bridgeland,
@@ -193,6 +233,7 @@ From these, Lean proves the induction on the length of the word:
 | At `η`, every prefix `W_j 𝒪_x` has exactly one HN factor carrying the point, and every other factor is spherical | `TowerHypotheses.carriesOnce_anchor` |
 | The same at the target `σ`, also when `σ` lies on walls | `TowerHypotheses.tower` |
 | The same for every HN filtration of `W 𝒪_x` at `σ` with nonzero factors | `TowerHypotheses.tower_forall` |
+| With a Mukai budget for which point-like objects have `e = 2`: at every slicing, every HN filtration of every prefix has `e = 2` at most once, with no wall input; the tower theorem gives zero defect at `σ`; and given the pointwise links between carriers, spheres and `e` (Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.6 for rigid objects), the conclusion at `σ` is equivalent to the existence of a carrier | `TowerHypotheses.atMostOnce_word`, `sum_e_eq_two`, `carriesOnce_target_iff` |
 
 [K3TwistsTest/HNTowerModel.lean](K3TwistsTest/HNTowerModel.lean) builds an instance from any slicing
 with a nonzero semistable object (the empty word, no walls); it shows the fields are consistent
@@ -430,6 +471,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, isomorphisms, subrepresentations, dimension vectors, restrictions, quotients, subquotients, kernels and images | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Ext.lean` | `Ext¹` by the standard complex, extensions as cocycles, the injection into `Ext¹(N, N)`, the dimension of `Ext¹` and Mukai's inequality | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/IncomingFlag.lean` | a rigid wall object is determined by its incoming flag, from the open-orbit input | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/Budget.lean` | the Mukai budget lemma in the quiver model: `e = dim Ext¹` invariant under isomorphism, even, Riemann–Roch, superadditive along flags and HN filtrations | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the wall group that carries the point: classification and table of HN quotients | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Radical.lean` | the saturation and radical of the representations supported at vertex zero; the top HN step as a radical | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/RigidRep.lean` | the rigid representation of dimension `(g², g)` with arrows in both directions | `Quiver.Kronecker` |
@@ -478,6 +520,9 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/HarderNarasimhan.lean` | HN filtrations along an exact autoequivalence |
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/Artin.lean` | Artin groups acting by autoequivalences; braid relations from the conjugation formula (`TwistConjugation`) |
 | `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall, a path of walls and a letter |
+| `Triangulated/StabilityCondition/Budget.lean` | `MukaiBudget` (`e : C → ℕ`, invariant under isomorphism, Mukai's lemma: Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5) and the Mukai budget lemma along Hom-orthogonal towers and HN filtrations |
+| `Triangulated/StabilityCondition/Tower.lean` | carrying the point once as at most once plus existence; a path of walls (`Leg`); `TowerHypotheses` and the tower theorem, also through the budget |
+| `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
 

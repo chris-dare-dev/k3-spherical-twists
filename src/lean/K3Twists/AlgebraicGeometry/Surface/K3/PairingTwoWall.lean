@@ -25,6 +25,8 @@ are its cited inputs. From them alone, in any abelian category, this file proves
   has smaller phase: the HN filtration of `M` is `0 ⊂ P ⊂ M`, with factors `P`, `A`;
 * `hn_of_phase_gt`: on the other side `A ⊂ M` has the largest phase, `U = M/A` is stable of
   smaller phase: the HN filtration is `0 ⊂ A ⊂ M`, with factors `A`, `U`;
+* `hn_P_of_phase_gt`: on that side `P` itself is not semistable: its HN filtration is
+  `0 ⊂ A ⊂ P`, with the two simple factors `A`, `B`;
 * `semistable_of_phase_eq`: on the wall every nonzero subobject of `M` has the phase of `M`:
   `M` is semistable with Jordan–Hölder factors `A`, `B`, `A`.
 
@@ -216,6 +218,22 @@ theorem hn_of_phase_gt (h : Φ.phase W.B < Φ.phase W.A) :
     · exact absurd rfl h1
     · rw [phase_mk]; exact hPA
     · rw [phase_top]; exact hMA
+
+/-- **The point splits on the side where `A` has the larger phase.** Where `φ(B) < φ(A)`, the
+only nonzero proper subobject of `P` is `A`, and `φ(B) < φ(P) < φ(A)`: the HN filtration of `P` is
+`0 ⊂ A ⊂ P`, with the two simple factors `A` and `P/A = B`. At the wall contracting a `(-2)`-curve
+`C` this is `𝒪_x` for `x ∈ C`, with the two spherical, hence rigid, HN factors `𝒪_C` and
+`𝒪_C(-1)[1]` on the side where `φ(𝒪_C) > φ(𝒪_C(-1)[1])`: no HN factor of a point carries its
+self-extensions there, already before any spherical twist is applied. -/
+theorem hn_P_of_phase_gt (h : Φ.phase W.B < Φ.phase W.A) :
+    (∀ T : Subobject W.P, T ≠ ⊥ → T ≠ ⊤ → T = Subobject.mk W.j) ∧
+      Φ.phase W.B < Φ.phase W.P ∧ Φ.phase W.P < Φ.phase W.A := by
+  obtain ⟨hBP, hPA⟩ := Φ.seesaw_gt _ W.shortExact_P W.not_isZero_A W.not_isZero_B h
+  refine ⟨fun T h0 h1 => ?_, hBP, hPA⟩
+  rcases W.subobject_P T with rfl | rfl | rfl
+  · exact absurd rfl h0
+  · rfl
+  · exact absurd rfl h1
 
 /-! ### On the wall -/
 

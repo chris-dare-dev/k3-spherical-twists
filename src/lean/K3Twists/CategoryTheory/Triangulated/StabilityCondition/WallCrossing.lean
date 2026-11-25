@@ -24,21 +24,20 @@ through a wall `w` is given by two local inputs: the grouping of the incoming fa
 groups, and, for each wall group, an outgoing filtration whose phases stay in a window around its
 wall phase, the windows of different groups being ordered. Inserting the outgoing flags by
 homotopy pullback (`HNFiltration.exists_refinement`) gives the outgoing HN filtration, and the
-property is carried across (`WallCrossing.carriesOnce`). A finite path of crossings is a `Leg`
-(`Leg.carriesOnce`). An exact autoequivalence `Φ` matching the properties carries the property
-from `s` to `Φ s` (`TriEquiv.carriesOnce_map`).
+property is carried across (`WallCrossing.carriesOnce`). An exact autoequivalence `Φ` matching the
+properties carries the property from `s` to `Φ s` (`TriEquiv.carriesOnce_map`). A finite path of
+crossings, `Leg`, is in `StabilityCondition/Tower.lean`, with the split of `CarriesOnce` into its
+at-most-once half, which the Mukai budget gives at every slicing, and its existence half.
 
 ## Main definitions
 
 * `HNFiltration.CarriesOnce`, `Slicing.CarriesOnce`: exactly one factor carries the point.
 * `WallCrossing`: the local inputs at one wall.
-* `Leg`: a finite path of wall crossings.
 
 ## Main results
 
 * `Slicing.CarriesOnce.forall`: the property holds for every HN filtration with nonzero factors.
 * `WallCrossing.carriesOnce`: crossing one wall.
-* `Leg.carriesOnce`: following a path of walls.
 * `TriEquiv.carriesOnce_map`: applying a letter.
 
 ## Tags
@@ -177,37 +176,6 @@ theorem carriesOnce_wall (hw : WallCrossing t₁ w t₂ Pt Rg 𝒪) {E : C} (hE 
   hw.wall_of_incoming E hE h
 
 end WallCrossing
-
-/-! ### A path of walls -/
-
-/-- **A finite path of wall crossings**: chambers `chamber 0, …, chamber n` and walls
-`wall 0, …, wall (n - 1)`, the `k`-th wall separating `chamber k` from `chamber (k + 1)`. Between
-walls the HN filtration does not change, so only the walls are recorded (in the draft, the
-straight legs of a polygon meet finitely many rational alignment lines, "How to find the next
-wall"). -/
-structure Leg (Pt Rg : Slicing C → ObjectProperty C) (𝒪 : ObjectProperty C) where
-  /-- The number of walls. -/
-  n : ℕ
-  /-- The chambers. -/
-  chamber : ℕ → Slicing C
-  /-- The walls. -/
-  wall : ℕ → Slicing C
-  /-- The local inputs at each wall. -/
-  crossing : ∀ k < n, WallCrossing (chamber k) (wall k) (chamber (k + 1)) Pt Rg 𝒪
-
-/-- **Following a path of walls.** An object of `𝒪` that carries the point once at the start of
-a leg carries it once at its end. -/
-theorem Leg.carriesOnce [IsTriangulated C] {Pt Rg : Slicing C → ObjectProperty C}
-    [∀ s, (Pt s).IsClosedUnderIsomorphisms] [∀ s, (Rg s).IsClosedUnderIsomorphisms]
-    {𝒪 : ObjectProperty C} (L : Leg Pt Rg 𝒪) {E : C} (hE : 𝒪 E)
-    (h : (L.chamber 0).CarriesOnce (Pt (L.chamber 0)) (Rg (L.chamber 0)) E) :
-    (L.chamber L.n).CarriesOnce (Pt (L.chamber L.n)) (Rg (L.chamber L.n)) E := by
-  suffices key : ∀ k ≤ L.n,
-      (L.chamber k).CarriesOnce (Pt (L.chamber k)) (Rg (L.chamber k)) E from key L.n le_rfl
-  intro k
-  induction k with
-  | zero => exact fun _ => h
-  | succ k ih => exact fun hk => (L.crossing k (by omega)).carriesOnce hE (ih (by omega))
 
 /-! ### One letter -/
 
