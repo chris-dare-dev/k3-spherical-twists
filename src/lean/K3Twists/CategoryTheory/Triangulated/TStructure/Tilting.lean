@@ -11,9 +11,10 @@ import K3Twists.CategoryTheory.Triangulated.TStructure.HeartAbelian
 Let `t` and `t'` be t-structures on a triangulated category, in Mathlib's cohomological
 convention (`t.le 0` is the aisle `D^{≤0}`), with
 `D_t^{≤ -1} ⊆ D_{t'}^{≤ 0} ⊆ D_t^{≤ 0}`. Write `A` and `A'` for their hearts. This is the
-converse of the tilting theorem of Happel–Reiten–Smalø (*Tilting in abelian categories and
-quasitilted algebras*, Mem. Amer. Math. Soc. 120 (1996), Proposition I.2.1; Polishchuk,
-arXiv:math/0606013, Lemma 1.1.2):
+converse of tilting at a torsion pair (Happel–Reiten–Smalø, *Tilting in abelian categories and
+quasitilted algebras*, Mem. Amer. Math. Soc. 120 (1996), no. 575, Chapter I, §2), in the form of
+Polishchuk, arXiv:math/0606013, Lemma 1.1.2, there stated up to a shift as
+`D₁^{≤0} ⊂ D₂^{≤0} ⊂ D₁^{≤1}`:
 
 * `TStructure.exists_distTriang_heart_of_le`: every `X ∈ A` sits in a distinguished triangle
   `X₁ → X → X₃ → X₁⟦1⟧` with `X₁ ∈ A ∩ D_{t'}^{≤0}` and `X₃ ∈ A ∩ D_{t'}^{≥1}`: the
