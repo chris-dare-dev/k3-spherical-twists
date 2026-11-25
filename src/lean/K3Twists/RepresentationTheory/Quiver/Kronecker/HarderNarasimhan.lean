@@ -2,7 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
-import K3Twists.Order.HarderNarasimhan
+import K3Twists.Order.HarderNarasimhan.Polytope
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
 
 /-!
@@ -35,6 +35,25 @@ For the rigid representation of dimension `(g², g)`:
 By `Order.SlopeFunction.HNFiltration.instSubsingleton` these are the only HN filtrations, and by
 `HNFiltration.convexHull_subset` they read the upper and lower boundaries of the convex hull of
 the points `(i + j, j)` of the subrepresentations.
+
+## Charge functions and existence
+
+A charge `Z(i, j) = i Z₀ + j Z₁` with `Z₀`, `Z₁` in the upper half-plane or on the negative real
+axis is a charge function on the subrepresentations (`DoubledRep.chargeFunction`, rank
+`r₀ i + r₁ j`, degree `d₀ i + d₁ j`); a simple on the negative real axis gives vertical steps.
+
+* `DoubledRep.nonempty_hnFiltration`: every charge has an HN filtration on the subrepresentations
+  of a finite-dimensional representation, by the existence theorem for charge functions
+  (the charge takes finitely many values, `DoubledRep.finite_range_chargeFunction`); it is unique.
+  `DoubledRep.hnFiltration` is this filtration.
+* `DoubledRep.chargeFunction_phase_le_phase_iff`, `chargeFunction_phase_le_phase_iff_neg`: the
+  phase order, vertical steps included, only depends on the side of the wall.
+* `RigidRep.range_hnFiltration_chain_upper`, `RigidRep.range_hnFiltration_chain_lower`: the HN
+  filtration of the rigid representation given by the existence theorem is `0 ⊂ (H', W) ⊂ M` or
+  `0 ⊂ (H', 0) ⊂ M`, for every charge on the corresponding side.
+* `RigidRep.verticalCharge_factorPhase_zero`, `RigidRep.verticalCharge_weight_bot_lt`: for the
+  charge with `Z₀ = -1`, the first factor `(H', 0) = S₀^{g² - 1}` is vertical, and `⊥` maximizes
+  no weight `deg - θ rk`.
 
 ## The flag does not depend on the representative
 
@@ -183,6 +202,156 @@ theorem slope_le_slope_iff_neg {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r�
     div_le_div_iff₀ (by linarith) (by linarith), div_le_div_iff₀ (by linarith) (by linarith)]
   simp only [zero_mul, zero_add, one_mul]
   exact cross_le_iff_neg hD
+
+/-! ### Charge functions, with vertical steps -/
+
+omit [FiniteDimensional k V₀] [FiniteDimensional k V₁] in
+/-- A nonzero nonnegative combination of two lexicographically positive vectors is
+lexicographically positive. -/
+private lemma lex_pos_add {r₀ r₁ d₀ d₁ a b : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (ha : 0 ≤ a) (hb : 0 ≤ b) (hab : 0 < a + b) :
+    0 < r₀ * a + r₁ * b ∨ (r₀ * a + r₁ * b = 0 ∧ 0 < d₀ * a + d₁ * b) := by
+  rcases h₀ with h₀ | ⟨rfl, h₀⟩ <;> rcases h₁ with h₁ | ⟨rfl, h₁⟩
+  · left
+    rcases ha.lt_or_eq with ha | rfl
+    · nlinarith
+    · nlinarith
+  · rcases ha.lt_or_eq with ha | rfl
+    · left; nlinarith
+    · right; constructor <;> nlinarith
+  · rcases hb.lt_or_eq with hb | rfl
+    · left; nlinarith
+    · right; constructor <;> nlinarith
+  · right
+    refine ⟨by ring, ?_⟩
+    have p₀ := mul_nonneg h₀.le ha
+    have p₁ := mul_nonneg h₁.le hb
+    rcases ha.lt_or_eq with ha' | rfl
+    · linarith [mul_pos h₀ ha']
+    · linarith [mul_pos h₁ (by linarith : 0 < b)]
+
+/-- The charge function on the subrepresentations of `M` with rank `r₀ i + r₁ j` and degree
+`d₀ i + d₁ j` at the dimension vector `(i, j)`, for `(r₀, d₀)` and `(r₁, d₁)` lexicographically
+positive. With `rk = Im Z`, `deg = -Re Z`, this is the central charge `Z(i, j) = i Z₀ + j Z₁`
+with `Z₀`, `Z₁` in the upper half-plane or on the negative real axis; a simple of charge on the
+negative real axis gives vertical steps. -/
+noncomputable def chargeFunction (M : DoubledRep k ι V₀ V₁) {r₀ r₁ d₀ d₁ : K}
+    (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀)) (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) :
+    ChargeFunction M.subreps K where
+  rk N := r₀ * (dimVec N).1 + r₁ * (dimVec N).2
+  deg N := d₀ * (dimVec N).1 + d₁ * (dimVec N).2
+  lex_lt {N N'} h := by
+    have hle := dimVec_mono h.le
+    have hlt := totalDim_lt_of_lt h
+    have a₁ : ((dimVec N).1 : K) ≤ (dimVec N').1 := by exact_mod_cast hle.1
+    have a₂ : ((dimVec N).2 : K) ≤ (dimVec N').2 := by exact_mod_cast hle.2
+    have a₃ : ((dimVec N).1 : K) + (dimVec N).2 < (dimVec N').1 + (dimVec N').2 := by
+      exact_mod_cast hlt
+    rcases lex_pos_add h₀ h₁ (sub_nonneg.mpr a₁) (sub_nonneg.mpr a₂) (by linarith) with h | h
+    · left; linarith
+    · right; constructor <;> linarith [h.1, h.2]
+  rk_sup_add_inf N N' := (M.slopeFunction one_pos one_pos r₀ r₁).deg_sup_add_inf N N'
+  deg_sup_add_inf N N' := (M.slopeFunction one_pos one_pos d₀ d₁).deg_sup_add_inf N N'
+
+lemma chargeFunction_rk {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (N : M.subreps) :
+    (M.chargeFunction h₀ h₁).rk N = r₀ * (dimVec N).1 + r₁ * (dimVec N).2 := rfl
+
+lemma chargeFunction_deg {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (N : M.subreps) :
+    (M.chargeFunction h₀ h₁).deg N = d₀ * (dimVec N).1 + d₁ * (dimVec N).2 := rfl
+
+/-- The slope function of a charge in the upper half-plane is its charge function. -/
+lemma slopeFunction_toChargeFunction {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁) (d₀ d₁ : K) :
+    (M.slopeFunction h₀ h₁ d₀ d₁).toChargeFunction =
+      M.chargeFunction (Or.inl h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+        (Or.inl h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) :=
+  rfl
+
+/-- The charge of a subrepresentation takes finitely many values: the dimension vector is at
+most `(dim V₀, dim V₁)`. -/
+theorem finite_range_chargeFunction {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) :
+    (Set.range fun N ↦ ((M.chargeFunction h₀ h₁).rk N, (M.chargeFunction h₀ h₁).deg N)).Finite := by
+  refine (((Set.finite_Iic (finrank k V₀)).prod (Set.finite_Iic (finrank k V₁))).image
+    fun p : ℕ × ℕ ↦ (r₀ * (p.1 : K) + r₁ * p.2, d₀ * (p.1 : K) + d₁ * p.2)).subset ?_
+  rintro _ ⟨N, rfl⟩
+  have h := dimVec_mono (le_top : N ≤ ⊤)
+  rw [dimVec_top] at h
+  exact ⟨dimVec N, ⟨h.1, h.2⟩, rfl⟩
+
+/-- The subrepresentations of a finite-dimensional representation satisfy the ascending chain
+condition. -/
+instance : WellFoundedGT M.subreps :=
+  (M.chargeFunction (K := ℚ) (r₀ := 1) (r₁ := 1) (d₀ := 0) (d₁ := 0) (Or.inl one_pos)
+    (Or.inl one_pos)).wellFoundedGT_of_finite_range (M.finite_range_chargeFunction _ _)
+
+/-- **Every charge has an HN filtration** on the subrepresentations of a finite-dimensional
+representation, from the existence theorem for charge functions. By
+`ChargeFunction.HNChain.instSubsingleton` it is unique. -/
+theorem nonempty_hnFiltration {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) : Nonempty (M.chargeFunction h₀ h₁).HNFiltration :=
+  (M.chargeFunction h₀ h₁).nonempty_hnFiltration_of_finite_range
+    (M.finite_range_chargeFunction h₀ h₁)
+
+/-- The HN filtration of `M` for the charge `(r₀ i + r₁ j, d₀ i + d₁ j)`, given by
+`nonempty_hnFiltration`; it is the only one. -/
+noncomputable def hnFiltration {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) : (M.chargeFunction h₀ h₁).HNFiltration :=
+  Classical.choice (M.nonempty_hnFiltration h₀ h₁)
+
+/-- Every slope function `slopeFunction r d` has an HN filtration. -/
+theorem nonempty_hnFiltration_slopeFunction {r₀ r₁ : K} (h₀ : 0 < r₀) (h₁ : 0 < r₁)
+    (d₀ d₁ : K) : Nonempty (M.slopeFunction h₀ h₁ d₀ d₁).HNFiltration :=
+  (M.nonempty_hnFiltration (Or.inl h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (Or.inl h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁))).map SlopeFunction.HNFiltration.ofCharge
+
+omit [FiniteDimensional k V₀] [FiniteDimensional k V₁] in
+/-- The cross products of the phases of `chargeFunction` and of `wallSlope`, in the coordinates of
+the dimension vectors `(i, j) < (i', j')` and `(k, l) < (k', l')`. -/
+private lemma charge_cross_iff {r₀ r₁ d₀ d₁ : K} (hD : d₀ * r₁ < d₁ * r₀)
+    (i j i' j' k l k' l' : K) :
+    (d₀ * i' + d₁ * j' - (d₀ * i + d₁ * j)) * (r₀ * k' + r₁ * l' - (r₀ * k + r₁ * l)) ≤
+        (d₀ * k' + d₁ * l' - (d₀ * k + d₁ * l)) * (r₀ * i' + r₁ * j' - (r₀ * i + r₁ * j)) ↔
+      (j' - j) * (k' + l' - (k + l)) ≤ (l' - l) * (i' + j' - (i + j)) := by
+  convert cross_le_iff (a := i' - i) (b := j' - j) (a' := k' - k) (b' := l' - l) hD using 2 <;>
+    ring
+
+omit [FiniteDimensional k V₀] [FiniteDimensional k V₁] in
+private lemma charge_cross_iff_neg {r₀ r₁ d₀ d₁ : K} (hD : d₁ * r₀ < d₀ * r₁)
+    (i j i' j' k l k' l' : K) :
+    (d₀ * i' + d₁ * j' - (d₀ * i + d₁ * j)) * (r₀ * k' + r₁ * l' - (r₀ * k + r₁ * l)) ≤
+        (d₀ * k' + d₁ * l' - (d₀ * k + d₁ * l)) * (r₀ * i' + r₁ * j' - (r₀ * i + r₁ * j)) ↔
+      (-j' - -j) * (k' + l' - (k + l)) ≤ (-l' - -l) * (i' + j' - (i + j)) := by
+  convert cross_le_iff_neg (a := i' - i) (b := j' - j) (a' := k' - k) (b' := l' - l) hD
+    using 2 <;> ring
+
+/-- **The phase order of a charge near the wall only depends on the side**, vertical steps
+included: if `d₀ r₁ < d₁ r₀`, the phases of `chargeFunction` are ordered like those of
+`wallSlope`. -/
+theorem chargeFunction_phase_le_phase_iff {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (hD : d₀ * r₁ < d₁ * r₀) {x y x' y' : M.subreps}
+    (hxy : x < y) (hxy' : x' < y') :
+    (M.chargeFunction h₀ h₁).phase x y ≤ (M.chargeFunction h₀ h₁).phase x' y' ↔
+      (wallSlope K M).toChargeFunction.phase x y ≤
+        (wallSlope K M).toChargeFunction.phase x' y' := by
+  rw [ChargeFunction.phase_le_phase_iff _ hxy hxy', ChargeFunction.phase_le_phase_iff _ hxy hxy']
+  simp only [chargeFunction_rk, chargeFunction_deg, SlopeFunction.toChargeFunction_rk,
+    SlopeFunction.toChargeFunction_deg, wallSlope_rk, wallSlope_deg]
+  exact charge_cross_iff hD _ _ _ _ _ _ _ _
+
+/-- On the other side, `d₁ r₀ < d₀ r₁`, the phases are ordered like those of `wallSlope.neg`. -/
+theorem chargeFunction_phase_le_phase_iff_neg {r₀ r₁ d₀ d₁ : K}
+    (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀)) (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁))
+    (hD : d₁ * r₀ < d₀ * r₁) {x y x' y' : M.subreps} (hxy : x < y) (hxy' : x' < y') :
+    (M.chargeFunction h₀ h₁).phase x y ≤ (M.chargeFunction h₀ h₁).phase x' y' ↔
+      (wallSlope K M).neg.toChargeFunction.phase x y ≤
+        (wallSlope K M).neg.toChargeFunction.phase x' y' := by
+  rw [ChargeFunction.phase_le_phase_iff _ hxy hxy', ChargeFunction.phase_le_phase_iff _ hxy hxy']
+  simp only [chargeFunction_rk, chargeFunction_deg, SlopeFunction.toChargeFunction_rk,
+    SlopeFunction.toChargeFunction_deg, SlopeFunction.neg_rk, SlopeFunction.neg_deg,
+    wallSlope_rk, wallSlope_deg]
+  exact charge_cross_iff_neg hD _ _ _ _ _ _ _ _
 
 /-! ### The flag does not depend on the representative -/
 
@@ -412,6 +581,78 @@ noncomputable def hnLowerOf (hι : 2 ≤ Fintype.card ι) {r₀ r₁ : K} (h₀ 
     {d₀ d₁ : K} (hD : d₁ * r₀ < d₀ * r₁) :
     ((rigidRep k ι).slopeFunction h₀ h₁ d₀ d₁).HNFiltration :=
   (hnLower K hι).ofSlopeOrder fun _ _ _ _ h h' ↦ (slope_le_slope_iff_neg _ h₀ h₁ hD h h').symm
+
+/-! ### Every charge, through the existence and uniqueness theorems -/
+
+variable {K}
+
+/-- **The HN filtration of the rigid representation on the first side, for every charge**, vertical
+charges included: for `(r₀, d₀)`, `(r₁, d₁)` lexicographically positive with `d₀ r₁ < d₁ r₀`, it
+is `0 ⊂ (H', W) ⊂ M`. -/
+noncomputable def hnUpperCharge {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (hD : d₀ * r₁ < d₁ * r₀) :
+    ((rigidRep k ι).chargeFunction h₀ h₁).HNFiltration :=
+  (hnUpper K).toCharge.ofPhaseOrder fun _ _ _ _ h h' ↦
+    ((rigidRep k ι).chargeFunction_phase_le_phase_iff h₀ h₁ hD h h').symm
+
+/-- **The HN filtration of the rigid representation on the other side, for every charge**: for
+`d₁ r₀ < d₀ r₁` and `g ≥ 2` it is `0 ⊂ (H', 0) ⊂ M`. -/
+noncomputable def hnLowerCharge (hι : 2 ≤ Fintype.card ι) {r₀ r₁ d₀ d₁ : K}
+    (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀)) (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁))
+    (hD : d₁ * r₀ < d₀ * r₁) : ((rigidRep k ι).chargeFunction h₀ h₁).HNFiltration :=
+  (hnLower K hι).toCharge.ofPhaseOrder fun _ _ _ _ h h' ↦
+    ((rigidRep k ι).chargeFunction_phase_le_phase_iff_neg h₀ h₁ hD h h').symm
+
+/-- **The HN filtration given by the existence theorem is `0 ⊂ (H', W) ⊂ M`** on the first side:
+`DoubledRep.hnFiltration` comes from `ChargeFunction.nonempty_hnFiltration_of_finite_range`, and
+uniqueness identifies it with `hnUpperCharge`. -/
+theorem range_hnFiltration_chain_upper {r₀ r₁ d₀ d₁ : K} (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀))
+    (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁)) (hD : d₀ * r₁ < d₁ * r₀) :
+    Set.range ((rigidRep k ι).hnFiltration h₀ h₁).chain = {⊥, upperCorner, ⊤} := by
+  rw [Subsingleton.elim ((rigidRep k ι).hnFiltration h₀ h₁) (hnUpperCharge h₀ h₁ hD)]
+  change Set.range ![⊥, upperCorner, ⊤] = _
+  simp only [Matrix.range_cons, Matrix.range_empty, Set.union_empty, Set.singleton_union]
+
+/-- **The HN filtration given by the existence theorem is `0 ⊂ (H', 0) ⊂ M`** on the other
+side. -/
+theorem range_hnFiltration_chain_lower (hι : 2 ≤ Fintype.card ι) {r₀ r₁ d₀ d₁ : K}
+    (h₀ : 0 < r₀ ∨ (r₀ = 0 ∧ 0 < d₀)) (h₁ : 0 < r₁ ∨ (r₁ = 0 ∧ 0 < d₁))
+    (hD : d₁ * r₀ < d₀ * r₁) :
+    Set.range ((rigidRep k ι).hnFiltration h₀ h₁).chain = {⊥, lowerCorner, ⊤} := by
+  rw [Subsingleton.elim ((rigidRep k ι).hnFiltration h₀ h₁) (hnLowerCharge hι h₀ h₁ hD)]
+  change Set.range ![⊥, lowerCorner, ⊤] = _
+  simp only [Matrix.range_cons, Matrix.range_empty, Set.union_empty, Set.singleton_union]
+
+variable (K) in
+/-- The vertical charge: `rk = j`, `deg = i`, that is `Z₀ = -1` on the negative real axis and
+`Z₁ = i`. The simple `S₀` has phase `⊤`. -/
+noncomputable def verticalCharge : ChargeFunction (rigidRep k ι).subreps K :=
+  (rigidRep k ι).chargeFunction (r₀ := 0) (d₀ := 1) (r₁ := 1) (d₁ := 0) (Or.inr ⟨rfl, one_pos⟩)
+    (Or.inl one_pos)
+
+/-- **A vertical first edge on a real object.** For the vertical charge and `g ≥ 2`, the HN
+filtration of the rigid representation is `0 ⊂ (H', 0) ⊂ M`, and its first factor
+`(H', 0) = S₀^{g² - 1}` is vertical. -/
+theorem verticalCharge_factorPhase_zero (hι : 2 ≤ Fintype.card ι)
+    (F : (verticalCharge (k := k) (ι := ι) K).HNFiltration) (h0 : 0 < F.n) :
+    F.factorPhase ⟨0, h0⟩ = ⊤ := by
+  refine (F.factorPhase_zero_eq_top_iff h0).mpr ⟨lowerCorner, bot_lt_lowerCorner hι, ?_⟩
+  simp [verticalCharge, chargeFunction_rk, dimVec_lowerCorner]
+
+/-- **`⊥` maximizes no weight for the vertical charge.** Every weight `w_θ` is larger at
+`(H', 0)` than at `⊥`, so the disjunct `x = ⊥` of `ChargeFunction.HNChain.mem_range_chain_iff`
+is needed for the rigid representation. -/
+theorem verticalCharge_weight_bot_lt (hι : 2 ≤ Fintype.card ι) (θ : K) :
+    (verticalCharge (k := k) (ι := ι) K).weight θ ⊥ <
+      (verticalCharge (k := k) (ι := ι) K).weight θ lowerCorner := by
+  have h1 : 1 ≤ Fintype.card ι ^ 2 - 1 := by
+    have : 4 ≤ Fintype.card ι ^ 2 := by nlinarith
+    omega
+  have h1' : (1 : K) ≤ ((Fintype.card ι ^ 2 - 1 : ℕ) : K) := by exact_mod_cast h1
+  simp only [ChargeFunction.weight, verticalCharge, chargeFunction_rk, chargeFunction_deg,
+    DoubledRep.dimVec_bot, dimVec_lowerCorner]
+  push_cast
+  linarith
 
 end RigidRep
 
