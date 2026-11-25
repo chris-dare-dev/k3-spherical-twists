@@ -19,10 +19,13 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallMatrix
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
+import K3Twists.Analysis.Convex.Birkhoff2
 import K3Twists.Analysis.Convex.HilbertMetric
+import K3Twists.Analysis.Convex.IFS
 import K3Twists.Analysis.Matrix.BipartiteCompression
 import K3Twists.Analysis.Matrix.GelfandRadius
 import K3Twists.Analysis.Matrix.JointSpectralRadius
+import K3Twists.Analysis.Normed.Algebra.PowerBound
 import K3Twists.Analysis.SpecificLimits.GrowthRate
 import K3Twists.CategoryTheory.Abelian.Subobject.Valuation
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Radical
