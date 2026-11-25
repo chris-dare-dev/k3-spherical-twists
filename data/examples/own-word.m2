@@ -5,7 +5,7 @@
 -- the image costs lattice arithmetic only, whatever the length of the word.  Building the image as a
 -- complex is a separate step, and it answers "unsupported", with the reason, where the package has no
 -- construction (GUIDE.md, "Certified quartic cones", says which words it has).
-path = prepend("src/", path);                -- the package is in src/ of the repository
+path = prepend("src/macaulay2/", path);      -- the package is in src/macaulay2/ of the repository
 needsPackage "K3Twists";
 K = k3Surface 2;
 P = catalogueObject(K, "O_x");                                      -- the point sheaf
