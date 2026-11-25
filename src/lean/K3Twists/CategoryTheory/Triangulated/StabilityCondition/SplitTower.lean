@@ -28,9 +28,10 @@ objects with `e(E) = 2` pass from `t₁` to `t₂` (`CarrierStep.exists_anisotro
 anisotropy fields of `SplitTowerHypotheses` are carrier transport restated. What drops out of the
 proof is the *octahedral* proof of transport: `IsTriangulated`, wall slicings, outgoing flags and
 their ordering, the sphericity of letters and uniqueness of HN filtrations are not used by
-`SplitTowerHypotheses.tower`. The field has lattice content only once the Gram matrix of a step is
-defined from the classes of the stable spherical objects of each phase of a named wall and the
-field is proved from constituent-level inputs; this file does not do that.
+`SplitTowerHypotheses.tower`. In `CategoryTheory/Triangulated/StabilityCondition/WallStep.lean` the
+Gram matrix of a step is defined from the classes of the stable spherical objects of each phase of
+a named wall, and the field becomes a theorem from constituent-level inputs
+(`WallStep.lost_isotropic`, `WallStep.toCarrierStep`).
 
 **The slice fields are used, not needed.** `SliceFields` holds for `carrier := (e = 2)` and
 `spherical := (e = 0)` and every budget with no semistable object of budget `1`
@@ -154,7 +155,8 @@ coefficients.
 The data are per phase, not per wall: anisotropy is not closed under orthogonal sums
 (`Matrix.isotropic_block`). In this structure they are free: any isotropic matrix gives a step
 between any two slicings, and an anisotropic step exists exactly when carriers are transported
-(`CarrierStep.exists_anisotropic_iff`). -/
+(`CarrierStep.exists_anisotropic_iff`). `WallStep.toCarrierStep` builds a step whose `gram` is the
+Gram matrix of the stable spheres of a named wall. -/
 structure CarrierStep (b : MukaiBudget C) (carrier : Slicing C → ObjectProperty C)
     (t₁ t₂ : Slicing C) where
   /-- The index type of phase `φ`: the stable spherical objects of that phase at the wall. -/

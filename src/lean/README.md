@@ -294,6 +294,36 @@ semistable object of budget `1` (on a 2-Calabi–Yau category, from Riemann–Ro
 of isotropic class), and keeps the vacuity statements as tests: a step with free Gram matrices
 exists between any two slicings.
 
+### A lost carrier forces an isotropic sphere sum
+
+`WallStep` ties a transport step to a named wall: a pre-stability condition with class map `v` to a
+lattice with the Mukai pairing `q`. For each phase `φ` the **sphere types** are the isomorphism
+classes of objects stable of phase `φ` at the wall and rigid (spherical, Bayer–Bridgeland,
+arXiv:1310.8266, Lemma 2.6), and the Gram matrix is `q(v(Sᵢ), v(Sⱼ))`: both are definitions. The
+inputs are fields, each with its source: stable objects of each phase (Bridgeland,
+arXiv:math/0212237, Lemma 5.2); Jordan–Hölder constituents whose classes add up (ibid., Lemma 4.5);
+semicontinuity of constituents, which gives the isotropic stable constituent of a carrier as a
+semistable object of the wall (ibid., §9; Bayer–Bridgeland, Lemma 2.7, Remark 2.8); and the draft's
+two-extension lemma (a non-rigid constituent keeps the carrier on the outgoing side). None has an
+instance from real objects: the library has no 2-Calabi–Yau triangulated category of a K3 surface.
+
+| Assertion | Lean |
+|---|---|
+| A nonzero semistable object has nonzero class, and two of one phase do not have opposite classes | `PreStabilityCondition.WithClassMap.classOf_ne_zero`, `classOf_ne_neg` |
+| **A lost carrier forces an isotropic sphere sum at one phase**: if `e(E) = 2`, `E` has a carrier at `t₁` and none at `t₂`, the isotropic constituent of its carrier is semistable of some phase `ψ` of the wall with only spherical constituents there, and a nonzero `a ∈ ℕ^{types}` has `aᵀ·gram ψ·a = 0`; per phase, with natural coefficients, and with no assumption on the number of spheres of a phase | `WallStep.exists_isotropic_of_lost`, `WallStep.lost_isotropic`, `WallStep.exists_nonrigid_constituent` |
+| So a wall is a transport step with these Gram matrices, an anisotropic wall keeps a carrier, and the split tower theorem holds over paths of anisotropic named walls | `WallStep.toCarrierStep`, `WallStep.keep`, `WallTowerHypotheses.tower` |
+| The lattice core: one sphere has no isotropic sum; two spheres of pairing `g` have one iff `g = 2`; an isotropic nonzero class that is a sum of constituent classes, with anisotropic spherical part, has a non-spherical constituent | `Matrix.noIsotropic_one`, `Matrix.isotropicSphereSum_two_iff`, `Matrix.noIsotropic_two`, `Matrix.isotropic_two`, `BilinearForm.exists_nonspherical_constituent`, `BilinearForm.isotropicSphereSum_gram_of_list` |
+| **Picard rank one**: two roots of pairing `2` are opposite; with at most two sphere types per phase (Bayer–Bridgeland, Lemma 3.3 and Proposition 3.4) and Riemann–Roch for stable rigid objects, every wall is anisotropic, and the tower theorem follows through the split tower theorem with the Gram matrices of the walls | `MukaiVector.eq_neg_of_pairing_eq_two`, `RankOneWall.anisotropic`, `WallTowerHypotheses.tower_of_rankOne` |
+| The wall of `𝒪_X` and `𝒪_X(-H)[1]` has Gram matrix `[[-2, d + 2], [d + 2, -2]]` and no isotropic sphere sum | `gram_structureSheaf_shift`, `WallStep.anisotropic_of_structureSheaf_shift` |
+
+[K3TwistsTest/WallStepModel.lean](K3TwistsTest/WallStepModel.lean) computes the pairing-two wall of
+`𝒪_C`, `𝒪_C(-1)[1]` on the elliptic K3 surface with a section: its Gram matrix is
+`[[-2, 2], [2, -2]]`, `(1, 1)` is isotropic with class `v(𝒪_x)`, and where a point loses its carrier
+(`PairingTwoWallTowerModel`) `WallStep.lost_isotropic` places the loss at an isotropic phase. It
+keeps the per-phase and natural-coefficient regression tests, and builds consistency models of
+`WallStep` (a step that crosses no wall) and `WallTowerHypotheses` relative to a slicing with a
+nonzero semistable object, which Mathlib cannot yet construct.
+
 ### Rigid wall objects from their incoming flag
 
 `OpenOrbitHypotheses` is the one step of the uniqueness in the draft's proposition on rigid wall
@@ -522,7 +552,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `LinearAlgebra/Lattice/Mukai/Eichler.lean` | the Mukai quadratic form, `⊗𝒪(D)` as an Eichler transvection, the wall of a `(-2)`-curve | `Mukai` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
 | `LinearAlgebra/Matrix/ZMatrix.lean`, `Matrix/ZMatrix/Integer.lean`, `Matrix/ZMatrix/Isotropic.lean` | symmetric Z-matrices: the ground-state identity, the M-matrix criterion, the affine kernel, integer certificates, isotropic sums of spheres, the wall matrix of a family and the Tits identity | `Matrix`, `LinearMap.BilinForm` |
-| `LinearAlgebra/Lattice/Mukai/SphericalConfiguration.lean` | isotropic sums with natural coefficients of a Gram matrix of spheres, for any index type; independence of sign and indexing; anisotropy is not closed under orthogonal sums | `Matrix` |
+| `LinearAlgebra/Lattice/Mukai/SphericalConfiguration.lean` | isotropic sums with natural coefficients of a Gram matrix of spheres, for any index type; independence of sign and indexing; anisotropy is not closed under orthogonal sums; one and two spheres; the lattice core of a lost carrier | `Matrix`, `BilinearForm` |
 | `LinearAlgebra/Matrix/Cartan/Basic.lean` | finite-type Cartan matrices from certificates; `E₆`, `E₇`, `E₈`, `Ẽ₈` | `Matrix`, `CartanMatrix` |
 | `Combinatorics/Quiver/Kronecker/CartanMatrix.lean` | the wall matrix `[[2, -g], [-g, 2]]` of two spheres and its trichotomy | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallMatrix.lean` | the wall matrix of two spherical simples in Picard rank one | `AlgebraicGeometry.K3.PicardRankOne` |
@@ -555,6 +585,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerCountCocycle.lean` | the count cocycle of the Euler pairings with `𝒪_X` and `𝒪_X(H)`, and the failure of the sign rule for it | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem of the draft: deprecated aliases for `CategoryTheory/Triangulated/StabilityCondition/Tower.lean` | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/AnisotropicWall.lean` | two roots of pairing two are opposite; every rank-one wall is anisotropic; the tower theorem through the split tower theorem; the wall of `𝒪_X` and `𝒪_X(-H)[1]` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/RigidWall.lean` | the example of a rigid wall at `g = 3` | same |
 | `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations in a lattice with a charge function: extremality, uniqueness, existence; slope functions as charge functions | `Order.ChargeFunction`, `Order.SlopeFunction` |
 | `Order/IntervalClass.lean` | interval classes on a lattice: the saturation closure operator, the radical, the nested formula, transport, the socle iteration | root (`IntervalClass`) |
@@ -620,6 +651,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Budget.lean` | `MukaiBudget` (`e : C → ℕ`, invariant under isomorphism, Mukai's lemma: Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5) and the Mukai budget lemma along Hom-orthogonal towers and HN filtrations |
 | `Triangulated/StabilityCondition/Tower.lean` | carrying the point once as at most once plus existence; a path of walls (`Leg`); `TowerHypotheses` and the tower theorem, also through the budget |
 | `Triangulated/StabilityCondition/SplitTower.lean` | the slice fields, transport steps and paths, `SplitTowerHypotheses` and the split tower theorem; the old inputs give the new ones |
+| `Triangulated/StabilityCondition/WallStep.lean` | a named wall, the sphere types of each phase and their Gram matrix; a lost carrier forces an isotropic sphere sum at one phase; the split tower theorem over paths of named walls |
 | `Triangulated/SerreFunctor/TwoCalabiYau.lean` | `TwoCYHypotheses`: Hom-finiteness, Serre functor `≅ ⟦2⟧`, Mukai's lemma, evenness of `e`, Riemann–Roch for simple objects (Mukai's sign) |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
