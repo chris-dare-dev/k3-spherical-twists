@@ -18,6 +18,7 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.Visibility
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallMatrix
+import K3Twists.Analysis.Complex.QuadraticModulus
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
 import K3Twists.Analysis.Matrix.BipartiteCompression
 import K3Twists.Analysis.Matrix.GelfandRadius
