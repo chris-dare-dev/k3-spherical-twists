@@ -54,6 +54,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | From the proposition on rigid wall groups: the outgoing HN flag determines subobjects of the retained wall object independently of the representative. An isomorphism `M ≅ N` carries the HN filtration of `M` to that of `N` on either side, and every automorphism fixes the HN prefixes (in a lattice: any map preserving rank and degree fixes them) | `DoubledRep.Iso.mapSubrep`, `Iso.map_hnFiltration`, `Iso.map_hnFiltration_neg`, `Iso.mapSubrep_chain`, `HNFiltration.apply_chain_eq`, `HNFiltration.map` |
 | `Ext¹` of representations with the preprojective relations, by the standard complex `⊕ Hom(X_v, Y_v) → ⊕ Hom(X_{t(a)}, Y_{h(a)}) → ⊕ Hom(X_v, Y_v)`: `H⁰ = Hom`; an extension `0 → A → N → B → 0` is a cocycle placed in the off-diagonal block, every subrepresentation presents its representation as such an extension, and classes related by isomorphisms of the ends (cohomologous classes in particular) give isomorphic extensions | `DoubledRep.Ext1`, `ker_d₀₁`, `isPreprojective_extension_iff`, `offDiag_mem_cocycles₁`, `exists_iso_extension`, `extensionIso` |
 | From the proposition on rigid wall groups: for an extension `ξ` with middle term `N` and `Hom(A, B) = 0`, `v ↦ i v p` induces an injection `Ext¹(B, A)/(End(A)ξ + ξ End(B)) ↪ Ext¹(N, N)`; so `Ext¹(N, N) = 0` gives `Ext¹(B, A) = End(A)ξ + ξ End(B)` | `extQuotPushPull_injective`, `orbitSpan_eq_top`, `cocycles₁_le_orbitTangent` |
+| From the same proposition: a prefix `M_j` of an HN filtration has no maps to the next factor `M_{j+1}/M_j` (a nonzero map would give subobjects `K < M_j ≤ I` with `w(K) + w(I) = 2w(M_j)`, while `M_j` is the only maximizer of a weight `w`), and along such a flag the prefixes of a rigid representation are rigid | `Hom_restrict_subquotient_eq_bot`, `exists_subreps_of_mem_Hom`, `subsingleton_Ext1_restrict_of_chain` |
 | `dim Ext¹(X, Y) = dim Hom(X, Y) + dim Hom(Y, X) - (x, y)`, `(x, y) = 2x₀y₀ + 2x₁y₁ - g(x₀y₁ + x₁y₀)` (Crawley-Boevey, Amer. J. Math. 122 (2000), Lemma 1), from the duality of the two differentials under the trace pairing; Mukai's inequality with its defect, `e(N) = e(A) + e(B) + 2 dim Ext¹(B, A)/(End(A)ξ + ξ End(B))` when `Hom(A, B) = 0` (Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5), so both ends of a rigid extension are rigid; the rigid example has `Ext¹ = 0` | `finrank_Ext1`, `dualMap_d₀₁_comp_tracePairing₁`, `finrank_Ext1_extension`, `finrank_Ext1_add_le`, `rigid_of_rigid_extension`, `subsingleton_Ext1_rigidRep` |
 | Fekete with a constant: the rate exists, each block certifies `ρ ≤ (K H_k)^{1/k}`, and the bounds converge | `exists_rate_of_submul`, `pow_rate_le` |
 | Transfer of rates between comparable sequences, uniformly in parameters; `o(n)` errors; polynomial growth has rate one; the rate per letter of a periodic word | `tendsto_rpow_inv_of_bounds`, `tendstoUniformly_rpow_inv_of_bounds`, `tendsto_log_div_of_bound`, `tendsto_log_div_zero_of_poly`, `tendsto_log_div_of_period` |
@@ -158,11 +159,31 @@ From these, Lean proves the induction on the length of the word:
 with a nonzero semistable object (the empty word, no walls); it shows the fields are consistent
 relative to such a slicing, which Mathlib cannot yet construct.
 
+### Rigid wall objects from their incoming flag
+
+`OpenOrbitHypotheses` is the one step of the uniqueness in the draft's proposition on rigid wall
+groups that Mathlib cannot prove: over an algebraically closed field of characteristic zero, two
+classes of `Ext¹(B, A)` whose `Aut(A) × Aut(B)`-orbits have full tangent space
+`End(A)ξ + ξ End(B) = Ext¹(B, A)` lie in one orbit. Its source is the closed-orbit lemma (Borel,
+*Linear Algebraic Groups*, Proposition I.1.8; Humphreys, *Linear Algebraic Groups*, §8.3): a full
+tangent space makes the orbit full-dimensional, hence open and dense in the irreducible space
+`Ext¹(B, A)`, and two such orbits meet. From it, in the quiver model:
+
+| Assertion | Lean |
+|---|---|
+| Two extensions `0 → A → N → B → 0` and `0 → A' → N' → B' → 0` with `A ≅ A'`, `B ≅ B'`, `Hom(A, B) = 0` and rigid middle terms are isomorphic | `DoubledRep.nonempty_iso_extension` |
+| A rigid wall object is determined by its incoming flag: two rigid representations with the relations whose HN filtrations for one charge have isomorphic factors, in order, are isomorphic; the same holds along any flags whose prefixes have no maps to the next factor | `DoubledRep.nonempty_iso_of_hnFiltration`, `nonempty_iso_of_chain` |
+
+[K3TwistsTest/OpenOrbitModel.lean](K3TwistsTest/OpenOrbitModel.lean) proves the field for a quiver
+without arrows, where `Ext¹ = 0`; with arrows it is the open-orbit theorem itself, which needs
+algebraic groups acting on varieties in Mathlib.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
-preprojective relations, from Mathlib alone. Two inputs connect them to the K3 surface and are
-not formalized:
+preprojective relations, from Mathlib alone, except that the uniqueness of a rigid wall object
+given its incoming flag also uses `OpenOrbitHypotheses`. Two inputs connect them to the K3 surface
+and are not formalized:
 
 - the iterated extensions of the stable wall constituents are the nilpotent representations of
   this quiver with these relations, so that wall subobjects are subrepresentations with their
@@ -223,6 +244,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `RepresentationTheory/Quiver/Kronecker/HarderNarasimhan.lean` | slope functions on subrepresentations, the two sides of a wall, the HN filtrations of the rigid representation | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, isomorphisms, subrepresentations, dimension vectors, restrictions, quotients, subquotients, kernels and images | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Ext.lean` | `Ext¹` by the standard complex, extensions as cocycles, the injection into `Ext¹(N, N)`, the dimension of `Ext¹` and Mukai's inequality | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/IncomingFlag.lean` | a rigid wall object is determined by its incoming flag, from the open-orbit input | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the wall group that carries the point: classification and table of HN quotients | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/RigidRep.lean` | the rigid representation of dimension `(g², g)` with arrows in both directions | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` | punctures, clear sight lines, the lattice arguments of visibility on the cover, the finite search | same |
@@ -309,4 +331,4 @@ These follow Mathlib and derived-alg-geo-lean, so that files can move to either.
 
 ## What this does not cover
 
-The wall lemmas beyond the quiver model are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements. In the quiver model, the uniqueness of a rigid wall object given its incoming flag is not formalized: the injection into `Ext¹(N, N)` that its proof uses is proved, but the open-orbit argument for `Aut(A) × Aut(B)` acting on `Ext¹(B, A)` needs algebraic groups, which Mathlib cannot use yet.
+The wall lemmas beyond the quiver model are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements. In the quiver model, the uniqueness of a rigid wall object given its incoming flag is proved from one input, `OpenOrbitHypotheses`: the open-orbit argument for `Aut(A) × Aut(B)` acting on `Ext¹(B, A)` needs algebraic groups acting on varieties, which Mathlib cannot use yet.
