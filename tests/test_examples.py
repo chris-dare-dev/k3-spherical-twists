@@ -35,7 +35,14 @@ class Layout(unittest.TestCase):
         names = sorted(path.name for path in EXAMPLES.iterdir())
         self.assertEqual(
             names,
-            ["own-pair.m2", "own-surface.m2", "own-surfaces.toml", "own-word.m2", "resumable-quartic.m2"],
+            [
+                "elliptic-wall-word.m2",
+                "own-pair.m2",
+                "own-surface.m2",
+                "own-surfaces.toml",
+                "own-word.m2",
+                "resumable-quartic.m2",
+            ],
         )
         for name in names:
             self.assertIn(f"data/examples/{name}", guide)
@@ -72,6 +79,14 @@ class Scripts(unittest.TestCase):
         output = macaulay2(EXAMPLES / "own-pair.m2").stdout
         self.assertIn("{M_H, M_x, {0, 0, 1}, 1, Serre duality}", output)
         self.assertIn("{O_x, O_x, , 0, not computed}", output)
+
+    def test_elliptic_wall_windows_and_grouped_quotients(self) -> None:
+        done = macaulay2(EXAMPLES / "elliptic-wall-word.m2")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("{{{0, {-2, 1}}, {0, {-1/2, 0}}}, {{0, {4, 1}}, {1, {4, 1}}}}", done.stdout)
+        self.assertIn("{{0, {-2, 1}}, {0, {-7/2, 0}}, {0, {19/4, 2}}}", done.stdout)
+        self.assertIn("{{-4, 0}, {-2, 1}}   Mass terms  {{1, 4}, {5, 1}}", done.stdout)
+        self.assertIn("{{-4, -1}, {-7/2, 0}, {19/2, 4}}   Mass terms  {{1, 7/2}, {17, 7/2}}", done.stdout)
 
 
 @unittest.skipUnless(sys.platform.startswith("linux") and shutil.which("M2"), "requires M2 on Linux")
