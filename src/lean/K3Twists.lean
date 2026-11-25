@@ -30,6 +30,7 @@ import K3Twists.Analysis.Matrix.GelfandRadius
 import K3Twists.Analysis.Matrix.JointSpectralRadius
 import K3Twists.Analysis.Normed.Algebra.PowerBound
 import K3Twists.Analysis.SpecificLimits.GrowthRate
+import K3Twists.CategoryTheory.Abelian.SerreClass.Additive
 import K3Twists.CategoryTheory.Abelian.Subobject.Valuation
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Radical
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Saturation
