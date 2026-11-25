@@ -610,6 +610,49 @@ end OrderedField
 end HNFiltration
 
 variable {s} in
+/-- **HN prefixes are fixed by symmetries.** A map `φ : L → L` preserving rank and degree fixes
+every prefix of an HN filtration, since each prefix is the unique maximizer of some weight. -/
+theorem HNFiltration.apply_chain_eq [IsStrictOrderedRing K] (F : s.HNFiltration) {φ : L → L}
+    (hrk : ∀ x, s.rk (φ x) = s.rk x) (hdeg : ∀ x, s.deg (φ x) = s.deg x) (k : Fin (F.n + 1)) :
+    φ (F.chain k) = F.chain k := by
+  obtain ⟨θ, hθ⟩ := (F.mem_range_chain_iff (F.chain k)).mp ⟨k, rfl⟩
+  have hw : s.weight θ (φ (F.chain k)) = s.weight θ (F.chain k) := by
+    simp only [weight, hrk, hdeg]
+  exact (hθ _).2 hw
+
+variable {s} in
+/-- The transport of an HN filtration along an order isomorphism that carries `s` to `s'`. -/
+def HNFiltration.map {L' : Type*} [Lattice L'] [BoundedOrder L'] {s' : SlopeFunction L' K}
+    (φ : L ≃o L') (hrk : ∀ x, s'.rk (φ x) = s.rk x) (hdeg : ∀ x, s'.deg (φ x) = s.deg x)
+    (F : s.HNFiltration) : s'.HNFiltration where
+  n := F.n
+  chain := φ ∘ F.chain
+  strictMono := φ.strictMono.comp F.strictMono
+  chain_zero := by simp [F.chain_zero]
+  chain_last := by simp [F.chain_last]
+  semistable i := by
+    have hslope : ∀ x y, s'.slope (φ x) (φ y) = s.slope x y := fun x y ↦ by
+      simp only [slope, hrk, hdeg]
+    have hweight : ∀ θ x, s'.weight θ (φ x) = s.weight θ x := fun θ x ↦ by
+      simp only [weight, hrk, hdeg]
+    refine ⟨φ.strictMono (F.semistable i).1, fun z h₁ h₂ ↦ ?_⟩
+    simp only [Function.comp_apply, hslope] at h₁ h₂ ⊢
+    rw [← φ.apply_symm_apply z, hweight, hweight]
+    exact (F.semistable i).2 _ (by rwa [← φ.le_iff_le, φ.apply_symm_apply])
+      (by rwa [← φ.le_iff_le, φ.apply_symm_apply])
+  slope_strictAnti i j hij := by
+    have hslope : ∀ x y, s'.slope (φ x) (φ y) = s.slope x y := fun x y ↦ by
+      simp only [slope, hrk, hdeg]
+    simp only [Function.comp_apply, hslope]
+    exact F.slope_strictAnti hij
+
+variable {s} in
+@[simp] lemma HNFiltration.map_chain {L' : Type*} [Lattice L'] [BoundedOrder L']
+    {s' : SlopeFunction L' K} (φ : L ≃o L') (hrk : ∀ x, s'.rk (φ x) = s.rk x)
+    (hdeg : ∀ x, s'.deg (φ x) = s.deg x) (F : s.HNFiltration) (k : Fin (F.n + 1)) :
+    (F.map φ hrk hdeg).chain k = φ (F.chain k) := rfl
+
+variable {s} in
 /-- **HN filtrations only depend on the slope order.** An HN filtration of `s` is one of every
 slope function `t` on `L` whose interval slopes are ordered like those of `s`. -/
 def HNFiltration.ofSlopeOrder [IsStrictOrderedRing K] {K' : Type*} [Field K'] [LinearOrder K']

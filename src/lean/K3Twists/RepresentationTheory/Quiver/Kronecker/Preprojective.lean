@@ -24,7 +24,9 @@ family of linear maps `A_i : V₀ → V₁` and `B_i : V₁ → V₀`. The prepr
   `k`-subspace; `dim End M` is `finrank k (Hom M M)`;
 * `DoubledRep.subreps M`: the subrepresentations, pairs of subspaces `(U₀, U₁)` with
   `A_i U₀ ⊆ U₁` and `B_i U₁ ⊆ U₀`, a complete sublattice of `Submodule k V₀ × Submodule k V₁`;
-* `DoubledRep.dimVec`: the dimension vector `(dim U₀, dim U₁)` of a subrepresentation.
+* `DoubledRep.dimVec`: the dimension vector `(dim U₀, dim U₁)` of a subrepresentation;
+* `DoubledRep.Iso`, `DoubledRep.Iso.mapSubrep`: isomorphisms of representations, and the
+  isomorphism of lattices of subrepresentations they induce, which preserves dimension vectors.
 
 ## Main results
 
@@ -232,6 +234,72 @@ theorem eq_of_le_of_dimVec_eq {N N' : M.subreps} (h : N ≤ N') (hd : dimVec N =
   exact lt_irrefl _ this
 
 end Subrep
+
+section Iso
+
+variable {W₀ W₁ : Type*} [AddCommGroup W₀] [Module k W₀] [AddCommGroup W₁] [Module k W₁]
+
+/-- An isomorphism of representations: linear equivalences at the two vertices commuting with
+every arrow. -/
+structure Iso (M : DoubledRep k ι V₀ V₁) (N : DoubledRep k ι W₀ W₁) where
+  /-- The equivalence at vertex zero. -/
+  e₀ : V₀ ≃ₗ[k] W₀
+  /-- The equivalence at vertex one. -/
+  e₁ : V₁ ≃ₗ[k] W₁
+  comm_A (i : ι) (x : V₀) : e₁ (M.A i x) = N.A i (e₀ x)
+  comm_B (i : ι) (y : V₁) : e₀ (M.B i y) = N.B i (e₁ y)
+
+namespace Iso
+
+variable {M : DoubledRep k ι V₀ V₁} {N : DoubledRep k ι W₀ W₁}
+
+/-- An isomorphism of representations induces an isomorphism of the lattices of
+subrepresentations, `(U₀, U₁) ↦ (e₀ U₀, e₁ U₁)`. -/
+def mapSubrep (u : Iso M N) : M.subreps ≃o N.subreps where
+  toFun P := ⟨((P : Submodule k V₀ × Submodule k V₁).1.map (u.e₀ : V₀ →ₗ[k] W₀),
+      (P : Submodule k V₀ × Submodule k V₁).2.map (u.e₁ : V₁ →ₗ[k] W₁)), fun i ↦ ⟨by
+    rintro _ ⟨x, hx, rfl⟩
+    exact ⟨M.A i x, A_mem P i hx, u.comm_A i x⟩, by
+    rintro _ ⟨y, hy, rfl⟩
+    exact ⟨M.B i y, B_mem P i hy, u.comm_B i y⟩⟩⟩
+  invFun Q := ⟨((Q : Submodule k W₀ × Submodule k W₁).1.comap (u.e₀ : V₀ →ₗ[k] W₀),
+      (Q : Submodule k W₀ × Submodule k W₁).2.comap (u.e₁ : V₁ →ₗ[k] W₁)), fun i ↦ ⟨by
+    intro x hx
+    simp only [Submodule.mem_comap, LinearEquiv.coe_coe] at hx ⊢
+    rw [u.comm_A]
+    exact A_mem Q i hx, by
+    intro y hy
+    simp only [Submodule.mem_comap, LinearEquiv.coe_coe] at hy ⊢
+    rw [u.comm_B]
+    exact B_mem Q i hy⟩⟩
+  left_inv P := Subtype.ext (Prod.ext
+    (Submodule.comap_map_eq_of_injective u.e₀.injective _)
+    (Submodule.comap_map_eq_of_injective u.e₁.injective _))
+  right_inv Q := Subtype.ext (Prod.ext
+    (Submodule.map_comap_eq_of_surjective u.e₀.surjective _)
+    (Submodule.map_comap_eq_of_surjective u.e₁.surjective _))
+  map_rel_iff' {P Q} := by
+    change ((P : Submodule k V₀ × Submodule k V₁).1.map (u.e₀ : V₀ →ₗ[k] W₀),
+        (P : Submodule k V₀ × Submodule k V₁).2.map (u.e₁ : V₁ →ₗ[k] W₁)) ≤
+      ((Q : Submodule k V₀ × Submodule k V₁).1.map (u.e₀ : V₀ →ₗ[k] W₀),
+        (Q : Submodule k V₀ × Submodule k V₁).2.map (u.e₁ : V₁ →ₗ[k] W₁)) ↔
+      (P : Submodule k V₀ × Submodule k V₁) ≤ Q
+    rw [Prod.mk_le_mk, Submodule.map_le_map_iff_of_injective u.e₀.injective,
+      Submodule.map_le_map_iff_of_injective u.e₁.injective]
+    rfl
+
+lemma coe_mapSubrep (u : Iso M N) (P : M.subreps) :
+    (u.mapSubrep P : Submodule k W₀ × Submodule k W₁) =
+      ((P : Submodule k V₀ × Submodule k V₁).1.map (u.e₀ : V₀ →ₗ[k] W₀),
+        (P : Submodule k V₀ × Submodule k V₁).2.map (u.e₁ : V₁ →ₗ[k] W₁)) := rfl
+
+/-- An isomorphism preserves dimension vectors of subrepresentations. -/
+lemma dimVec_mapSubrep (u : Iso M N) (P : M.subreps) : dimVec (u.mapSubrep P) = dimVec P :=
+  Prod.ext (LinearEquiv.finrank_map_eq u.e₀ _) (LinearEquiv.finrank_map_eq u.e₁ _)
+
+end Iso
+
+end Iso
 
 end DoubledRep
 
