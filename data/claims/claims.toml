@@ -1,6 +1,6 @@
 # The registry of claims: every row of the claim tables of CLAIMS.md.
 #
-# src/bookkeeping/claims.py writes the tables of CLAIMS.md, the file data/claims/RECORDS.md and the headline table of
+# `make tables` (src/batch/claims/tables.py) writes the tables of CLAIMS.md, the file data/claims/RECORDS.md and the headline table of
 # GUIDE.md from this file, from the batch files (which tasks exist) and from the records in data/records/.
 # `make check` fails if the committed tables differ from what it writes.
 #
@@ -237,7 +237,7 @@ cells = [
   '''the quintic threefold''',
 ]
 tasks = []
-no_task = '''a test of the package (`src/K3Twists/tests-quintic.m2`, run by `make test`); it leaves no record'''
+no_task = '''a test of the package (`src/macaulay2/K3Twists/tests/quintic.m2`, run by `make test`); it leaves no record'''
 
 # The headline table of GUIDE.md: tasks of data/batches/invariants.toml, which `make smoke` runs.
 
