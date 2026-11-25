@@ -338,6 +338,38 @@ On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕
 | `exp h_cat(T_{𝒪_C} T_{𝒪_C(2)}) = (4² - 2 + √(4⁴ - 4·4²))/2 = 7 + 4√3` (Barbacovi–Kim, arXiv:2107.06079), while points off `C` are fixed | `barbacoviKim_four`, `barbacoviKim_four_root` |
 | `v(𝒪_X[1])` and `v(𝒪_C)` pair to `1`, an `A₂` configuration: reflections in roots are conjugation-equivariant under isometries, `ρ_{v(𝒪_C)} ρ_{v(𝒪_X)} v(𝒪_C) = v(𝒪_X[1])` (the class of `T_{𝒪_C} T_{𝒪_X} 𝒪_C ≅ 𝒪_X[1]`), so `Art(A₂)` acts on the Mukai lattice, through `W(A₂)`, and every pure braid acts trivially | `reflection_smul`, `a2_edge`, `a2Hom`, `exists_factor_a2Hom`, `a2Hom_eq_one_of_mem_pureArtinGroup` |
 
+## The framed multiplier
+
+The framed multiplier is the product of units `S_e = ∏_{α > 0} (1 - x^α)^{e_α}` in
+`MvPowerSeries σ R`, for any commutative ring `R`, any type `σ` of vertices and integer exponents
+on the nonzero exponent vectors. A framing `p : σ → ℤ`, possibly signed, pairs with a class by
+`p·α = Σ p_i α_i`; for an external object `D` and wall simples `A_i`, `p_i = χ(D, A_i)`. The
+numerical framed DT statement for BPS invariants `Ω` is that the series framed by `p` is the
+multiplier with exponents `e_α(p) = Ω_α (p·α)`. The sign convention is Mozgovoy's
+(arXiv:1107.6044, Theorem 5.1, Corollary 2.8): the factor is `(1 - x^α)^{(p·α)Ω_α}` in the twisted
+variables `x^α = (-1)^{w·α} y^α`, and `Ω = -A(1)` for the Kac polynomials `A`. Only the formal
+multiplier is formalized: integer exponents, so the numerical and not the motivic DT formula, and
+neither the automorphism of the twisted torus algebra nor the analytic Riemann–Hilbert problem
+(Bridgeland, arXiv:1611.03697). The values of Kac polynomials and the identification of framed
+counts with the multiplier are cited, not formalized.
+
+| Statement | Lean |
+|---|---|
+| Agreement of coefficients on a lower set of exponents is a ring congruence; a product over any index type whose factors are `1` below each exponent, up to finitely many, converges in the product topology | `MvPowerSeries.CoeffEqOn.mul`, `MvPowerSeries.hasProd_of_coeffEqOn_one` |
+| Over any commutative ring: `S_e` is the infinite product of its factors; `S_{e+e'} = S_e S_{e'}`, so the multiplier is multiplicative in the framing; finitely many nonzero exponents give the finite product; coefficient inversion `[x^α] S_e - [x^α] S_{e'} = -(e_α - e'_α)` when `e, e'` agree below `α`; the `(1, 1)` coefficient `e_a e_b - e_{a+b}` for `a ≠ b` | `hasProd_S`, `S_add`, `framedS_add`, `Z_add`, `S_eq_prod`, `coeff_S_sub`, `coeff_S_one_one`, `coeff_two_simple` |
+| Over a ring of characteristic zero `e ↦ S_e` is injective, and one framing with `p·α ≠ 0` on every positive class determines `Ω`; over `ℤ` it is a bijection onto the series with constant term one (big Witt vectors), and the DT statement is the equation `e_α(p) = Ω_α (p·α)` for these exponents | `S_injective`, `framedS_injective`, `S_bijective_int`, `isFramedDT_iff` |
+| A framing does not see `Ω_α` where `p·α = 0`: the curve-wall framing `(m + 1, -m)` misses the root `(m, m + 1)` | `framedS_update_of_pair_eq_zero`, `pair_signed_blind` |
+| The positive roots of `A_n`, for the Tits form `½ αᵀ A_n α` of Mathlib's Cartan matrix, are the intervals; the multiplier of type `A_n` is the finite product over them | `Quiver.TypeA.titsForm_eq_one_iff`, `Quiver.TypeA.dotProduct_cartanA_mulVec`, `framedS_typeA` |
+| The Jordan quiver: `Z_2(y) = Z_1(-y)² ≠ Z_1(y)²`. The affine Kronecker quiver with framing `(p, q)`: exponents `-((n + 1)p + nq)`, `-(np + (n + 1)q)`, `-2n(p + q)`; `xy` coefficient `pq + 2(p + q)`; coefficient `8` at `(2, 2)` for the framing `(1, 0)`, computed by a verified table recursion | `jordan_Z_two_eq`, `jordan_Z_two_ne`, `kronecker_exponent_R`, `kronecker_exponent_L`, `kronecker_exponent_diag`, `coeff_kronecker_one_one`, `coeff_S_mk2`, `coeff_kronecker_two_two` |
+| The curve wall of the elliptic K3: the Kronecker indices `-1` and `-2` mark the spherical and the nonzero isotropic wall classes; `𝒪_X(D)` frames the wall by `(1 - C·D, C·D)`; for `C·D = -m` the exponents are `-(n + m + 1)`, `m - n`, `-2n`, the `xy` coefficient is `2 - m(m + 1)` and the class `(m, m + 1)` is not seen; framed by `𝒪_X` the coefficient at `(2, 2)` is `8`; a point is framed by the rank, and the rank-two extension `S` gives `Z_1(-y)²` | `kroneckerIndex_eq_neg_one_iff`, `kroneckerIndex_eq_neg_two_iff`, `wallFraming_eq`, `curveWall_exponent_R`, `coeff_curveWallMultiplier_one_one`, `curveWall_blind`, `coeff_curveWallMultiplier_two_two`, `pointMultiplier_rankTwo_ne` |
+
+Unqualified names are in `MvPowerSeries.FramedMultiplier`, those of the last row in
+`AlgebraicGeometry.K3.EllipticWithSection`.
+[K3TwistsTest/FramedMultiplierCounterexamples.lean](K3TwistsTest/FramedMultiplierCounterexamples.lean)
+keeps the counterexamples: over `ℤ/2`, `(1 - x)² = 1 - x²`, so injectivity needs characteristic
+zero; over `ℚ`, `1 + x/2` is no multiplier with integer exponents; the `(1, 1)` formula fails for
+`a = b`; and an exponent proportional to `p·α` need not be an integer multiple of it.
+
 ## Layout
 
 The library mirrors Mathlib: a file sits at the Mathlib path of the API it extends, or of its
@@ -367,6 +399,12 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Combinatorics/Quiver/Kronecker/CartanMatrix.lean` | the wall matrix `[[2, -g], [-g, 2]]` of two spheres and its trichotomy | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallMatrix.lean` | the wall matrix of two spherical simples in Picard rank one | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/WallMatrix.lean` | the wall matrix of the curve wall and of a wall of pairing two | `AlgebraicGeometry.K3` |
+| `Combinatorics/Quiver/TypeA/Roots.lean` | the Tits form of `A_n` and its positive roots, the intervals | `Quiver.TypeA` |
+| `RingTheory/MvPowerSeries/LowerSet.lean` | agreement of coefficients on a lower set of exponents, locally finite products | `MvPowerSeries` |
+| `Combinatorics/DT/FramedMultiplier.lean` | the framed multiplier over any commutative ring: products, multiplicativity, coefficient inversion, framings | `MvPowerSeries.FramedMultiplier` |
+| `Combinatorics/DT/Inversion.lean` | injectivity in characteristic zero, the big Witt bijection over `ℤ`, recovering `Ω` from one framing, the framed DT statement | same |
+| `Combinatorics/DT/TwoVertex.lean` | coefficients of the multiplier of a two-vertex quiver by a computable table recursion | same |
+| `Combinatorics/DT/Quivers.lean` | the multiplier of the Jordan, type-`A_n` and affine Kronecker quivers | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
 | `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two and its two HN filtrations | `AlgebraicGeometry.K3` |
@@ -404,6 +442,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/MukaiCharge.lean` | the charge of the curve wall as a Mukai charge and a `GL₂⁺(ℝ)`-translate of an exponential charge | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/Braid.lean` | the `A₂` configuration `𝒪_X[1]`, `𝒪_C` on classes: the Artin group acting on the Mukai lattice through the Coxeter group | same |
 | `GroupTheory/Coxeter/ArtinGroup.lean` | the Artin group of a Coxeter matrix, the pure Artin group, braid relations from one conjugation identity per edge | `CoxeterMatrix` |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/FramedMultiplier.lean` | the framed multiplier of the curve wall and of a point, from the classes of the lattice | same |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
 Mathlib's representations and subrepresentations, and keep the namespace `Quiver.Kronecker` of
