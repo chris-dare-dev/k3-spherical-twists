@@ -3,6 +3,8 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
+import K3Twists.LinearAlgebra.BilinearForm.Gram
+import K3Twists.LinearAlgebra.Lattice.Mukai.Eichler
 import K3Twists.LinearAlgebra.Lattice.Mukai.Reflection
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Data.ZMod.Basic
@@ -28,7 +30,11 @@ lattice statements about them:
   `A = 𝒪_C` and `B = 𝒪_C(-1)[1]`, of classes `(0, C, 1)` and `(0, -C, 0)`. They pair to `2`,
   `v(A) + v(B) = v(𝒪_x)`, and a wall object of multiplicities `(a, b)` has
   `v² = -2(a - b)² = -2 q₂(a, b)`, where `q₂` is the Kronecker form at `g = 2`
-  (`selfPairing_wallClass`).
+  (`selfPairing_wallClass`, and `selfPairing_wallClass_eq_kroneckerForm`, the Tits identity for
+  the two simples).
+* **The wall as an Eichler transvection.** `T_B T_A` acts on classes as `⊗𝒪(C)`, the Eichler
+  transvection `E(pt, v(B), -1)` at the class of a point, and `(T_B T_A)ⁿ` as `⊗𝒪(nC)`
+  (`reflectHom_wallB_mul_reflectHom_wallA`, `reflectHom_wallB_mul_reflectHom_wallA_pow`).
 * **Section evaluation.** `v(𝒪_C(j)) = (j + 1)v(A) + j v(B)`, the classes of
   `0 → A^{j+1} → 𝒪_C(j) → B^j → 0`; and `v(𝒪_X(D)) - v(𝒪_X(D - C)) = v(𝒪_C(C·D))`, the classes of
   the restriction sequence (`lineBundle_sub_lineBundle_sub_curve`).
@@ -242,7 +248,43 @@ lemma selfPairing_wallClass (a b : ℤ) :
 `g = 2`. -/
 lemma selfPairing_wallClass_eq_kroneckerForm (a b : ℤ) :
     selfPairing intersection (wallClass a b) = -2 * Quiver.Kronecker.kroneckerForm 2 a b := by
-  rw [selfPairing_wallClass, Quiver.Kronecker.kroneckerForm]; ring
+  have hA : selfPairing intersection wallA = -2 := isSpherical_wallA
+  have hB : selfPairing intersection wallB = -2 := isSpherical_wallB
+  rw [selfPairing_eq_pairing, ← mukaiForm_apply, wallClass, BilinearForm.apply_smul_add_smul_self]
+  simp only [mukaiForm_apply, ← selfPairing_eq_pairing, hA, hB, pairing_wallA_wallB,
+    pairing_comm intersection intersection_comm wallB wallA, Quiver.Kronecker.kroneckerForm]
+  ring
+
+/-! ### The wall as an Eichler transvection -/
+
+/-- **`T_B T_A` acts on classes as `⊗𝒪(C)`.** The reflections in `v(A) = (0, C, 1)` and
+`v(B) = -(0, C, 0)` compose to tensoring with `𝒪(C)`, which uses only `C² = -2`. -/
+theorem reflectHom_wallB_mul_reflectHom_wallA :
+    reflectHom intersection wallB * reflectHom intersection wallA =
+      tensorLine intersection curve (-1) := by
+  have hA : wallA = ((0 : ℤ), curve, (1 : ℤ)) := by simp [wallA]
+  have hB : wallB = -((0 : ℤ), curve, (0 : ℤ)) := by simp [wallB]
+  simp only [hA, hB, reflectHom, BilinearForm.reflectHom_neg]
+  exact reflectHom_mul_reflectHom_curve intersection curve (by simp)
+
+/-- The same map as the Eichler transvection of the pairing-two wall at the class of a point:
+`T_B T_A = E(pt, v(B), -1)`, from `⟨v(A), v(B)⟩ = 2` and `v(A) + v(B) = v(𝒪_x)`. -/
+theorem reflectHom_wallB_mul_reflectHom_wallA_eq_eichler :
+    reflectHom intersection wallB * reflectHom intersection wallA =
+      BilinearForm.eichler (mukaiForm intersection) point wallB (-1) := by
+  rw [← wallA_add_wallB]
+  exact BilinearForm.reflectHom_mul_reflectHom_of_apply_eq_two _ pairing_wallA_wallB
+
+/-- **Powers of the wall word.** `(T_B T_A)ⁿ` acts on classes as `⊗𝒪(nC)`, with
+`(nC)²/2 = -n²`: quadratic growth of the classes in `n`. -/
+theorem reflectHom_wallB_mul_reflectHom_wallA_pow (n : ℕ) :
+    (reflectHom intersection wallB * reflectHom intersection wallA) ^ n =
+      tensorLine intersection ((n : ℤ) • curve) (-(n : ℤ) ^ 2) := by
+  simp only [reflectHom]
+  rw [BilinearForm.reflectHom_mul_reflectHom_pow _ (mukaiForm_comm _ intersection_comm)
+      isSpherical_wallA isSpherical_wallB pairing_wallA_wallB, wallA_add_wallB,
+    tensorLine_eq_eichler]
+  congr 1
 
 /-- **Section evaluation on classes.** `0 → A^{j+1} → 𝒪_C(j) → B^j → 0`, so
 `v(𝒪_C(j)) = (j + 1)v(A) + j v(B)`. -/

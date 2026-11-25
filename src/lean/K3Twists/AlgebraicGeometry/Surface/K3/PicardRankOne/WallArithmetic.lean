@@ -3,6 +3,7 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
+import K3Twists.LinearAlgebra.BilinearForm.Gram
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
 
 /-!
@@ -16,6 +17,9 @@ The statements of the article's section on walls that need the Mukai lattice:
   the wall group carrying the point, which leaves `N = U` or one of the two universal
   extensions;
 * `rigid_example`: the numbers of the example of a rigid wall at `g = 3`.
+
+The two lattice statements are the Tits identity `BilinearForm.apply_smul_add_smul_self` for two
+classes, read on the Mukai form of Picard rank one.
 -/
 
 namespace AlgebraicGeometry.K3.PicardRankOne
@@ -27,14 +31,11 @@ rational combination is isotropic. -/
 theorem span_roots_anisotropic {d : ℚ} {s₀ s₁ : MukaiVector ℚ} (h₀ : MukaiVector.IsRoot d s₀)
     (h₁ : MukaiVector.IsRoot d s₁) {g : ℤ} (hg : 3 ≤ |g|) (h01 : MukaiVector.pairing d s₀ s₁ = g)
     {x y : ℚ} (hiso : MukaiVector.IsIsotropic d (x • s₀ + y • s₁)) : x = 0 ∧ y = 0 := by
-  unfold MukaiVector.IsIsotropic at hiso
-  unfold MukaiVector.IsRoot at h₀ h₁
-  simp only [MukaiVector.pairing_add_left, MukaiVector.pairing_add_right,
-    MukaiVector.pairing_smul_left, MukaiVector.pairing_smul_right, h₀, h₁, h01,
-    MukaiVector.pairing_comm d s₁ s₀] at hiso
-  have := no_null_vector (g := -g) (by rwa [abs_neg]) (x := x) (y := y)
-    (by push_cast; linear_combination (-1 / 2 : ℚ) * hiso)
-  exact this
+  rw [MukaiVector.IsIsotropic, ← MukaiVector.mukaiForm_apply,
+    BilinearForm.apply_smul_add_smul_self] at hiso
+  simp only [MukaiVector.mukaiForm_apply, MukaiVector.pairing_comm d s₁ s₀, h01] at hiso
+  rw [h₀, h₁] at hiso
+  exact no_null_vector (g := -g) (by rwa [abs_neg]) (by push_cast; linear_combination -hiso / 2)
 
 /-! ### The wall group that carries the point -/
 
@@ -44,11 +45,9 @@ lemma square_roots_plus_isotropic {R : Type*} [CommRing R] {d : R} {s w : MukaiV
     (hs : MukaiVector.IsRoot d s) (hw : MukaiVector.IsIsotropic d w) {g : R}
     (hsw : MukaiVector.pairing d s w = g)
     (q : R) : MukaiVector.pairing d (q • s + w) (q • s + w) = 2 * q * (g - q) := by
-  unfold MukaiVector.IsRoot at hs
-  unfold MukaiVector.IsIsotropic at hw
-  simp only [MukaiVector.pairing_add_left, MukaiVector.pairing_add_right,
-    MukaiVector.pairing_smul_left, MukaiVector.pairing_smul_right, hs, hw, hsw,
-    MukaiVector.pairing_comm d w s]
+  rw [← one_smul R w, ← MukaiVector.mukaiForm_apply, BilinearForm.apply_smul_add_smul_self]
+  simp only [MukaiVector.mukaiForm_apply, MukaiVector.pairing_comm d w s, hsw]
+  rw [hs, hw]
   ring
 
 /-- **The numerical step of the two-extension lemma.** If a wall object `N` has filtration

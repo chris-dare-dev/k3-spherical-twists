@@ -49,11 +49,14 @@ import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import K3Twists.GroupTheory.Commutator.ForkWord
 import K3Twists.GroupTheory.GroupAction.CountCocycle
 import K3Twists.GroupTheory.GroupAction.TwistSystem
+import K3Twists.LinearAlgebra.BilinearForm.Eichler
+import K3Twists.LinearAlgebra.BilinearForm.Gram
 import K3Twists.LinearAlgebra.BilinearForm.Hyperbolic
 import K3Twists.LinearAlgebra.BilinearForm.Reflection
 import K3Twists.LinearAlgebra.Lattice.Arithmetic.TorsionFree
 import K3Twists.LinearAlgebra.Lattice.Mukai.Basic
 import K3Twists.LinearAlgebra.Lattice.Mukai.CentralCharge
+import K3Twists.LinearAlgebra.Lattice.Mukai.Eichler
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
 import K3Twists.LinearAlgebra.Lattice.Mukai.ProjectiveModel
 import K3Twists.LinearAlgebra.Lattice.Mukai.Reflection
