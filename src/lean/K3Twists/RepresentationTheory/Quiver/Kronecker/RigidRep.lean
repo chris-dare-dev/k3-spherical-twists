@@ -2,7 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
-import K3Twists.RepresentationTheory.Quiver.Kronecker.Preprojective
+import K3Twists.RepresentationTheory.Quiver.Kronecker.Ext
 
 /-!
 # A rigid preprojective representation with arrows in both directions
@@ -22,6 +22,8 @@ This is a representation of the doubled `g`-Kronecker quiver of dimension vector
 * `finrank_rigidRep_End`: `dim End = g²`, the Tits form `q(g², g) = g⁴ + g² - g·g²·g`. An
   endomorphism acts by one scalar on `W` and on `H'`, with an arbitrary extra `H'`-component in
   the image of `u` (`RigidRep.eq_endOf`);
+* `subsingleton_Ext1_rigidRep`: the representation is rigid, `Ext¹(M, M) = 0`, since
+  `dim Ext¹(M, M) = 2 dim End - 2 q(g², g)` (`DoubledRep.finrank_Ext1`);
 * `RigidRep.eq_top_or`: a subrepresentation `(U₀, U₁)` is everything, or `U₀ ⊆ H'`, with
   `U₀ = H'` if `U₁ = W` and `dim U₀ ≥ g·dim U₁` otherwise: `U₀` contains the image of
   `W ⊗ U₁`, of dimension `g·dim U₁` because the defining tensor `∑ e_i ⊗ e_i` has full rank;
@@ -266,6 +268,7 @@ theorem finrank_rigidRep_End [Nonempty ι] :
     Module.finrank_self, finrank_H]
   have : 1 ≤ Fintype.card ι ^ 2 := Nat.one_le_pow _ _ Fintype.card_pos
   omega
+
 
 /-! ### Subrepresentations -/
 
@@ -527,5 +530,15 @@ theorem le_lowerCorner_of_dimVec_snd {N : (rigidRep k ι).subreps}
   · exact Prod.mk_le_mk.mpr ⟨hle, (Submodule.finrank_eq_zero.mp h).le⟩
 
 end RigidRep
+
+/-- **The example is rigid**: `Ext¹(M, M) = 0`. By `DoubledRep.finrank_Ext1`,
+`dim Ext¹(M, M) = 2 dim End M - 2 (g⁴ + g² - g · g² · g) = 2 g² - 2 g²`. -/
+theorem subsingleton_Ext1_rigidRep [Nonempty ι] :
+    Subsingleton (DoubledRep.Ext1 (rigidRep k ι) (rigidRep k ι)) := by
+  have h := DoubledRep.finrank_Ext1 (rigidRep_isPreprojective (k := k) (ι := ι))
+    rigidRep_isPreprojective
+  rw [finrank_rigidRep_End, RigidRep.finrank_V₀, Module.finrank_pi] at h
+  refine (Module.finrank_eq_zero_iff_of_free k _).mp ?_
+  nlinarith
 
 end Quiver.Kronecker

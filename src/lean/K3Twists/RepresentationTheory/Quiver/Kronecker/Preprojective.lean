@@ -25,8 +25,14 @@ family of linear maps `A_i : V₀ → V₁` and `B_i : V₁ → V₀`. The prepr
 * `DoubledRep.subreps M`: the subrepresentations, pairs of subspaces `(U₀, U₁)` with
   `A_i U₀ ⊆ U₁` and `B_i U₁ ⊆ U₀`, a complete sublattice of `Submodule k V₀ × Submodule k V₁`;
 * `DoubledRep.dimVec`: the dimension vector `(dim U₀, dim U₁)` of a subrepresentation;
-* `DoubledRep.Iso`, `DoubledRep.Iso.mapSubrep`: isomorphisms of representations, and the
-  isomorphism of lattices of subrepresentations they induce, which preserves dimension vectors.
+* `DoubledRep.Iso`, `DoubledRep.Iso.mapSubrep`: isomorphisms of representations (with
+  `Iso.refl`, `Iso.symm`, `Iso.trans`), and the isomorphism of lattices of subrepresentations they
+  induce, which preserves dimension vectors;
+* `DoubledRep.restrict`, `DoubledRep.quotient`, `DoubledRep.subquotient`: the restriction to a
+  subrepresentation `P`, the quotient by it, and the subquotient `Q / P` of `P ≤ Q`;
+  `mapRestrict` and `comapQuotient` identify the subrepresentations of `M|P` and of `M ⧸ P` with
+  those of `M` below and above `P`;
+* `DoubledRep.kerSubrep`, `DoubledRep.rangeSubrep`: the kernel and the image of a morphism.
 
 ## Main results
 
@@ -66,6 +72,7 @@ variable (k : Type*) [Field k] (ι : Type*) (V₀ V₁ : Type*) [AddCommGroup V�
 
 /-- A representation of the doubled Kronecker quiver with arrow set `ι` on the spaces `V₀, V₁`:
 linear maps `A i : V₀ → V₁` and `B i : V₁ → V₀`. -/
+@[ext]
 structure DoubledRep where
   /-- The arrows from vertex zero to vertex one. -/
   A : ι → V₀ →ₗ[k] V₁
@@ -120,6 +127,19 @@ lemma mem_Hom {M : DoubledRep k ι V₀ V₁} {N : DoubledRep k ι W₀ W₁}
     {f : (V₀ →ₗ[k] W₀) × (V₁ →ₗ[k] W₁)} :
     f ∈ Hom M N ↔ ∀ i, f.2 ∘ₗ M.A i = N.A i ∘ₗ f.1 ∧ f.1 ∘ₗ M.B i = N.B i ∘ₗ f.2 :=
   Iff.rfl
+
+/-- The identity is a morphism. -/
+lemma id_mem_Hom (M : DoubledRep k ι V₀ V₁) : (LinearMap.id, LinearMap.id) ∈ Hom M M :=
+  fun _ ↦ ⟨rfl, rfl⟩
+
+/-- The composite of two morphisms is a morphism. -/
+lemma comp_mem_Hom {U₀ U₁ : Type*} [AddCommGroup U₀] [Module k U₀] [AddCommGroup U₁]
+    [Module k U₁] {M : DoubledRep k ι V₀ V₁} {N : DoubledRep k ι W₀ W₁}
+    {P : DoubledRep k ι U₀ U₁} {f : (V₀ →ₗ[k] W₀) × (V₁ →ₗ[k] W₁)}
+    {g : (W₀ →ₗ[k] U₀) × (W₁ →ₗ[k] U₁)} (hf : f ∈ Hom M N) (hg : g ∈ Hom N P) :
+    (g.1 ∘ₗ f.1, g.2 ∘ₗ f.2) ∈ Hom M P := fun i ↦
+  ⟨by rw [LinearMap.comp_assoc, (hf i).1, ← LinearMap.comp_assoc, (hg i).1, LinearMap.comp_assoc],
+    by rw [LinearMap.comp_assoc, (hf i).2, ← LinearMap.comp_assoc, (hg i).2, LinearMap.comp_assoc]⟩
 
 end Hom
 
@@ -251,7 +271,49 @@ structure Iso (M : DoubledRep k ι V₀ V₁) (N : DoubledRep k ι W₀ W₁) wh
 
 namespace Iso
 
+/-- The identity isomorphism. -/
+def refl (M : DoubledRep k ι V₀ V₁) : Iso M M where
+  e₀ := LinearEquiv.refl k V₀
+  e₁ := LinearEquiv.refl k V₁
+  comm_A _ _ := rfl
+  comm_B _ _ := rfl
+
 variable {M : DoubledRep k ι V₀ V₁} {N : DoubledRep k ι W₀ W₁}
+
+/-- The inverse isomorphism. -/
+def symm (u : Iso M N) : Iso N M where
+  e₀ := u.e₀.symm
+  e₁ := u.e₁.symm
+  comm_A i y := u.e₁.injective (by
+    rw [LinearEquiv.apply_symm_apply, u.comm_A, LinearEquiv.apply_symm_apply])
+  comm_B i y := u.e₀.injective (by
+    rw [LinearEquiv.apply_symm_apply, u.comm_B, LinearEquiv.apply_symm_apply])
+
+/-- The composite of two isomorphisms. -/
+def trans {U₀ U₁ : Type*} [AddCommGroup U₀] [Module k U₀] [AddCommGroup U₁] [Module k U₁]
+    {P : DoubledRep k ι U₀ U₁} (u : Iso M N) (v : Iso N P) : Iso M P where
+  e₀ := u.e₀.trans v.e₀
+  e₁ := u.e₁.trans v.e₁
+  comm_A i x := by simp only [LinearEquiv.trans_apply, u.comm_A, v.comm_A]
+  comm_B i y := by simp only [LinearEquiv.trans_apply, u.comm_B, v.comm_B]
+
+/-- The maps of an isomorphism form a morphism. -/
+lemma mem_Hom (u : Iso M N) : ((u.e₀ : V₀ →ₗ[k] W₀), (u.e₁ : V₁ →ₗ[k] W₁)) ∈ Hom M N :=
+  fun i ↦ ⟨LinearMap.ext (u.comm_A i), LinearMap.ext (u.comm_B i)⟩
+
+/-- An isomorphic copy of a representation with the preprojective relations satisfies them. -/
+lemma isPreprojective [Fintype ι] (u : Iso M N) (hM : M.IsPreprojective) : N.IsPreprojective := by
+  refine ⟨LinearMap.ext fun y ↦ ?_, LinearMap.ext fun y ↦ ?_⟩
+  · obtain ⟨x, rfl⟩ := u.e₀.surjective y
+    have := congrArg u.e₀ (LinearMap.congr_fun hM.1 x)
+    simp only [LinearMap.sum_apply, LinearMap.comp_apply, map_sum, LinearMap.zero_apply,
+      map_zero, u.comm_A, u.comm_B] at this ⊢
+    exact this
+  · obtain ⟨x, rfl⟩ := u.e₁.surjective y
+    have := congrArg u.e₁ (LinearMap.congr_fun hM.2 x)
+    simp only [LinearMap.sum_apply, LinearMap.comp_apply, map_sum, LinearMap.zero_apply,
+      map_zero, u.comm_A, u.comm_B] at this ⊢
+    exact this
 
 /-- An isomorphism of representations induces an isomorphism of the lattices of
 subrepresentations, `(U₀, U₁) ↦ (e₀ U₀, e₁ U₁)`. -/
@@ -300,6 +362,210 @@ lemma dimVec_mapSubrep (u : Iso M N) (P : M.subreps) : dimVec (u.mapSubrep P) = 
 end Iso
 
 end Iso
+
+/-! ### Restrictions, quotients and subquotients -/
+
+section Restrict
+
+variable (M : DoubledRep k ι V₀ V₁) (P : M.subreps)
+
+/-- The restriction of `M` to a subrepresentation `P = (U₀, U₁)`. -/
+def restrict : DoubledRep k ι (P : Submodule k V₀ × Submodule k V₁).1
+    (P : Submodule k V₀ × Submodule k V₁).2 where
+  A i := (M.A i).restrict fun _ hx ↦ A_mem P i hx
+  B i := (M.B i).restrict fun _ hy ↦ B_mem P i hy
+
+@[simp]
+lemma coe_restrict_A_apply (i : ι) (x : (P : Submodule k V₀ × Submodule k V₁).1) :
+    ((M.restrict P).A i x : V₁) = M.A i x := rfl
+
+@[simp]
+lemma coe_restrict_B_apply (i : ι) (y : (P : Submodule k V₀ × Submodule k V₁).2) :
+    ((M.restrict P).B i y : V₀) = M.B i y := rfl
+
+/-- The quotient of `M` by a subrepresentation `P = (U₀, U₁)`. -/
+def quotient : DoubledRep k ι (V₀ ⧸ (P : Submodule k V₀ × Submodule k V₁).1)
+    (V₁ ⧸ (P : Submodule k V₀ × Submodule k V₁).2) where
+  A i := Submodule.mapQ _ _ (M.A i) fun _ hx ↦ A_mem P i hx
+  B i := Submodule.mapQ _ _ (M.B i) fun _ hy ↦ B_mem P i hy
+
+@[simp]
+lemma quotient_A_mk (i : ι) (x : V₀) :
+    (M.quotient P).A i (Submodule.Quotient.mk x) = Submodule.Quotient.mk (M.A i x) := rfl
+
+@[simp]
+lemma quotient_B_mk (i : ι) (y : V₁) :
+    (M.quotient P).B i (Submodule.Quotient.mk y) = Submodule.Quotient.mk (M.B i y) := rfl
+
+/-- `P ⊓ Q` as a subrepresentation of the restriction `M|Q`, as `Subgroup.subgroupOf`. -/
+def subrepOf (P Q : M.subreps) : (M.restrict Q).subreps :=
+  ⟨((P : Submodule k V₀ × Submodule k V₁).1.comap (Q : Submodule k V₀ × Submodule k V₁).1.subtype,
+    (P : Submodule k V₀ × Submodule k V₁).2.comap (Q : Submodule k V₀ × Submodule k V₁).2.subtype),
+    fun i ↦ ⟨fun _ hx ↦ A_mem P i hx, fun _ hy ↦ B_mem P i hy⟩⟩
+
+/-- The subquotient `Q / P` of `M`, for subrepresentations `P ≤ Q` (in general `Q / (P ⊓ Q)`). -/
+def subquotient (P Q : M.subreps) :
+    DoubledRep k ι ((Q : Submodule k V₀ × Submodule k V₁).1 ⧸ (M.subrepOf P Q).1.1)
+      ((Q : Submodule k V₀ × Submodule k V₁).2 ⧸ (M.subrepOf P Q).1.2) :=
+  (M.restrict Q).quotient (M.subrepOf P Q)
+
+variable {M P}
+
+/-- A subrepresentation of `M|P` as a subrepresentation of `M`, below `P`. -/
+def mapRestrict (S : (M.restrict P).subreps) : M.subreps :=
+  ⟨(S.1.1.map (P : Submodule k V₀ × Submodule k V₁).1.subtype,
+    S.1.2.map (P : Submodule k V₀ × Submodule k V₁).2.subtype),
+    fun i ↦ ⟨by
+      rintro _ ⟨x, hx, rfl⟩
+      exact ⟨(M.restrict P).A i x, A_mem S i hx, rfl⟩, by
+      rintro _ ⟨y, hy, rfl⟩
+      exact ⟨(M.restrict P).B i y, B_mem S i hy, rfl⟩⟩⟩
+
+/-- The preimage in `M` of a subrepresentation of `M ⧸ P`, above `P`. -/
+def comapQuotient (T : (M.quotient P).subreps) : M.subreps :=
+  ⟨(T.1.1.comap (P : Submodule k V₀ × Submodule k V₁).1.mkQ,
+    T.1.2.comap (P : Submodule k V₀ × Submodule k V₁).2.mkQ),
+    fun i ↦ ⟨fun _ hx ↦ A_mem T i hx, fun _ hy ↦ B_mem T i hy⟩⟩
+
+lemma mapRestrict_le (S : (M.restrict P).subreps) : mapRestrict S ≤ P :=
+  ⟨Submodule.map_subtype_le _ _, Submodule.map_subtype_le _ _⟩
+
+lemma le_comapQuotient (T : (M.quotient P).subreps) : P ≤ comapQuotient T :=
+  ⟨fun x hx ↦ by
+    change Submodule.Quotient.mk x ∈ T.1.1
+    rw [(Submodule.Quotient.mk_eq_zero _).mpr hx]
+    exact zero_mem _, fun y hy ↦ by
+    change Submodule.Quotient.mk y ∈ T.1.2
+    rw [(Submodule.Quotient.mk_eq_zero _).mpr hy]
+    exact zero_mem _⟩
+
+lemma mapRestrict_mono {S S' : (M.restrict P).subreps} (h : S ≤ S') :
+    mapRestrict S ≤ mapRestrict S' :=
+  ⟨Submodule.map_mono h.1, Submodule.map_mono h.2⟩
+
+/-- `mapRestrict` is everything below `P` only at the top. -/
+lemma mapRestrict_eq_self_iff {S : (M.restrict P).subreps} : mapRestrict S = P ↔ S = ⊤ := by
+  constructor
+  · intro h
+    have h₀ := congrArg (fun z : M.subreps ↦ (z : Submodule k V₀ × Submodule k V₁).1) h
+    have h₁ := congrArg (fun z : M.subreps ↦ (z : Submodule k V₀ × Submodule k V₁).2) h
+    rw [← Submodule.map_subtype_top (P : Submodule k V₀ × Submodule k V₁).1] at h₀
+    rw [← Submodule.map_subtype_top (P : Submodule k V₀ × Submodule k V₁).2] at h₁
+    exact Subtype.ext (Prod.ext
+      (Submodule.map_injective_of_injective (Submodule.injective_subtype _) h₀)
+      (Submodule.map_injective_of_injective (Submodule.injective_subtype _) h₁))
+  · rintro rfl
+    exact Subtype.ext (Prod.ext (Submodule.map_subtype_top _) (Submodule.map_subtype_top _))
+
+lemma mapRestrict_subrepOf {P Q : M.subreps} (h : P ≤ Q) : mapRestrict (M.subrepOf P Q) = P :=
+  Subtype.ext (Prod.ext ((Submodule.map_comap_subtype _ _).trans (inf_eq_right.mpr h.1))
+    ((Submodule.map_comap_subtype _ _).trans (inf_eq_right.mpr h.2)))
+
+lemma dimVec_mapRestrict (S : (M.restrict P).subreps) : dimVec (mapRestrict S) = dimVec S :=
+  Prod.ext (Submodule.finrank_map_subtype_eq _ _) (Submodule.finrank_map_subtype_eq _ _)
+
+/-- The preimage of a subspace `T` of `V ⧸ R` has dimension `dim R + dim T`. -/
+private lemma finrank_comap_mkQ {V : Type*} [AddCommGroup V] [Module k V]
+    [FiniteDimensional k V] (R : Submodule k V) (T : Submodule k (V ⧸ R)) :
+    finrank k (T.comap R.mkQ) = finrank k R + finrank k T := by
+  have hRT : R ≤ T.comap R.mkQ := fun x hx ↦ by
+    simp [(Submodule.Quotient.mk_eq_zero R).mpr hx]
+  let g : T.comap R.mkQ →ₗ[k] T := R.mkQ.restrict fun _ hx ↦ hx
+  have hg : Function.Surjective g := by
+    rintro ⟨t, ht⟩
+    obtain ⟨v, rfl⟩ := Submodule.Quotient.mk_surjective R t
+    exact ⟨⟨v, ht⟩, rfl⟩
+  have hker : LinearMap.ker g = R.comap (T.comap R.mkQ).subtype := by
+    ext x
+    simp [g, LinearMap.mem_ker, Subtype.ext_iff, Submodule.Quotient.mk_eq_zero]
+  have := LinearMap.finrank_range_add_finrank_ker g
+  rw [LinearMap.range_eq_top.mpr hg, finrank_top, hker,
+    (Submodule.comapSubtypeEquivOfLe hRT).finrank_eq] at this
+  omega
+
+lemma dimVec_comapQuotient [FiniteDimensional k V₀] [FiniteDimensional k V₁]
+    (T : (M.quotient P).subreps) : dimVec (comapQuotient T) = dimVec P + dimVec T :=
+  Prod.ext (finrank_comap_mkQ _ _) (finrank_comap_mkQ _ _)
+
+/-- The restriction of `M|Q` to `P ≤ Q` is the restriction of `M` to `P`. -/
+def restrictSubrepOfIso {P Q : M.subreps} (h : P ≤ Q) :
+    Iso ((M.restrict Q).restrict (M.subrepOf P Q)) (M.restrict P) where
+  e₀ := Submodule.comapSubtypeEquivOfLe h.1
+  e₁ := Submodule.comapSubtypeEquivOfLe h.2
+  comm_A _ _ := rfl
+  comm_B _ _ := rfl
+
+variable [Fintype ι]
+
+/-- A restriction of a representation with the preprojective relations satisfies them. -/
+lemma IsPreprojective.restrict (hM : M.IsPreprojective) (P : M.subreps) :
+    (M.restrict P).IsPreprojective := by
+  refine ⟨LinearMap.ext fun x ↦ Subtype.ext ?_, LinearMap.ext fun x ↦ Subtype.ext ?_⟩
+  · simpa [LinearMap.sum_apply] using LinearMap.congr_fun hM.1 x
+  · simpa [LinearMap.sum_apply] using LinearMap.congr_fun hM.2 x
+
+/-- A quotient of a representation with the preprojective relations satisfies them. -/
+lemma IsPreprojective.quotient (hM : M.IsPreprojective) (P : M.subreps) :
+    (M.quotient P).IsPreprojective := by
+  refine ⟨LinearMap.ext fun x ↦ ?_, LinearMap.ext fun x ↦ ?_⟩
+  · induction x using Submodule.Quotient.induction_on with
+    | H x =>
+      have h := congrArg (Submodule.mkQ (P : Submodule k V₀ × Submodule k V₁).1)
+        (LinearMap.congr_fun hM.1 x)
+      simp only [LinearMap.sum_apply, LinearMap.comp_apply, map_sum, LinearMap.zero_apply,
+        map_zero, Submodule.mkQ_apply] at h
+      simpa [LinearMap.sum_apply] using h
+  · induction x using Submodule.Quotient.induction_on with
+    | H x =>
+      have h := congrArg (Submodule.mkQ (P : Submodule k V₀ × Submodule k V₁).2)
+        (LinearMap.congr_fun hM.2 x)
+      simp only [LinearMap.sum_apply, LinearMap.comp_apply, map_sum, LinearMap.zero_apply,
+        map_zero, Submodule.mkQ_apply] at h
+      simpa [LinearMap.sum_apply] using h
+
+end Restrict
+
+/-! ### Kernels and images -/
+
+section KerRange
+
+variable {W₀ W₁ : Type*} [AddCommGroup W₀] [Module k W₀] [AddCommGroup W₁] [Module k W₁]
+  {M : DoubledRep k ι V₀ V₁} {N : DoubledRep k ι W₀ W₁} {f : (V₀ →ₗ[k] W₀) × (V₁ →ₗ[k] W₁)}
+
+/-- The kernel of a morphism, a subrepresentation. -/
+def kerSubrep (hf : f ∈ Hom M N) : M.subreps :=
+  ⟨(LinearMap.ker f.1, LinearMap.ker f.2), fun i ↦ ⟨fun x hx ↦ by
+    rw [LinearMap.mem_ker] at hx
+    rw [Submodule.mem_comap, LinearMap.mem_ker, ← LinearMap.comp_apply, (hf i).1,
+      LinearMap.comp_apply, hx, map_zero], fun y hy ↦ by
+    rw [LinearMap.mem_ker] at hy
+    rw [Submodule.mem_comap, LinearMap.mem_ker, ← LinearMap.comp_apply, (hf i).2,
+      LinearMap.comp_apply, hy, map_zero]⟩⟩
+
+/-- The image of a morphism, a subrepresentation. -/
+def rangeSubrep (hf : f ∈ Hom M N) : N.subreps :=
+  ⟨(LinearMap.range f.1, LinearMap.range f.2), fun i ↦ ⟨by
+    rintro _ ⟨x, rfl⟩
+    exact ⟨M.A i x, LinearMap.congr_fun (hf i).1 x⟩, by
+    rintro _ ⟨y, rfl⟩
+    exact ⟨M.B i y, LinearMap.congr_fun (hf i).2 y⟩⟩⟩
+
+lemma eq_zero_of_kerSubrep_eq_top (hf : f ∈ Hom M N) (h : kerSubrep hf = ⊤) : f = 0 := by
+  have h₀ : LinearMap.ker f.1 = ⊤ := congrArg (fun z : M.subreps ↦ z.1.1) h
+  have h₁ : LinearMap.ker f.2 = ⊤ := congrArg (fun z : M.subreps ↦ z.1.2) h
+  exact Prod.ext (LinearMap.ker_eq_top.mp h₀) (LinearMap.ker_eq_top.mp h₁)
+
+/-- Rank–nullity for a morphism of representations. -/
+lemma dimVec_kerSubrep_add_dimVec_rangeSubrep [FiniteDimensional k V₀] [FiniteDimensional k V₁]
+    (hf : f ∈ Hom M N) :
+    dimVec (kerSubrep hf) + dimVec (rangeSubrep hf) = (finrank k V₀, finrank k V₁) :=
+  Prod.ext (by
+    rw [Prod.fst_add, add_comm]
+    exact LinearMap.finrank_range_add_finrank_ker f.1) (by
+    rw [Prod.snd_add, add_comm]
+    exact LinearMap.finrank_range_add_finrank_ker f.2)
+
+end KerRange
 
 end DoubledRep
 
