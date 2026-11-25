@@ -65,7 +65,7 @@ lemma beta_conditions :
 
 /-- The central charge `Z(E) = -ch₂(E) + β·c₁(E) + 2 rk(E) + i (H·c₁(E) - rk(E))` of the
 curve-wall stability condition, on Mukai vectors `(r, c, s)` with `ch₂ = s - r`. -/
-noncomputable def charge : MukaiLattice NS →+ ℂ where
+noncomputable def charge : MukaiLattice ℤ NS →+ ℂ where
   toFun v := -((v.2.2 - v.1 : ℤ) : ℂ) - (intersection curve v.2.1 : ℂ) / 4 + 2 * (v.1 : ℂ) +
     I * ((intersection polarization v.2.1 : ℂ) - v.1)
   map_zero' := by simp
@@ -73,18 +73,18 @@ noncomputable def charge : MukaiLattice NS →+ ℂ where
     simp only [Prod.fst_add, Prod.snd_add, map_add, Int.cast_add, Int.cast_sub]
     ring
 
-lemma charge_apply (v : MukaiLattice NS) :
+lemma charge_apply (v : MukaiLattice ℤ NS) :
     charge v = -((v.2.2 - v.1 : ℤ) : ℂ) - (intersection curve v.2.1 : ℂ) / 4 + 2 * (v.1 : ℂ) +
       I * ((intersection polarization v.2.1 : ℂ) - v.1) :=
   rfl
 
 /-- The imaginary part of the charge is `H·c - r`. -/
-lemma im_charge (v : MukaiLattice NS) :
+lemma im_charge (v : MukaiLattice ℤ NS) :
     (charge v).im = ((intersection polarization v.2.1 - v.1 : ℤ) : ℝ) := by
   simp [charge_apply]
 
 /-- The real part of the charge is `-ch₂ + β·c + 2r = 3r - s - (C·c)/4`. -/
-lemma re_charge (v : MukaiLattice NS) :
+lemma re_charge (v : MukaiLattice ℤ NS) :
     (charge v).re = 3 * (v.1 : ℝ) - v.2.2 - (intersection curve v.2.1 : ℝ) / 4 := by
   simp [charge_apply]; ring
 
@@ -211,7 +211,7 @@ lemma arg_charge_rankTwo :
 /-- **The odd tail is stable.** `𝒪_X(-C - F)[1]` is spherical with imaginary charge `2`; a
 nontrivial filtration by stable spherical factors would need two roots of imaginary charge one,
 which the parity argument excludes. -/
-theorem not_split_tail_odd {u : MukaiLattice NS} (hu : IsSpherical intersection u)
+theorem not_split_tail_odd {u : MukaiLattice ℤ NS} (hu : IsSpherical intersection u)
     (hu1 : (charge u).im = 1) : ¬IsSpherical intersection (-lineBundle (-1, -1) - u) := by
   refine not_isSpherical_sub_of_odd_rank ((isSpherical_lineBundle _).neg intersection)
     ⟨-1, by simp⟩ (by simp) hu ?_
@@ -220,7 +220,7 @@ theorem not_split_tail_odd {u : MukaiLattice NS} (hu : IsSpherical intersection 
 
 /-- **Line bundles of `H`-slope `3` are stable.** `𝒪_X(aC + 3F)` has imaginary charge `2`, and
 the parity argument excludes a splitting into two roots of imaginary charge one. -/
-theorem not_split_slope_three (a : ℤ) {u : MukaiLattice NS} (hu : IsSpherical intersection u)
+theorem not_split_slope_three (a : ℤ) {u : MukaiLattice ℤ NS} (hu : IsSpherical intersection u)
     (hu1 : (charge u).im = 1) : ¬IsSpherical intersection (lineBundle (a, 3) - u) := by
   refine not_isSpherical_sub_of_odd_rank (isSpherical_lineBundle _) ⟨0, by simp⟩ (by simp) hu ?_
   rw [im_charge] at hu1

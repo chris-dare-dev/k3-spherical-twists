@@ -147,16 +147,16 @@ lemma intersection_polarization_pos {x : NS} (hC : 0 ≤ intersection curve x)
 /-! ### Mukai vectors -/
 
 /-- `v(𝒪_x) = (0, 0, 1)`. -/
-def point : MukaiLattice NS := (0, 0, 1)
+def point : MukaiLattice ℤ NS := (0, 0, 1)
 
 /-- `v(𝒪_X(D)) = (1, D, D²/2 + 1)`; for `D = aC + bF`, `D²/2 = a(b - a)`. -/
-def lineBundle (D : NS) : MukaiLattice NS := (1, D, D.1 * (D.2 - D.1) + 1)
+def lineBundle (D : NS) : MukaiLattice ℤ NS := (1, D, D.1 * (D.2 - D.1) + 1)
 
 /-- `v(I_x ⊗ 𝒪_X(D)) = v(𝒪_X(D)) - v(𝒪_x)`. -/
-def idealPoint (D : NS) : MukaiLattice NS := lineBundle D - point
+def idealPoint (D : NS) : MukaiLattice ℤ NS := lineBundle D - point
 
 /-- `v(𝒪_C(k)) = (0, C, k + 1)`, since `χ(𝒪_C(k)) = k + 1` on `C ≅ ℙ¹`. -/
-def curveSheaf (k : ℤ) : MukaiLattice NS := (0, curve, k + 1)
+def curveSheaf (k : ℤ) : MukaiLattice ℤ NS := (0, curve, k + 1)
 
 @[simp] lemma point_def : point = (0, 0, 1) := rfl
 @[simp] lemma lineBundle_def (D : NS) : lineBundle D = (1, D, D.1 * (D.2 - D.1) + 1) := rfl
@@ -192,13 +192,13 @@ lemma lineBundle_sub_lineBundle_sub_curve (D : NS) :
 /-! ### The wall of pairing two -/
 
 /-- `A = 𝒪_C`, the first spherical simple of the curve wall. -/
-def wallA : MukaiLattice NS := curveSheaf 0
+def wallA : MukaiLattice ℤ NS := curveSheaf 0
 
 /-- `B = 𝒪_C(-1)[1]`, the second; the shift negates the class. -/
-def wallB : MukaiLattice NS := -curveSheaf (-1)
+def wallB : MukaiLattice ℤ NS := -curveSheaf (-1)
 
 /-- The class `a v(A) + b v(B)` of a wall object with multiplicities `(a, b)`. -/
-def wallClass (a b : ℤ) : MukaiLattice NS := a • wallA + b • wallB
+def wallClass (a b : ℤ) : MukaiLattice ℤ NS := a • wallA + b • wallB
 
 @[simp]
 lemma wallClass_eq (a b : ℤ) : wallClass a b = (0, (a - b, 0), a) := by
@@ -284,7 +284,7 @@ lemma selfPairing_wallClass_two_two : selfPairing intersection (wallClass 2 2) =
 
 /-- The class of `M_{d,x}`, the nonsplit extension `0 → 𝒪_x → M_{d,x} → 𝒪_C(d) → 0`; for `d = 0`
 it is `𝒪_X/(I_C I_x)`, the curve with an embedded point. -/
-def embeddedPoint (d : ℤ) : MukaiLattice NS := point + curveSheaf d
+def embeddedPoint (d : ℤ) : MukaiLattice ℤ NS := point + curveSheaf d
 
 /-- `M_{d,x}` has wall multiplicities `(d + 2, d + 1)`. -/
 lemma embeddedPoint_eq_wallClass (d : ℤ) : embeddedPoint d = wallClass (d + 2) (d + 1) := by
@@ -297,7 +297,7 @@ lemma isSpherical_embeddedPoint (d : ℤ) : IsSpherical intersection (embeddedPo
   rw [IsSpherical, embeddedPoint_eq_wallClass, selfPairing_wallClass]; ring
 
 /-- The class of `D(jC)/(I_x ⊗ D(-C))`: the inclusions `I_x ⊗ D(-C) ⊂ D(-C) ⊂ D ⊂ D(jC)`. -/
-def idealQuotient (D : NS) (j : ℤ) : MukaiLattice NS :=
+def idealQuotient (D : NS) (j : ℤ) : MukaiLattice ℤ NS :=
   lineBundle (D + j • curve) - idealPoint (D - curve)
 
 /-- `R₀ = D/(I_x ⊗ D(-C)) = M_{d,x}` with `d = C·D`. -/
@@ -414,7 +414,7 @@ lemma sum_A_side_odd (r : ℕ) :
   rw [thickening_eq]
   have : ∀ n : ℕ, ∑ i ∈ Finset.range n, wallClass ((2 * r + 1 - 2 * i : ℤ) - 1)
       (2 * r + 1 - 2 * i) =
-        ((0, (-(n : ℤ), 0), (n : ℤ) * (2 * r) - n * (n - 1)) : MukaiLattice NS) := by
+        ((0, (-(n : ℤ), 0), (n : ℤ) * (2 * r) - n * (n - 1)) : MukaiLattice ℤ NS) := by
     intro n
     induction n with
     | zero => ext <;> simp
@@ -433,7 +433,7 @@ lemma sum_A_side_even (r : ℕ) :
   simp_rw [reflect_wallA_curveSheaf]
   rw [thickening_eq]
   have : ∀ n : ℕ, ∑ i ∈ Finset.range n, wallClass ((2 * r - 2 * i : ℤ) - 1) (2 * r - 2 * i) =
-      ((0, (-(n : ℤ), 0), (n : ℤ) * (2 * r - 1) - n * (n - 1)) : MukaiLattice NS) := by
+      ((0, (-(n : ℤ), 0), (n : ℤ) * (2 * r - 1) - n * (n - 1)) : MukaiLattice ℤ NS) := by
     intro n
     induction n with
     | zero => ext <;> simp
@@ -477,7 +477,7 @@ lemma reflect_rankTwo_point :
 
 /-- `v(𝒪_Γ(D)) = (0, F, k)` for a line bundle of degree `k` on a smooth fibre `Γ`, an elliptic
 curve, where `χ(𝒪_Γ(D)) = k`. -/
-def fibreSheaf (k : ℤ) : MukaiLattice NS := (0, fibre, k)
+def fibreSheaf (k : ℤ) : MukaiLattice ℤ NS := (0, fibre, k)
 
 @[simp] lemma fibreSheaf_def (k : ℤ) : fibreSheaf k = (0, fibre, k) := rfl
 
@@ -529,7 +529,7 @@ root with `H·c(u) - rk(u) = 1`, then `v - u` is not a root. On the curve wall t
 of the charge is `H·c - rk`, so a nontrivial filtration of a stable-free object of class `v` by
 stable spherical factors of positive imaginary part would need two roots of imaginary part one;
 this excludes it. -/
-theorem not_isSpherical_sub_of_odd_rank {v u : MukaiLattice NS}
+theorem not_isSpherical_sub_of_odd_rank {v u : MukaiLattice ℤ NS}
     (hv : IsSpherical intersection v) (hodd : Odd v.1)
     (hv2 : intersection polarization v.2.1 - v.1 = 2) (hu : IsSpherical intersection u)
     (hu1 : intersection polarization u.2.1 - u.1 = 1) :

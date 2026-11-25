@@ -540,7 +540,7 @@ theorem exists_sees_of_stable {σ : Stab} {E : Obj} (hE : I.Spherical E) (hst : 
   apply I.eq_of_stable_of_cl_eq hE hst (I.stable_vadd σ (-j) _ hst₀)
   · rw [I.cl_vadd, I.cl_sphere, hℓ]
     simp only [even_neg, hjE, posClass]
-    split_ifs <;> simp [neg_neg_mukai]
+    split_ifs <;> simp
   · rw [I.phase_vadd]; push_cast; linarith
 
 /-- **Visibility on the cover, for marked spheres.** The shifted sphere `n +ᵥ sphere ℓ` is stable

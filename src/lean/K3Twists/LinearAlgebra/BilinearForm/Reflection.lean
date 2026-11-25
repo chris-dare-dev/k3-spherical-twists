@@ -3,6 +3,7 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import Mathlib.LinearAlgebra.BilinearForm.Isometry
+import Mathlib.LinearAlgebra.Reflection
 import Mathlib.Tactic
 
 /-!
@@ -47,6 +48,16 @@ what makes it visible:
 `-2` is the hypothesis rather than a `IsSpherical`-style predicate on purpose:
 spherical-class vocabulary is application vocabulary, and it stays with the
 application.
+
+## It is Mathlib's reflection
+
+`ρ_s` is `Module.preReflection s f` for the functional `f = -B(·, s)`:
+`preReflection s f v = v - f v • s = v + B v s • s`. `reflectHom` is defined
+as that map and `reflectEquiv` as `Module.reflection`, the case `f s = 2`, which
+is `B s s = -2`. Both identifications hold by `rfl`
+(`reflectHom_eq_preReflection`, `reflectEquiv_eq_reflection`), so Mathlib's
+reflection API, the Chebyshev formula for `(ρ_a ρ_b)^m` among it, applies to
+`ρ_s` with no translation.
 -/
 
 namespace BilinearForm
@@ -80,15 +91,19 @@ theorem reflect_neg (s v : M) : reflect B s (-v) = -reflect B s v := by
   simp only [reflect, map_neg, LinearMap.neg_apply, neg_smul, neg_add_rev]
   abel
 
-/-- `ρ_s` as a linear endomorphism.
+/-- `ρ_s` as a linear endomorphism: Mathlib's `Module.preReflection s f` for the
+functional `f = -B(·, s)`.
 
 No hypothesis on `s`: additivity is bilinearity of `B`, nothing more. -/
-def reflectHom (s : M) : M →ₗ[R] M where
-  toFun := reflect B s
-  map_add' := reflect_add B s
-  map_smul' := by intro a v; simpa using reflect_smul B a s v
+def reflectHom (s : M) : M →ₗ[R] M := Module.preReflection s (-B.flip s)
 
-@[simp] theorem reflectHom_apply (s v : M) : reflectHom B s v = reflect B s v := rfl
+theorem reflectHom_eq_preReflection (s : M) :
+    reflectHom B s = Module.preReflection s (-B.flip s) :=
+  rfl
+
+@[simp] theorem reflectHom_apply (s v : M) : reflectHom B s v = reflect B s v := by
+  rw [reflectHom, Module.preReflection_apply, reflect]
+  simp [sub_eq_add_neg]
 
 theorem apply_reflect_right (s : M) (hs : B s s = -2) (v : M) :
     B (reflect B s v) s = -B v s := by
@@ -108,19 +123,26 @@ theorem reflect_involutive (s : M) (hs : B s s = -2) :
 theorem reflect_bijective (s : M) (hs : B s s = -2) :
     Function.Bijective (reflect B s) := (reflect_involutive B s hs).bijective
 
-/-- `ρ_s` as a linear automorphism, with itself as inverse. Needs
-`B s s = -2`, which is what makes it an involution. -/
+/-- The functional `-B(·, s)` takes the value `2` at `s` exactly when `B s s = -2`. -/
+theorem neg_flip_apply_self (s : M) (hs : B s s = -2) : (-B.flip s) s = 2 := by
+  simp [hs]
+
+/-- `ρ_s` as a linear automorphism, with itself as inverse: Mathlib's
+`Module.reflection`. Needs `B s s = -2`, which is what makes it an involution. -/
 def reflectEquiv (s : M) (hs : B s s = -2) : M ≃ₗ[R] M :=
-  { reflectHom B s with
-    invFun := reflect B s
-    left_inv := reflect_reflect B s hs
-    right_inv := reflect_reflect B s hs }
+  Module.reflection (neg_flip_apply_self B s hs)
+
+theorem reflectEquiv_eq_reflection (s : M) (hs : B s s = -2) :
+    reflectEquiv B s hs = Module.reflection (neg_flip_apply_self B s hs) :=
+  rfl
 
 @[simp] theorem reflectEquiv_apply (s : M) (hs : B s s = -2) (v : M) :
-    reflectEquiv B s hs v = reflect B s v := rfl
+    reflectEquiv B s hs v = reflect B s v :=
+  reflectHom_apply B s v
 
 @[simp] theorem reflectEquiv_symm_apply (s : M) (hs : B s s = -2) (v : M) :
-    (reflectEquiv B s hs).symm v = reflect B s v := rfl
+    (reflectEquiv B s hs).symm v = reflect B s v :=
+  reflectHom_apply B s v
 
 @[simp] theorem reflect_self (s : M) (hs : B s s = -2) : reflect B s s = -s := by
   rw [reflect, hs]
@@ -150,11 +172,12 @@ of `B` as well as `B s s = -2`. -/
 def reflectIsometry (hb : ∀ x y : M, B x y = B y x) (s : M) (hs : B s s = -2) :
     B →bᵢ B where
   toLinearMap := reflectHom B s
-  map_app' v w := apply_reflect_reflect B hb s hs v w
+  map_app' v w := by simpa using apply_reflect_reflect B hb s hs v w
 
 @[simp] theorem reflectIsometry_apply (hb : ∀ x y : M, B x y = B y x)
     (s : M) (hs : B s s = -2) (v : M) :
-    reflectIsometry B hb s hs v = reflect B s v := rfl
+    reflectIsometry B hb s hs v = reflect B s v :=
+  reflectHom_apply B s v
 
 @[simp] theorem reflect_neg_left (s v : M) : reflect B (-s) v = reflect B s v := by
   simp only [reflect, map_neg, neg_smul, smul_neg, neg_neg]
