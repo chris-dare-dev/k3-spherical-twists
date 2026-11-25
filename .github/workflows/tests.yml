@@ -92,7 +92,7 @@ jobs:
         run: |
           git reset --hard
           git clean -ffdx -e .lake
-      - uses: leanprover/lean-action@v1
+      - uses: leanprover/lean-action@ba3fdfe5c4476c925da13bf11a005ddb47e47aee # v1.7.1
         with:
           lake-package-directory: src/lean
           build-args: --wfail
