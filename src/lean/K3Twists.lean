@@ -46,6 +46,7 @@ import K3Twists.LinearAlgebra.Lattice.Mukai.Reflection
 import K3Twists.Order.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.Ext
 import K3Twists.RepresentationTheory.Quiver.Kronecker.HarderNarasimhan
+import K3Twists.RepresentationTheory.Quiver.Kronecker.IncomingFlag
 import K3Twists.RepresentationTheory.Quiver.Kronecker.Preprojective
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
 import K3Twists.RepresentationTheory.Quiver.Kronecker.TwoExtensions
