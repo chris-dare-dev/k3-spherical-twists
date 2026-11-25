@@ -51,9 +51,13 @@ the proofs use only the valuation identities, not modularity of `L` (which they 
 
 ## Implementation notes
 
-The chain is indexed by `Fin (n + 1)`, as in derived-alg-geo-lean's `AbelianHNFiltration`;
-proofs pass to the extension `HNFiltration.c : ℕ → L`, constant `⊤` after `n`. Semistability is
-stated with weights, which avoids division; `isSemistable_iff` gives the slope form.
+The chain is indexed by `Fin (n + 1)`, with the number of factors `n` part of the data: it has
+exactly the entries `c₀, …, cₙ`, from `chain 0 = ⊥` to `chain (Fin.last n) = ⊤`, and the factor
+`[cᵢ, cᵢ₊₁]` is indexed by `i : Fin n` through `Fin.castSucc` and `Fin.succ`. So a filtration has
+no entries past its end, and filtrations of different lengths are terms of one type, which the
+uniqueness statement compares. Proofs that induct on the index pass to the extension
+`HNFiltration.c : ℕ → L`, constant `⊤` after `n`. Semistability is stated with weights, which
+avoids division; `isSemistable_iff` gives the slope form.
 -/
 
 namespace Order
