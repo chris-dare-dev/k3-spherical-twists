@@ -75,6 +75,19 @@ lifts to its marking). This file proves the lattice and geometric part of it fro
   rigid wall example (`rigid_segmentClear`) are instances; `cuspClear_of_lt` generalizes
   `opening_segment_clear`.
 
+## Sight lines to cusps
+
+* `CuspObstacle`, `CuspRayClear`: the sight line from `p` to the cusp of an isotropic class `w`,
+  described by the pairing and the central charge alone: a root `δ'` obstructs it when
+  `⟨δ', w⟩ < 0` and `Z_p(δ') ∈ ℝ_{≥0} Z_p(w)`;
+* `cuspRayClear_point_iff`, `cuspRayClear_iff_rayClear`: for the point class, or any isotropic
+  class of rank zero, it is the upward ray; `cuspRayClear_iff_cuspClear`: for an isotropic class
+  `(r, c, s)` of rank `r ≠ 0`, it is the straight segment to the cusp `(c/r, (c/r)²)`; it does not
+  depend on the sign or a positive multiple of `w` (`cuspRayClear_neg`, `cuspRayClear_smul`);
+* `cuspRayClear_iff_of_isometry`: an isometry of the Mukai lattice that matches real
+  proportionality of charges at `p` with that at `q` carries the sight line from `p` to the cusp
+  of `u` to the sight line from `q` to the cusp of its image of `u`.
+
 ## A decision procedure
 
 * `mem_segment_iff_collinear`: a point is on a segment of the plane exactly when it is on its line
@@ -1088,5 +1101,210 @@ theorem rigid_segmentClear_by_search : SegmentClear 1 (castPoint (1 / 2, 3 / 2))
   rw [segmentClear_iff_check (R := 1) (C := 1) one_pos (by norm_num) isRoot_lineBundle_one
     one_pos (by norm_num) (by norm_num)]
   decide +kernel
+
+/-! ### Sight lines to the cusp of an isotropic class -/
+
+/-- The root `δ'` obstructs the sight line from `p` to the cusp of the isotropic class `w`:
+`⟨δ', w⟩ < 0` and `Z_p(δ') ∈ ℝ_{≥0} Z_p(w)`. For `w = (0, 0, 1)` these are the punctures on the
+upward ray (`cuspRayClear_point_iff`); for `w` of nonzero rank, the punctures on the segment from
+`p` to the point `(c/r, (c/r)²)` of `w` on the parabola (`cuspRayClear_iff_cuspClear`). The
+condition is read off the pairing and the central charge only, so an isometry of the Mukai lattice
+that matches the charges at two points matches their sight lines
+(`cuspRayClear_iff_of_isometry`). -/
+def CuspObstacle (d : ℤ) (p : ℝ × ℝ) (w δ' : MukaiVector ℤ) : Prop :=
+  IsRoot d δ' ∧ pairing d δ' w < 0 ∧
+    ∃ m : ℝ, 0 ≤ m ∧ modelCharge d p δ'.toReal = m * modelCharge d p w.toReal
+
+/-- **Visibility of the cusp of an isotropic class.** No root obstructs the sight line from `p`
+to the cusp of `w`. -/
+def CuspRayClear (d : ℤ) (p : ℝ × ℝ) (w : MukaiVector ℤ) : Prop :=
+  ∀ δ' : MukaiVector ℤ, ¬CuspObstacle d p w δ'
+
+lemma pairing_point_right (d : ℤ) (v : MukaiVector ℤ) : pairing d v point = -v.r := by
+  simp [pairing, point]
+
+lemma modelCharge_toReal_point (d : ℝ) (p : ℝ × ℝ) :
+    modelCharge d p (point : MukaiVector ℤ).toReal = -1 := by
+  simp [modelCharge, charge, map, point]
+
+lemma toReal_neg (v : MukaiVector ℤ) : (-v).toReal = -v.toReal := by ext <;> simp
+
+lemma toReal_smul (a : ℤ) (v : MukaiVector ℤ) : (a • v).toReal = (a : ℝ) • v.toReal := by
+  ext <;> simp
+
+/-- The cusp at infinity: the sight line to the cusp of the point class is the upward ray. -/
+theorem cuspRayClear_point_iff (hd : 0 < d) {p : ℝ × ℝ} (hp : p.1 ^ 2 < p.2) :
+    CuspRayClear d p point ↔ RayClear d p := by
+  rw [rayClear_iff hd hp]
+  constructor
+  · intro h δ' hδ' hr x hx hZ
+    refine h δ' ⟨hδ', by rw [pairing_point_right]; omega, -x, by linarith, ?_⟩
+    rw [hZ, modelCharge_toReal_point]; push_cast; ring
+  · rintro h δ' ⟨hδ', hpair, m, hm, hZ⟩
+    rw [pairing_point_right] at hpair
+    rw [modelCharge_toReal_point] at hZ
+    exact h δ' hδ' (by omega) (-m) (by linarith) (by rw [hZ]; push_cast; ring)
+
+lemma cuspObstacle_neg_iff {p : ℝ × ℝ} {w δ' : MukaiVector ℤ} :
+    CuspObstacle d p (-w) (-δ') ↔ CuspObstacle d p w δ' := by
+  unfold CuspObstacle IsRoot
+  simp only [pairing_neg_left, pairing_neg_right, neg_neg, toReal_neg, modelCharge_neg]
+  constructor
+  · rintro ⟨h1, h2, m, hm, hZ⟩; exact ⟨h1, h2, m, hm, by linear_combination -hZ⟩
+  · rintro ⟨h1, h2, m, hm, hZ⟩; exact ⟨h1, h2, m, hm, by linear_combination -hZ⟩
+
+private lemma neg_neg_mukai (v : MukaiVector ℤ) : - -v = v := by ext <;> simp
+
+/-- A cusp does not depend on the sign of its class. -/
+theorem cuspRayClear_neg {p : ℝ × ℝ} {w : MukaiVector ℤ} :
+    CuspRayClear d p (-w) ↔ CuspRayClear d p w := by
+  constructor
+  · intro h δ' hδ'
+    exact h (-δ') (cuspObstacle_neg_iff.mpr hδ')
+  · intro h δ' hδ'
+    rw [← neg_neg_mukai δ'] at hδ'
+    exact h (-δ') (cuspObstacle_neg_iff.mp hδ')
+
+/-- ... nor on a positive integral multiple of its class. -/
+theorem cuspRayClear_smul {p : ℝ × ℝ} {w : MukaiVector ℤ} {a : ℤ} (ha : 0 < a) :
+    CuspRayClear d p (a • w) ↔ CuspRayClear d p w := by
+  have ha' : (0 : ℝ) < a := by exact_mod_cast ha
+  have key : ∀ δ', CuspObstacle d p (a • w) δ' ↔ CuspObstacle d p w δ' := by
+    intro δ'
+    unfold CuspObstacle
+    rw [pairing_smul_right, toReal_smul, modelCharge_smul]
+    constructor
+    · rintro ⟨h1, h2, m, hm, hZ⟩
+      exact ⟨h1, by nlinarith, m * a, by positivity, by rw [hZ]; push_cast; ring⟩
+    · rintro ⟨h1, h2, m, hm, hZ⟩
+      refine ⟨h1, by nlinarith, m / a, by positivity, ?_⟩
+      have ha'' : (a : ℂ) ≠ 0 := by exact_mod_cast ha.ne'
+      rw [hZ]; push_cast; field_simp
+  exact ⟨fun h δ' hδ' => h δ' ((key δ').mpr hδ'), fun h δ' hδ' => h δ' ((key δ').mp hδ')⟩
+
+/-- The cusp of an isotropic class of rank zero is the cusp at infinity. -/
+theorem cuspRayClear_iff_rayClear (hd : 0 < d) {p : ℝ × ℝ} (hp : p.1 ^ 2 < p.2)
+    {w : MukaiVector ℤ} (hw : IsIsotropic d w) (hr : w.r = 0) (hw0 : w ≠ 0) :
+    CuspRayClear d p w ↔ RayClear d p := by
+  have hc : w.c = 0 := by
+    unfold IsIsotropic pairing at hw
+    rw [hr] at hw
+    have : d * w.c ^ 2 = 0 := by linarith
+    exact pow_eq_zero_iff two_ne_zero |>.mp ((mul_eq_zero.mp this).resolve_left hd.ne')
+  have hs : w.s ≠ 0 := fun hs => hw0 (MukaiVector.ext (by simp [hr]) (by simp [hc])
+    (by simp [hs]))
+  rw [← cuspRayClear_point_iff hd hp]
+  rcases lt_or_gt_of_ne hs with hs | hs
+  · have hw' : w = -((-w.s) • point) := by ext <;> simp [hr, hc, point]
+    rw [hw', cuspRayClear_neg, cuspRayClear_smul (by omega)]
+  · have hw' : w = w.s • point := by ext <;> simp [hr, hc, point]
+    rw [hw', cuspRayClear_smul hs]
+
+/-- **The cusp of an isotropic class of nonzero rank.** The sight line from `p` to the cusp of an
+isotropic class `w` of rank `r ≠ 0` is clear exactly when the straight segment from `p` to its
+point `(c/r, (c/r)²)` on the parabola meets no puncture. -/
+theorem cuspRayClear_iff_cuspClear (hd : 0 < d) {p : ℝ × ℝ} (hp : p.1 ^ 2 < p.2)
+    {w : MukaiVector ℤ} (hw : IsIsotropic d w) (hr : w.r ≠ 0) :
+    CuspRayClear d p w ↔ CuspClear d p ((w.c : ℝ) / w.r) := by
+  -- reduce to positive rank
+  wlog hpos : 0 < w.r generalizing w
+  · have h := this (w := -w) (by unfold IsIsotropic at hw ⊢; rw [pairing_neg_left,
+      pairing_neg_right, neg_neg, hw]) (by simp; exact hr) (by simp; omega)
+    rw [cuspRayClear_neg] at h
+    rw [h]
+    simp [neg_div_neg_eq]
+  have hd' : (0 : ℝ) < d := by exact_mod_cast hd
+  have hd0 : (d : ℝ) ≠ 0 := hd'.ne'
+  have hwr : (0 : ℝ) < w.r := by exact_mod_cast hpos
+  -- the point of `w` is `(m, m²)`, and `⟨κ_p, w⟩ < 0`
+  have hww : pairing (d : ℝ) w.toReal w.toReal = 0 := by
+    rw [pairing_toReal]; exact_mod_cast hw
+  have hcusp : toModel d w.toReal = ((w.c : ℝ) / w.r, ((w.c : ℝ) / w.r) ^ 2) := by
+    have h := toModel_snd_sub_sq hd0 (v := w.toReal) (by simpa using hr)
+    rw [hww, neg_zero, zero_div, sub_eq_zero] at h
+    ext
+    · rfl
+    · exact h
+  have hκw : pairing (d : ℝ) (kernelVector (d : ℝ) p) w.toReal < 0 :=
+    pairing_neg_of_rank_pos hd' (by rw [pairing_kernelVector_self]; nlinarith) hww.le
+      (by simp) (by simpa using hpos)
+  have hseg : ∀ δ' : MukaiVector ℤ, 0 < δ'.r →
+      (puncture d δ' ∈ segment ℝ p ((w.c : ℝ) / w.r, ((w.c : ℝ) / w.r) ^ 2) ↔
+        ∃ l m : ℝ, 0 ≤ l ∧ 0 ≤ m ∧ δ'.toReal = l • kernelVector (d : ℝ) p + m • w.toReal) := by
+    intro δ' hr'
+    rw [← hcusp]
+    have h := toModel_mem_segment_iff hd0 (u := δ'.toReal) (v := kernelVector (d : ℝ) p)
+      (w := w.toReal) (by simpa using hr') (by simp) (by simpa using hpos)
+    rwa [toModel_kernelVector hd0] at h
+  constructor
+  · intro h δ' hδ' hr' hmem
+    obtain ⟨l, m, hl, hm, hdec⟩ := (hseg δ' hr').mp hmem
+    apply h δ'
+    refine ⟨hδ', ?_, m, hm, ?_⟩
+    · -- `⟨δ', w⟩ = l ⟨κ_p, w⟩ < 0`, as `l > 0`: otherwise `δ' = m w` would be isotropic
+      have hl0 : 0 < l := by
+        rcases hl.lt_or_eq with hl | rfl
+        · exact hl
+        · exfalso
+          have hroot := isRoot_toReal.mpr hδ'
+          unfold IsRoot at hroot
+          rw [hdec] at hroot
+          simp only [pairing_add_left, pairing_add_right, pairing_smul_left, pairing_smul_right,
+            hww, zero_mul, mul_zero, add_zero] at hroot
+          norm_num at hroot
+      have : ((pairing d δ' w : ℤ) : ℝ) =
+          l * pairing (d : ℝ) (kernelVector (d : ℝ) p) w.toReal := by
+        rw [← pairing_toReal, hdec, pairing_add_left, pairing_smul_left, pairing_smul_left, hww]
+        ring
+      have : ((pairing d δ' w : ℤ) : ℝ) < 0 := by
+        rw [this]; exact mul_neg_of_pos_of_neg hl0 hκw
+      exact_mod_cast this
+    · rw [hdec, modelCharge_add, modelCharge_smul, modelCharge_smul,
+        modelCharge_kernelVector _ hp.le, mul_zero, zero_add]
+  · rintro h δ' ⟨hδ', hpair, m, hm, hZ⟩
+    obtain ⟨t, ht⟩ := (modelCharge_eq_ofReal_mul_iff hd0 hp _ _ _).mp hZ
+    -- `⟨δ', w⟩ = t ⟨κ_p, w⟩ < 0` forces `t > 0`
+    have hpair' : ((pairing d δ' w : ℤ) : ℝ) =
+        t * pairing (d : ℝ) (kernelVector (d : ℝ) p) w.toReal := by
+      rw [← pairing_toReal, ht, pairing_add_left, pairing_smul_left, pairing_smul_left, hww]
+      ring
+    have hneg : ((pairing d δ' w : ℤ) : ℝ) < 0 := by exact_mod_cast hpair
+    have ht0 : 0 < t := by
+      by_contra ht0
+      push Not at ht0
+      have : 0 ≤ t * pairing (d : ℝ) (kernelVector (d : ℝ) p) w.toReal :=
+        mul_nonneg_of_nonpos_of_nonpos ht0 hκw.le
+      linarith
+    have hr' : 0 < δ'.r := by
+      have hrk := congrArg MukaiVector.r ht
+      simp only [toReal_r, add_r, smul_r, kernelVector_r, mul_one] at hrk
+      have : (0 : ℝ) < δ'.r := by rw [hrk]; positivity
+      exact_mod_cast this
+    exact h δ' hδ' hr' ((hseg δ' hr').mpr ⟨t, m, ht0.le, hm, by rw [ht]; ext <;> simp <;> ring⟩)
+
+/-- **Transport of sight lines by an isometry.** Let `g` be a surjective isometry of the Mukai
+lattice that matches real proportionality of central charges at `p` with that at `q`:
+`Z_p(v) = m Z_p(u) ↔ Z_q(g v) = m Z_q(g u)`. Then the sight line from `p` to the cusp of `u` is
+clear exactly when the sight line from `q` to the cusp of `g u` is. -/
+theorem cuspRayClear_iff_of_isometry {p q : ℝ × ℝ} (g g' : MukaiVector ℤ → MukaiVector ℤ)
+    (hg : ∀ v, g (g' v) = v) (hpair : ∀ v w, pairing d (g v) (g w) = pairing d v w)
+    (hcharge : ∀ (v w : MukaiVector ℤ) (m : ℝ),
+      modelCharge d p v.toReal = m * modelCharge d p w.toReal ↔
+        modelCharge d q (g v).toReal = m * modelCharge d q (g w).toReal)
+    (u : MukaiVector ℤ) :
+    CuspRayClear d p u ↔ CuspRayClear d q (g u) := by
+  have key : ∀ δ', CuspObstacle d p u δ' ↔ CuspObstacle d q (g u) (g δ') := by
+    intro δ'
+    unfold CuspObstacle IsRoot
+    rw [hpair, hpair]
+    constructor
+    · rintro ⟨h1, h2, m, hm, hZ⟩; exact ⟨h1, h2, m, hm, (hcharge _ _ _).mp hZ⟩
+    · rintro ⟨h1, h2, m, hm, hZ⟩; exact ⟨h1, h2, m, hm, (hcharge _ _ _).mpr hZ⟩
+  constructor
+  · intro h δ'' hδ''
+    rw [← hg δ''] at hδ''
+    exact h _ ((key _).mpr hδ'')
+  · intro h δ' hδ'
+    exact h _ ((key δ').mp hδ')
 
 end AlgebraicGeometry.K3.PicardRankOne
