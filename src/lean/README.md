@@ -182,6 +182,35 @@ tangent space makes the orbit full-dimensional, hence open and dense in the irre
 without arrows, where `Ext¹ = 0`; with arrows it is the open-orbit theorem itself, which needs
 algebraic groups acting on varieties in Mathlib.
 
+### Twist systems and the exponent of the centre counts
+
+`HomTwistSystem₀` is a group acting on objects with centres `S_i`, letters `T_a` with centres
+`S_{c(a)}`, and a count `h(U, V) ∈ ℕ` (intended: `dim Ext^*(U, V)`), with two fields: invariance
+`h(gU, gV) = h(U, V)` and the one-letter bound `h(U, T_a V) ≤ h(U, V) + h(U, S) h(S, V)` from the
+twist triangle (Seidel–Thomas, arXiv:math/0001043). `HomTwistSystem` adds `T_S S = S[-1]` read
+through `h`. The exponent theorem also takes the lower bound
+`h(U, S) h(S, V) ≤ h(U, V) + h(U, T_a V)`, sphericity `h(S_i, S_i) = 2` and directed
+connectivity as named hypotheses; it uses neither `T_S S = S[-1]` nor symmetry of `h`, nor any
+category, stability condition or K3 surface.
+
+| Assertion | Lean |
+|---|---|
+| The domination recursion with constant one: tests of `W S_j` are bounded by the column `P_W e_j` of the product of transvections `1 + e_{c(a)} G_a` | `DominationSystem.test_word_le`, `DominationSystem.step_eq_mulVec`, `HomTwistSystem.toDomination`, `HomTwistSystem₀.toDomination0` |
+| For `P_q = max h(S_i, W S_j)` over `\|W\| ≤ q`: `log P_N / N → η`, with `log(P_q/2^{d+1})/(q + d + 1) ≤ η ≤ log(1 + q P_q)/q`, and `η ≥ 0` | `HomTwistSystem₀.tendsto_homExponent`, `homExponent_lower`, `homExponent_upper`, `homExponent_nonneg` |
+| `P_{q+1} ≤ (1 + g) P_q`, `g = max h(S_i, S_k)`, so the two certificates differ by at most `log(q + 1)/q + (d + 1)/(q + d + 1)(log(1 + g) + log g/q + log 2)` | `HomTwistSystem₀.maxCount_succ_le`, `homExponent_width` |
+| A map of twist systems matching centres and letters and preserving counts preserves every `P_q` and `η` | `HomTwistSystem₀.maxCount_eq_of_map`, `homExponent_eq_of_map` |
+| Inverse letters: the bounds for `T_a⁻¹` from symmetry of `h` | `HomTwistSystem₀.upper_inv`, `lower_inv`, `withInverses` |
+
+The real-object instance is `eulerTwistSystem`: on a K3 surface with `Pic X = ℤH`, `H² = 2d`,
+the classes `v(𝒪_X)`, `v(𝒪_X(H))` in the Mukai lattice, the reflections by which the two twists
+act, the isometry group, and the count `|χ(U, V)| = |⟨v(U), v(V)⟩|`, which equals the total
+`Ext` dimension at the centres. Every field and every hypothesis of the theorem is proved for
+it, and its exponent is positive, `η ≥ log(7/4)/3` (`eulerTwistSystem_homExponent_pos`). The
+same theorem for the total `Ext` dimensions of the objects `W S_j` needs `D^b(X)` and the twist
+functors. [K3TwistsTest/TwistSystemModel.lean](K3TwistsTest/TwistSystemModel.lean) shows that
+the zero count satisfies every other input but not sphericity, and that the bound for inverse
+letters does not follow without symmetry.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -232,6 +261,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 |---|---|---|
 | `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences: Fekete with a constant and with a gap, padding, a submultiplicative sequence without polynomial envelope | `Real` |
 | `GroupTheory/Commutator/ForkWord.lean` | fork words are conjugate to a two-letter period | root |
+| `GroupTheory/GroupAction/TwistSystem.lean` | twist systems, the domination recursion and the exponent of the centre counts | root |
 | `LinearAlgebra/Lattice/Mukai/PicardRankOne.lean` | the Mukai lattice of a Picard-rank-one K3: pairing, roots, reflections, punctures | `MukaiVector` |
 | `LinearAlgebra/Lattice/Mukai/Basic.lean`, `Mukai/Reflection.lean`, `BilinearForm/Hyperbolic.lean`, `BilinearForm/Reflection.lean`, `Lattice/Arithmetic/TorsionFree.lean` | the Mukai extension `ℤ ⊕ N ⊕ ℤ` of a bilinear lattice and its reflections, copied from derived-alg-geo-lean | `Mukai`, `BilinearForm`, `IntegralLattice` |
 | `Combinatorics/Quiver/Kronecker/RealRoots.lean` | the real roots of the `g`-Kronecker quiver and their determinants | `Quiver.Kronecker` |
@@ -243,6 +273,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/RigidWall.lean` | the example of a rigid wall at `g = 3` | same |
 | `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations and the HN polygon in a lattice with a slope function | `Order.SlopeFunction` |
