@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.CategoryTheory.ObjectProperty.Coreflection
 import Mathlib.Algebra.Order.Monoid.Defs
 import Mathlib.Algebra.Order.Monoid.Unbundled.Basic
 import Mathlib.CategoryTheory.Abelian.SerreClass.Basic
@@ -22,6 +23,9 @@ Two constructions in an abelian category `A`:
   map from the first to the second, such that every object sits in a short exact sequence
   `0 → T' → X → F' → 0` with `T'` in the first and `F'` in the second, form a torsion pair in
   Mathlib's sense (Dickson, Trans. Amer. Math. Soc. 121 (1966)).
+* `ObjectProperty.isCoreflection_of_shortExact`: in a torsion sequence `0 → T' → X → F' → 0`, with
+  no nonzero map from the class to `F'`, the map `T' → X` is a coreflection of `X` into the class:
+  `T'` is the torsion radical of `X`, with no chain condition on `X`.
 
 ## Tags
 
@@ -75,6 +79,17 @@ theorem isSerreClass_of_additive_nonneg (w : A → M)
     exact ((add_eq_zero_iff_of_nonneg (hnonneg _) (hnonneg _)).1 (h ▸ hX)).2
   prop_X₂_of_shortExact {S} hS h₁ h₃ := by
     rw [hadd S hS, h₁, h₃, add_zero]
+
+/-- **A torsion sequence is a coreflection.** If `0 → X₁ → X₂ → X₃ → 0` is short exact, `X₁` lies
+in `T`, and no object of `T` maps nontrivially to `X₃`, then `X₁ → X₂` is a coreflection of `X₂`
+into `T`. -/
+theorem isCoreflection_of_shortExact {T : ObjectProperty A} {S : ShortComplex A}
+    (hS : S.ShortExact) (h₁ : T S.X₁) (h₃ : ∀ ⦃Y : A⦄ (f : Y ⟶ S.X₃), T Y → f = 0) :
+    T.IsCoreflection S.f := by
+  have := hS.mono_f
+  refine ⟨h₁, fun Y hY => ⟨fun g g' w => (cancel_mono S.f).1 w, fun g => ?_⟩⟩
+  have hg : g ≫ S.g = 0 := h₃ _ hY
+  exact ⟨hS.fIsKernel.lift (KernelFork.ofι g hg), Fork.IsLimit.lift_ι hS.fIsKernel⟩
 
 end ObjectProperty
 

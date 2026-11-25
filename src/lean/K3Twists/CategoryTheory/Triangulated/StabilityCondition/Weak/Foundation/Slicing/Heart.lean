@@ -212,14 +212,13 @@ private theorem shortExact_of_isZero {A : Type*} [Category A] [Abelian A] {X : A
     mono_f := by dsimp; infer_instance
     epi_g := ⟨fun _ _ _ => hX.eq_of_src _ _⟩ }
 
-/-- **The torsion pair of an interior cut.** For `θ ∈ [a, a+1]`, the objects of phases in
-`(θ, a+1]` and those of phases in `(a, θ]` form a torsion pair in the heart `P((a, a+1])`; the
-torsion sequence of an object is its HN filtration cut at `θ`. No charge is needed. -/
-theorem Slicing.torsionTheory_heartAbove (s : Slicing C) {a θ : ℝ} (h₁ : a ≤ θ)
-    (h₂ : θ ≤ a + 1) : Abelian.TorsionTheory (s.heartAbove C a θ) (s.heartBelow C a θ) := by
-  refine Abelian.TorsionTheory.of_shortExact
-    (fun X Y f hX hY => ObjectProperty.hom_ext _ (Slicing.hom_eq_zero_of_gtProp_leProp s hX hY _))
-    (fun X => ?_)
+/-- The torsion sequence of an interior cut: for `θ ∈ [a, a+1]`, every object `X` of the heart
+sits in a short exact sequence `0 → X₁ → X → X₃ → 0` of the heart with `X₁` of phases in
+`(θ, a+1]` and `X₃` of phases in `(a, θ]`: its HN filtration cut at `θ`. -/
+theorem Slicing.exists_shortExact_heartAbove (s : Slicing C) {a θ : ℝ} (h₁ : a ≤ θ)
+    (h₂ : θ ≤ a + 1) (X : s.HeartCat C a) :
+    ∃ (X₁ X₃ : s.HeartCat C a) (i : X₁ ⟶ X) (p : X ⟶ X₃) (w : i ≫ p = 0),
+      (ShortComplex.mk i p w).ShortExact ∧ s.heartAbove C a θ X₁ ∧ s.heartBelow C a θ X₃ := by
   by_cases hZ : IsZero X.obj
   · exact ⟨X, X, 𝟙 X, 0, by simp, shortExact_of_isZero (HeartCat.isZero_of_obj_isZero C hZ),
       Or.inl hZ, Or.inl hZ⟩
@@ -242,17 +241,32 @@ theorem Slicing.torsionTheory_heartAbove (s : Slicing C) {a θ : ℝ} (h₁ : a 
   exact ⟨⟨X₁, hX₁⟩, ⟨X₃, hX₃⟩, ObjectProperty.homMk f, ObjectProperty.homMk g, _,
     HeartCat.shortExact_of_distTriang (δ := h) hT, hX₁', hX₃'⟩
 
-/-- **The torsion pair of the heart** for any slicing: the objects of phase `a + 1` and the thin
-interval `P((a, a+1))` form a torsion pair in `P((a, a+1])`. The torsion sequence of an object is
-its HN filtration cut just below `a + 1`. -/
-theorem Slicing.torsionTheory_heartTop (s : Slicing C) (a : ℝ) :
-    Abelian.TorsionTheory (s.heartTop C a) (s.heartFree C a) := by
-  refine Abelian.TorsionTheory.of_shortExact (fun X Y f hX hY => ObjectProperty.hom_ext _ ?_)
-    (fun X => ?_)
-  · rcases hY with hY | ⟨FY, hFY⟩
-    · exact hY.eq_of_tgt _ _
-    · exact s.hom_eq_zero_of_phase_gap C (HNFiltration.single C X.obj (a + 1) hX) FY
-        (fun _ j => by simpa [HNFiltration.single] using (hFY j).2) _
+/-- **The torsion pair of an interior cut.** For `θ ∈ [a, a+1]`, the objects of phases in
+`(θ, a+1]` and those of phases in `(a, θ]` form a torsion pair in the heart `P((a, a+1])`; the
+torsion sequence of an object is its HN filtration cut at `θ`. No charge is needed. -/
+theorem Slicing.torsionTheory_heartAbove (s : Slicing C) {a θ : ℝ} (h₁ : a ≤ θ)
+    (h₂ : θ ≤ a + 1) : Abelian.TorsionTheory (s.heartAbove C a θ) (s.heartBelow C a θ) :=
+  Abelian.TorsionTheory.of_shortExact
+    (fun _ _ _ hX hY => ObjectProperty.hom_ext _ (Slicing.hom_eq_zero_of_gtProp_leProp s hX hY _))
+    (s.exists_shortExact_heartAbove C h₁ h₂)
+
+omit [IsTriangulated C] in
+/-- No nonzero map goes from an object of phase `a + 1` to an object of `P((a, a+1))`. -/
+theorem Slicing.heartTop_hom_heartFree_eq_zero (s : Slicing C) {a : ℝ}
+    {X Y : s.HeartCat C a} (f : X ⟶ Y) (hX : s.heartTop C a X) (hY : s.heartFree C a Y) :
+    f = 0 := by
+  refine ObjectProperty.hom_ext _ ?_
+  rcases hY with hY | ⟨FY, hFY⟩
+  · exact hY.eq_of_tgt _ _
+  · exact s.hom_eq_zero_of_phase_gap C (HNFiltration.single C X.obj (a + 1) hX) FY
+      (fun _ j => by simpa [HNFiltration.single] using (hFY j).2) _
+
+/-- The torsion sequence of the heart: every object `X` of `P((a, a+1])` sits in a short exact
+sequence `0 → X₁ → X → X₃ → 0` of the heart with `X₁` of phase `a + 1` and `X₃` in
+`P((a, a+1))`: its HN filtration cut just below `a + 1`. -/
+theorem Slicing.exists_shortExact_heartTop (s : Slicing C) (a : ℝ) (X : s.HeartCat C a) :
+    ∃ (X₁ X₃ : s.HeartCat C a) (i : X₁ ⟶ X) (p : X ⟶ X₃) (w : i ≫ p = 0),
+      (ShortComplex.mk i p w).ShortExact ∧ s.heartTop C a X₁ ∧ s.heartFree C a X₃ := by
   by_cases hZ : IsZero X.obj
   · exact ⟨X, X, 𝟙 X, 0, by simp, shortExact_of_isZero (HeartCat.isZero_of_obj_isZero C hZ),
       s.zero_mem_of_isZero C _ _ hZ, Or.inl hZ⟩
@@ -272,6 +286,15 @@ theorem Slicing.torsionTheory_heartTop (s : Slicing C) (a : ℝ) :
     ⟨X₃, s.intervalProp_le_heartProp C a X₃ hX₃⟩, ObjectProperty.homMk f,
     ObjectProperty.homMk g, _, HeartCat.shortExact_of_distTriang (δ := h) hT, hX₁, hX₃⟩
 
+/-- **The torsion pair of the heart** for any slicing: the objects of phase `a + 1` and the thin
+interval `P((a, a+1))` form a torsion pair in `P((a, a+1])`. The torsion sequence of an object is
+its HN filtration cut just below `a + 1`. -/
+theorem Slicing.torsionTheory_heartTop (s : Slicing C) (a : ℝ) :
+    Abelian.TorsionTheory (s.heartTop C a) (s.heartFree C a) :=
+  Abelian.TorsionTheory.of_shortExact
+    (fun _ _ f hX hY => s.heartTop_hom_heartFree_eq_zero C f hX hY)
+    (s.exists_shortExact_heartTop C a)
+
 /-! ### The t-structures of one slicing at nearby base points -/
 
 /-- For `b ≤ a + 1`, `P(> a + 1) ⊆ P(> b)`: the aisle of the t-structure at `a` shifted by one lies
@@ -290,6 +313,13 @@ theorem Slicing.toTStructure_le_le (s : Slicing C) {a b : ℝ} (h : a ≤ b) :
   exact s.gtProp_anti C (by push_cast; linarith)
 
 /-! ### The Serre property, given a charge -/
+
+/-- The class in `K₀` is additive on short exact sequences of the heart. -/
+theorem Slicing.HeartCat.K₀_of_shortExact {s : Slicing C} {a : ℝ}
+    {S : ShortComplex (s.HeartCat C a)} (hS : S.ShortExact) :
+    K₀.of C S.X₂.obj = K₀.of C S.X₁.obj + K₀.of C S.X₃.obj := by
+  obtain ⟨δ, hT⟩ := HeartCat.exists_distTriang_of_shortExact hS
+  simpa using K₀.of_triangle C _ hT
 
 section Charge
 
@@ -353,11 +383,8 @@ theorem Slicing.isSerreClass_heartTop
   rw [heq]
   refine ObjectProperty.isSerreClass_of_additive_nonneg _ (fun S hS => ?_)
     (fun X => s.weight_nonneg_of_heartProp w hpos htop X.property)
-  obtain ⟨δ, hT⟩ := HeartCat.exists_distTriang_of_shortExact hS
-  have h := K₀.of_triangle C _ hT
-  simp only [Triangle.mk_obj₁, Triangle.mk_obj₂, Triangle.mk_obj₃] at h
   change w (K₀.of C S.X₂.obj) = w (K₀.of C S.X₁.obj) + w (K₀.of C S.X₃.obj)
-  rw [h, map_add]
+  rw [HeartCat.K₀_of_shortExact C hS, map_add]
 
 /-- **The torsion pair of the heart is hereditary, given a charge**: `P(a+1)` is closed under
 subobjects in the heart. -/
