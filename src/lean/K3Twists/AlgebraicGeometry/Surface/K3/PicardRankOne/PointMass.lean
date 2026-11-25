@@ -2,7 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
-import K3Twists.Analysis.SpecificLimits.GrowthRate
+import K3Twists.GroupTheory.GroupAction.MassComparison
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.Group.Commute.Defs
 import Mathlib.GroupTheory.GroupAction.Defs
@@ -26,9 +26,15 @@ uniformly in `x` and in `σ` at bounded distance from a reference condition; the
 This file proves all of these from the inputs collected in `PointMassHypotheses`. Mathlib does not
 yet have derived categories of K3 surfaces, Bridgeland stability or categorical entropy, so the
 geometric facts enter as named fields; each field's docstring gives its source (a lemma of the
-article, or a published theorem). Everything after the fields is proved here: the comparison
-for a fixed period, the two-sided estimate, Fekete's lemma, the identification of the limit and
-the treatment of standard words.
+article, or a published theorem). `PointMassHypotheses` extends `MassComparisonHypotheses` (the
+comparison of masses with total Hom from the split generator `G`) by the rank-one point fields.
+The constants `C`, `c` of the two-sided comparison `c h(G, V) ≤ m_τ(V) ≤ C h(G, V)` and the
+entropy `h_cat` are no longer inputs: `C = m_τ(G)/C₁` comes from the upper comparison
+`dhkk_comparison`, `c` from the twist triangles of the summands `S_i` (the lower comparison
+`MassComparisonHypotheses.hom_G_le_mul_mass`), and `h_cat(Φ) = lim log h(G, Φⁿ G)/n` exists by
+Fekete's lemma. The distance bound `δ` of the comparison is at most Bridgeland's metric.
+Everything after the fields is proved here: the comparison for a fixed period, the two-sided
+estimate, Fekete's lemma, the identification of the limit and the treatment of standard words.
 
 The notation follows the article: `h(U, V) = Σ_j dim Hom(U, V[j])`, `R(U)` is the sum of the
 generic ranks of the ordinary cohomology sheaves of `U`, `S_i = A^{-i}` (`i = 0, 1, 2`) for a very
@@ -45,59 +51,27 @@ open Filter Topology Real Finset
 `Obj` stands for the isomorphism classes of objects of `D^b(X)`, `Γ` for a group of exact
 autoequivalences containing the spherical twists and acting on them, `Stab` for the distinguished
 component `Stab†(X)` with Bridgeland's metric (on which `Γ` acts) and `Pt` for the closed points.
+The summands `S_i` of the split generator `G` are the three line bundles `A^{-i}`, `i = 0, 1, 2`.
 -/
 structure PointMassHypotheses (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ Obj]
-    [PseudoMetricSpace Stab] [MulAction Γ Stab] where
-  /-- `h(U, V) = Σ_j dim Hom(U, V[j])`. -/
-  hom : Obj → Obj → ℝ
+    [PseudoMetricSpace Stab] [MulAction Γ Stab]
+    extends MassComparisonHypotheses Obj Γ Stab (Fin 3) where
   /-- `R(U) = Σ_q rk 𝓗^q(U)`, the sum of the generic ranks of the cohomology sheaves. -/
   rank : Obj → ℝ
-  /-- The mass `m_σ(U)`. -/
-  mass : Stab → Obj → ℝ
   /-- The skyscraper sheaves `𝒪_x`. -/
   point : Pt → Obj
-  /-- The three line bundles `S_i = A^{-i}`. -/
-  S : Fin 3 → Obj
-  /-- The split generator `G = S₀ ⊕ S₁ ⊕ S₂`. -/
-  G : Obj
   /-- The reference geometric condition `τ = σ_{ia}`, `a > 1/√d`. -/
   τ : Stab
-  /-- Spherical objects. -/
-  Spherical : Obj → Prop
   /-- Standard autoequivalences: compositions of a shift, a line-bundle tensor and an
   automorphism of `X`. -/
   Standard : Γ → Prop
-  /-- Categorical entropy at parameter `0`. -/
-  hcat : Γ → ℝ
-  /-- The constant of the diagonal estimate. -/
-  K : ℝ
-  /-- The constant of the upper mass estimate. -/
-  C : ℝ
-  /-- The constant of the lower mass estimate. -/
-  c : ℝ
   /-- `ν = A²/2`. -/
   ν : ℝ
-  K_pos : 0 < K
-  C_pos : 0 < C
-  c_pos : 0 < c
   ν_pos : 0 < ν
-  /-- Serre duality on a K3 surface: `Hom(U, V[j]) ≅ Hom(V, U[2 - j])^*`. -/
-  hom_comm : ∀ U V, hom U V = hom V U
-  /-- An autoequivalence preserves graded Hom spaces. -/
-  hom_smul : ∀ (g : Γ) (U V : Obj), hom (g • U) (g • V) = hom U V
-  /-- Total Hom is additive on the direct sum `G = S₀ ⊕ S₁ ⊕ S₂`. -/
-  hom_G : ∀ V, hom G V = ∑ i, hom (S i) V
-  /-- The diagonal estimate `h(U, V) ≤ K h(U, G) h(G, V)` (the article's point-measurement
-  lemma), from Orlov's
-  generation theorem (arXiv:0804.1163, Theorem 4) for `A ⊠ A` on `X × X`; Castelnuovo–Mumford
-  regularity gives `K = 5(2 + 36ν)(2 + 25ν)⁸ 7⁴⁶`. -/
-  hom_diag : ∀ U V, hom U V ≤ K * hom U G * hom G V
-  /-- A nonzero total Hom dimension is at least one, and `WG ≠ 0`. -/
-  one_le_hom_G : ∀ W : Γ, 1 ≤ hom G (W • G)
+  /-- The distance bound of the comparison is at most Bridgeland's metric (Bridgeland,
+  arXiv:math/0212237, Proposition 8.1). -/
+  δ_le_dist : ∀ σ σ', δ σ σ' ≤ dist σ σ'
   rank_nonneg : ∀ U, 0 ≤ rank U
-  spherical_S : ∀ i, Spherical (S i)
-  /-- Autoequivalences preserve sphericity. -/
-  spherical_smul : ∀ (g : Γ) U, Spherical U → Spherical (g • U)
   /-- The point test `h(E, 𝒪_x) = R(E)` for a spherical `E` (the article's point-measurement
   lemma: the cohomology sheaves of a spherical object are rigid vector bundles, by Mukai's
   inequality and local freeness). -/
@@ -123,25 +97,48 @@ structure PointMassHypotheses (Obj Γ Stab Pt : Type*) [Group Γ] [MulAction Γ 
   standard_hom : ∀ Φ, Standard Φ → ∃ A B : ℝ, ∀ n : ℕ, hom G (Φ ^ n • G) ≤ A + B * n ^ 2
   /-- The image of a point is nonzero, so its mass is positive. -/
   mass_pos : ∀ σ (W : Γ) x, 0 < mass σ (W • point x)
-  /-- Bridgeland's metric bounds the change of mass (Bridgeland, arXiv:math/0212237,
-  Proposition 8.1). -/
-  mass_le_exp_dist : ∀ σ σ' U, mass σ U ≤ exp (dist σ σ') * mass σ' U
-  /-- The action of autoequivalences on stability conditions: `m_{gσ}(gU) = m_σ(U)`. -/
-  mass_smul : ∀ (g : Γ) σ U, mass (g • σ) (g • U) = mass σ U
-  /-- `m_τ(V) ≤ C h(G, V)` (the article's point-measurement lemma). -/
-  mass_le_hom : ∀ U, mass τ U ≤ C * hom G U
-  /-- `c h(G, V) ≤ m_τ(V)` (the article's point-measurement lemma, from the twist triangles of the
-  `S_i`). -/
-  hom_le_mass : ∀ U, c * hom G U ≤ mass τ U
-  /-- The entropy formula for smooth proper categories with split generator `G`
-  (Dimitrov–Haiden–Katzarkov–Kontsevich, arXiv:1307.8418, Theorem 2.6), at `t = 0`. -/
-  hcat_spec : ∀ Φ : Γ,
-    Tendsto (fun n : ℕ => log (hom G (Φ ^ n • G)) / n) atTop (𝓝 (hcat Φ))
 
 namespace PointMassHypotheses
 
 variable {Obj Γ Stab Pt : Type*} [Group Γ] [MulAction Γ Obj] [PseudoMetricSpace Stab]
   [MulAction Γ Stab] (I : PointMassHypotheses Obj Γ Stab Pt)
+
+/-! ### The constants of the comparison -/
+
+/-- The constant of the upper mass estimate, `C = m_τ(G)/C₁`. -/
+noncomputable def C : ℝ := I.mass I.τ I.G / I.C₁
+
+/-- The constant of the lower mass estimate, `c = 1/L_τ`. -/
+noncomputable def c : ℝ := (I.lowerConst I.τ)⁻¹
+
+theorem C_pos : 0 < I.C := div_pos (I.mass_G_pos I.τ) I.C₁_pos
+
+theorem c_pos : 0 < I.c := inv_pos.mpr (I.lowerConst_pos I.τ)
+
+/-- `m_τ(V) ≤ C h(G, V)` (the article's point-measurement lemma), from the upper comparison. -/
+theorem mass_le_hom (U : Obj) : I.mass I.τ U ≤ I.C * I.hom I.G U :=
+  I.mass_le_mul_hom I.τ U
+
+/-- `c h(G, V) ≤ m_τ(V)` (the article's point-measurement lemma), from the twist triangles of the
+`S_i`: the lower comparison. -/
+theorem hom_le_mass (U : Obj) : I.c * I.hom I.G U ≤ I.mass I.τ U := by
+  have h := I.hom_G_le_mul_mass I.τ U
+  have hL := I.lowerConst_pos I.τ
+  rw [c, inv_mul_le_iff₀ hL]
+  exact h
+
+/-- Bridgeland's metric bounds the change of mass (Bridgeland, arXiv:math/0212237,
+Proposition 8.1), through the distance bound `δ ≤ d`. -/
+theorem mass_le_exp_dist (σ σ' : Stab) (U : Obj) :
+    I.mass σ U ≤ exp (dist σ σ') * I.mass σ' U :=
+  (I.mass_le_exp_δ σ σ' U).trans (mul_le_mul_of_nonneg_right
+    (exp_le_exp.mpr (I.δ_le_dist σ σ')) (I.mass_nonneg σ' U))
+
+/-- The entropy formula `h_cat(Φ) = lim log h(G, Φⁿ G)/n` (Dimitrov–Haiden–Katzarkov–Kontsevich,
+arXiv:1307.8418, Theorem 2.6, at `t = 0`). -/
+theorem hcat_spec (Φ : Γ) :
+    Tendsto (fun n : ℕ => log (I.hom I.G (Φ ^ n • I.G)) / n) atTop (𝓝 (I.hcat Φ)) :=
+  I.tendsto_hcat Φ
 
 /-- `H(W) = h(G, WG)`. -/
 def H (W : Γ) : ℝ := I.hom I.G (W • I.G)
