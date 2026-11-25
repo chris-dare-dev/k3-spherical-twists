@@ -21,6 +21,10 @@ doc ///
             catalogue representative. Unsupported words return a status and a reason, while
             their symbolic image and Mukai class remain available.
 
+            The inverse structure-sheaf twist of the marked point ideal uses its actual
+            inclusion into O as coevaluation. On I_x[n] its fibre projects
+            quasi-isomorphically onto O_x[n-1]. The realization keeps both maps.
+
             The inverse twist about the hyperplane bundle sends the structure sheaf to
             @TT "Q[-1]"@, where @TO quotientBundle@ gives Q. The coevaluation uses the dual
             of the coordinate basis and its shifted cone has homological degrees minus one
@@ -67,4 +71,44 @@ doc ///
             U = realizeTwistImage applyWord(V, structureObject K);
             U
             cohomologyDims realizedHomology(U, 1)
+///
+
+doc ///
+    Key
+        homologicalCutInclusion
+        (homologicalCutInclusion, Complex, ZZ)
+        signedCutInclusion
+        (signedCutInclusion, Complex, ComplexMap, ZZ, ZZ)
+        certifiesCutSquare
+        (certifiesCutSquare, ComplexMap, ComplexMap, ComplexMap, ComplexMap)
+    Headline
+        recover and compare a strict upper cut with a supplied homological window
+    Usage
+        homologicalCutInclusion(C, q)
+        signedCutInclusion(C, f, sign, q)
+        certifiesCutSquare(a, b, s, t)
+    Description
+        Text
+            The marking supplies an integer q for which the desired phase cut on these
+            objects is homological truncation in degrees at least q. The first method
+            returns the inclusion of the canonical truncation into the original complex.
+            The second constructs an arrow into the supplied signed output from the input
+            windows of f. Supply the native cone for sign 1 and the fibre (cone f)[1]
+            for sign -1 in the indexing of the Complexes package.
+
+            For the cone, take the inverse image of the top cycles in the cone on the lower
+            inputs. For the fibre, remove the bottom cohomology from the fibre on the upper
+            inputs and compose into C. Both constructions use maps of presented modules.
+
+            The comparison takes chain maps a and b and specified identifications s of
+            their sources and t of their targets, directed from a to b. It checks the square
+            t*a == b*s and checks that the full cones of s and t are acyclic. A true result
+            certifies the two arrows over the specified output identification. A false
+            result means these four maps failed to give this strict certificate.
+        Example
+            K = k3Surface 2;
+            W = twistWord {twistStep(sphericalObject structureObject K, 1)};
+            R = realizeTwistImage(W, catalogueObject(K, "O_x"));
+            j = signedCutInclusion(R#"complex", R#"chainMap", 1, 1);
+            target j === R#"complex"
 ///

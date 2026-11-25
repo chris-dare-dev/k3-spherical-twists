@@ -103,6 +103,9 @@ export {
     "TwistRealization",
     "realizeTwistImage",
     "realizedHomology",
+    "homologicalCutInclusion",
+    "signedCutInclusion",
+    "certifiesCutSquare",
     -- tasks
     "expandBatch",
     "runTask",
@@ -158,10 +161,12 @@ load "./K3Twists/observations/predictions.m2"
 load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"
 
+load "./K3Twists/derived/cut-arrows.m2"
 load "./K3Twists/derived/quartic-derived.m2"
 load "./K3Twists/derived/quartic-cones.m2"
 load "./K3Twists/derived/quintic.m2"
 load "./K3Twists/tasks/quartic-prefix.m2"
+load "./K3Twists/tasks/hn-arrows.m2"
 
 beginDocumentation()
 
@@ -181,6 +186,7 @@ load "./K3Twists/tests/models.m2"
 load "./K3Twists/tests/observations.m2"
 load "./K3Twists/tests/words.m2"
 load "./K3Twists/tests/cones.m2"
+load "./K3Twists/tests/cut-arrows.m2"
 load "./K3Twists/tests/derived-quartic.m2"
 load "./K3Twists/tests/quintic.m2"
 

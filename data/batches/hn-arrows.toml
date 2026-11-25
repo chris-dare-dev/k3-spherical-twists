@@ -1,0 +1,29 @@
+# Strict cuts with a supplied heart. The six local tasks use QQ[u,v].
+# Only the final two tasks use the marked quartic.
+name = "hn-arrows"
+
+[scheduler]
+workers = 2
+memory_budget_mb = 1500
+
+[limits]
+time_seconds = 90
+memory_mb = 700
+
+[[surfaces]]
+family = "quartic_with_line"
+seed = 1
+characteristic = 32003
+
+[[tasks]]
+kind = "hn_arrow"
+items = [
+  { case = "cone-split", prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 2, lower_length = 1, uncorrected_defect = 1, radical_length = 0 } },
+  { case = "cone-u",     prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 2, lower_length = 1, uncorrected_defect = 1, radical_length = 1 } },
+  { case = "fibre-uu",   prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 1, lower_length = 1, uncorrected_defect = 1, yoneda =  0 } },
+  { case = "fibre-uv",   prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 1, lower_length = 1, uncorrected_defect = 1, yoneda =  1 } },
+  { case = "fibre-vu",   prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 1, lower_length = 1, uncorrected_defect = 1, yoneda = -1 } },
+  { case = "fibre-vv",   prediction = { arrow = true, quotient = true, zero_rejected = true, upper_length = 1, lower_length = 1, uncorrected_defect = 1, yoneda =  0 } },
+  { case = "point-forward", prediction = { arrow = true, quotient = true, uncorrected_rejected = true, cut_is_iso = true,  cut_is_zero = false, twist_map_identified = true } },
+  { case = "ideal-inverse", prediction = { arrow = true, quotient = true, uncorrected_rejected = true, cut_is_iso = false, cut_is_zero = true,  twist_map_identified = true } },
+]

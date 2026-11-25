@@ -239,6 +239,40 @@ cells = [
 tasks = []
 no_task = '''a test of the package (`src/macaulay2/K3Twists/tests/quintic.m2`, run by `make test`); it leaves no record'''
 
+[table.hn-arrows]
+heading = '''HN arrows in a supplied window'''
+columns = ['''Chain maps''', '''Predicted result''', '''Model''']
+
+[[claim]]
+id = "punctual-cone-arrows"
+table = "hn-arrows"
+cells = [
+  '''Zero or tangent map k[−1] → k, with an unmapped k[−1] target summand''',
+  '''Upper summand inclusions of k ⊕ k and Dᵤ, each of length 2 with lower length 1. Their radicals have lengths 0 and 1.''',
+  '''ℚ[u,v] at the origin''',
+]
+tasks = ["hn_arrow/cone-*"]
+
+[[claim]]
+id = "punctual-fibre-arrows"
+table = "hn-arrows"
+cells = [
+  '''Socle inclusion k → fib(Dₐ → k → Dᵦ) over the given fibre''',
+  '''Kernel and lower quotient each have length 1. Oriented boundary coefficients for uu, uv, vu, vv are 0, +1, −1, 0.''',
+  '''ℚ[u,v] at the origin''',
+]
+tasks = ["hn_arrow/fibre-*"]
+
+[[claim]]
+id = "quartic-point-cut-arrows"
+table = "hn-arrows"
+cells = [
+  '''T_O(kₓ) and T_O⁻¹(Iₓ[1]) at the strict cut above phase 1''',
+  '''Iₓ[1] includes quasi-isomorphically into the evaluation cone. The inverse fibre projects onto kₓ by a quasi-isomorphism and has zero upper cut.''',
+  '''quartic with a line over 𝔽₃₂₀₀₃''',
+]
+tasks = ["hn_arrow/point-forward/*", "hn_arrow/ideal-inverse/*"]
+
 # The headline table of GUIDE.md: tasks of data/batches/invariants.toml, which `make smoke` runs.
 
 [[headline]]

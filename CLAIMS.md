@@ -2,7 +2,7 @@
 
 This page lists what the [guide](GUIDE.md) says the code computes, claim by claim, and, in the last column of each table, what the records of the scheduler in [data/records/](data/records/) say about it.
 
-Contents: [Tasks and records](#tasks-and-records) · [Cohomology of the sheaves of short words](#cohomology-of-the-sheaves-of-short-words) · [Euler characteristics of pairs](#euler-characteristics-of-pairs) · [The marked curve on a quartic](#the-marked-curve-on-a-quartic) · [Twists realized as complexes](#twists-realized-as-complexes) · [What the tasks do not cover](#what-the-tasks-do-not-cover)
+Contents: [Tasks and records](#tasks-and-records) · [Cohomology of the sheaves of short words](#cohomology-of-the-sheaves-of-short-words) · [Euler characteristics of pairs](#euler-characteristics-of-pairs) · [The marked curve on a quartic](#the-marked-curve-on-a-quartic) · [Twists realized as complexes](#twists-realized-as-complexes) · [HN arrows in a supplied window](#hn-arrows-in-a-supplied-window) · [What the tasks do not cover](#what-the-tasks-do-not-cover)
 
 ## Tasks and records
 
@@ -15,7 +15,7 @@ The last column, *Run under the scheduler*, is computed from the records in [dat
 - **not re-run**, when no task of the claim has a record: nothing in this repository then says what its tasks compute to;
 - **no task**, with the reason, when nothing in the batch files computes the claim.
 
-"ok" is a statement about the tasks, not about the claim. A task computes on one surface over the field with 32003 elements, with seed 1, and compares with a value that follows from short exact sequences; agreement confirms that computation and the code. [data/claims/RECORDS.md](data/claims/RECORDS.md) lists every task of every claim with its predicted value and its record.
+"ok" records agreement with a task's prediction on its specified input. The K3 surface records use the field with 32003 elements and seed 1. The local arrow records use the polynomial ring in two variables over the rationals. Every task, prediction and record appears in the [record index](data/claims/RECORDS.md).
 
 A record in [data/records/](data/records/) was computed by this repository at the commit it names, from a working tree without uncommitted changes. `make record BATCH=data/batches/NAME.toml` runs a batch and copies its records there; [src/batch/claims/adopt.py](src/batch/claims/adopt.py) says what is copied and what is refused. The scheduler's own rule for reusing a record is stricter than the tables': it computes a task again whenever the code has changed, while a committed record stays the record of its task and names the commit that computed it.
 
@@ -74,12 +74,28 @@ Each of the first five rows is one dependent batch: a task builds the marked qua
 | On the Fermat quintic threefold over ZZ/101: hⁱ(O) = (1, 0, 0, 1), and the twist of the marked point about O is realized with numerical class (−1, 1) | (1, 0, 0, 1); (−1, 1) | the quintic threefold | no task: a test of the package (`src/macaulay2/K3Twists/tests/quintic.m2`, run by `make test`); it leaves no record |
 <!-- END GENERATED twists -->
 
+## HN arrows in a supplied window
+
+Each task starts with the chain map and the homological degree of the strict upper cut. The cone computation pulls back the top cycles from the cone on the lower inputs. The fibre computation cuts the bottom quotient from the fibre on the upper inputs. The test compares the resulting inclusion with a separately constructed arrow. A commuting square and two quasi-isomorphisms identify the arrows over the specified output. [Implementation](src/macaulay2/K3Twists/derived/cut-arrows.m2) · [Regression fixture](src/macaulay2/K3Twists/tasks/hn-arrows.m2) · [Issue #99](https://github.com/chris-dare-dev/k3-spherical-twists/issues/99)
+
+For the six local examples the supplied geometric window puts all punctual sheaves at phase one and their shifts by −1 at phase zero. The strict cut is at zero. Kernels, cokernels and maps are computed on presented modules. The two quartic tasks use the actual structure-sheaf evaluation and coevaluation. Their strict cut is at one, with the point ideal sequence supplied as exact in the geometric heart. The records check chain algebra with these phase inputs. Determining a marked stability condition or a window heart from a surface equation is a separate problem.
+
+<!-- BEGIN GENERATED hn-arrows: make tables -->
+| Chain maps | Predicted result | Model | Run under the scheduler |
+|---|---|---|---|
+| Zero or tangent map k[−1] → k, with an unmapped k[−1] target summand | Upper summand inclusions of k ⊕ k and Dᵤ, each of length 2 with lower length 1. Their radicals have lengths 0 and 1. | ℚ[u,v] at the origin | **not re-run**: 2 tasks in `hn-arrows`, no record; [tasks](data/claims/RECORDS.md#claim-punctual-cone-arrows) |
+| Socle inclusion k → fib(Dₐ → k → Dᵦ) over the given fibre | Kernel and lower quotient each have length 1. Oriented boundary coefficients for uu, uv, vu, vv are 0, +1, −1, 0. | ℚ[u,v] at the origin | **not re-run**: 4 tasks in `hn-arrows`, no record; [tasks](data/claims/RECORDS.md#claim-punctual-fibre-arrows) |
+| T_O(kₓ) and T_O⁻¹(Iₓ[1]) at the strict cut above phase 1 | Iₓ[1] includes quasi-isomorphically into the evaluation cone. The inverse fibre projects onto kₓ by a quasi-isomorphism and has zero upper cut. | quartic with a line over 𝔽₃₂₀₀₃ | **not re-run**: 2 tasks in `hn-arrows`, no record; [tasks](data/claims/RECORDS.md#claim-quartic-point-cut-arrows) |
+<!-- END GENERATED hn-arrows -->
+
+Run `make run BATCH=data/batches/hn-arrows.toml` from the repository root. Each record includes the module presentations, differentials, input map, computed and reference inclusions, the two comparison maps, and the projection onto the identified lower quotient. The four fibre records also give the first Koszul lift in the ordered parameters $u,v$. [Batch and expected values](data/batches/hn-arrows.toml) · [Recorded matrices](data/records/hn-arrows/results.jsonl)
+
 ## What the tasks do not cover
 
-- **Stability.** The tasks compute sheaf cohomology and Ext groups. Nothing here tests Bridgeland stability, which most statements of the study behind this repository are about. The point-cone and inverse-cancellation records above provide starting examples for checking the attaching map of a Harder–Narasimhan cut. [Arrow-level coverage tracker](https://github.com/chris-dare-dev/k3-spherical-twists/issues/99)
-- **Other fields, other seeds.** Every task of the batch files uses the field with 32003 elements and seed 1. The Picard rank of the surfaces is not determined; the numbers compared do not depend on it.
+- **Stability.** Computing the phases or testing semistability in an arbitrary geometric heart remains outside the recorded calculations.
+- **Other surfaces.** The K3 batch records use one seed and characteristic for each specified model. Their Picard ranks are undetermined.
 - **The dimensions of Ext for a pair.** Only the Euler characteristic of a pair is predicted.
 - **Pairs of large rank.** The time of a pair grows quickly with the ranks of the two sheaves; `data/batches/ext-table.toml` gives a pair between a quarter of an hour and four hours, by the rank of the sheaf Hom(E, F), and a pair that needs more ends `timeout`. The table of pairs says how many of its tasks have a record.
-- **Longer words.** The realized complexes are the three twists above and the words {T_O, T_O⁻¹} and {T_O, T_O} on O(−H), and {T_O, T_{O(H)}⁻¹} on O_x. Images of longer words are computed as Mukai classes only.
+- **Longer words.** The recorded complexes cover the twists and two-letter words above. A general word with a numerically known image still needs its derived evaluation and coevaluation maps for an arrow calculation.
 - **The quintic threefold row.** It is covered by a package test in `make test`.
 - **The synthetic tasks.** `data/batches/limits-demo.toml` has two tasks that are stopped on purpose, one at its time limit and one at its memory limit. They show what such records look like, and they count for no claim.

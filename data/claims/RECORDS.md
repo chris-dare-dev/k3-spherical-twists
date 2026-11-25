@@ -2369,3 +2369,38 @@ The word {T_O, T_{O(H)}⁻¹} on O_x is realized from the stored point cone, via
 | `quartic_prefix/mixed_point_inverse` | resumable-quartic-mixed-point |  | not re-run |  |
 | `quartic_prefix/model` | resumable-quartic, resumable-quartic-hypercohomology, resumable-quartic-inverse, resumable-quartic-mixed-point, resumable-quartic-point, resumable-quartic-second-forward |  | ok, 2026-11-19, `43ee811`, 1.476 s | family quartic_with_line |
 | `quartic_prefix/realize` | resumable-quartic-mixed-point, resumable-quartic-point |  | ok, 2026-11-19, `8014a21`, 0.729 s | class (-1, (0, 0), 0), shift 1 |
+
+<a name="claim-punctual-cone-arrows"></a>
+
+## punctual-cone-arrows
+
+Zero or tangent map k[−1] → k, with an unmapped k[−1] target summand
+
+| Task | Batches | Predicted | Record | Computed |
+|---|---|---|---|---|
+| `hn_arrow/cone-split` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 0 | not re-run |  |
+| `hn_arrow/cone-u` | hn-arrows | uncorrected_defect 1, upper_length 2, lower_length 1, zero_rejected yes, arrow yes, quotient yes, radical_length 1 | not re-run |  |
+
+<a name="claim-punctual-fibre-arrows"></a>
+
+## punctual-fibre-arrows
+
+Socle inclusion k → fib(Dₐ → k → Dᵦ) over the given fibre
+
+| Task | Batches | Predicted | Record | Computed |
+|---|---|---|---|---|
+| `hn_arrow/fibre-uu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | not re-run |  |
+| `hn_arrow/fibre-uv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 1, quotient yes | not re-run |  |
+| `hn_arrow/fibre-vu` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda -1, quotient yes | not re-run |  |
+| `hn_arrow/fibre-vv` | hn-arrows | uncorrected_defect 1, upper_length 1, lower_length 1, zero_rejected yes, arrow yes, yoneda 0, quotient yes | not re-run |  |
+
+<a name="claim-quartic-point-cut-arrows"></a>
+
+## quartic-point-cut-arrows
+
+T_O(kₓ) and T_O⁻¹(Iₓ[1]) at the strict cut above phase 1
+
+| Task | Batches | Predicted | Record | Computed |
+|---|---|---|---|---|
+| `hn_arrow/ideal-inverse/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero yes, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso no, twist_map_identified yes | not re-run |  |
+| `hn_arrow/point-forward/quartic_with_line-d2-p32003-s1` | hn-arrows | cut_is_zero no, arrow yes, quotient yes, uncorrected_rejected yes, cut_is_iso yes, twist_map_identified yes | not re-run |  |
