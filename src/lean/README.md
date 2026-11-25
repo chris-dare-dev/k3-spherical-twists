@@ -41,6 +41,8 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | Harder–Narasimhan filtrations in a lattice with a slope function (valuations `rk`, `deg`, `rk` strictly monotone): the prefix `c_k` with factor slopes `≥ θ` below and `≤ θ` above maximizes `deg - θ rk`, uniquely if the inequalities are strict; hence the HN filtration is unique, it reads the upper boundary of the convex hull of the points `(rk, deg)` and the opposite one reads the lower boundary (Baumann–Kamnitzer–Tingley, arXiv:1110.3661, §3.2), and it only depends on the order of slopes | `HNFiltration.weight_le`, `HNFiltration.eq_of_weight_eq`, `HNFiltration.mem_range_chain_iff`, `HNFiltration.instSubsingleton`, `HNFiltration.convexHull_subset`, `HNFiltration.weight_ge_edge_of_neg`, `HNFiltration.ofSlopeOrder` |
 | At a wall with two simples, a charge `i Z₀ + j Z₁` orders the subquotients by `j/(i + j)` on one side and by `i/(i + j)` on the other | `DoubledRep.slopeFunction`, `DoubledRep.slope_le_slope_iff`, `DoubledRep.slope_le_slope_iff_neg` |
 | The HN filtrations of the rigid wall example, for every `g` and every charge on either side, are `0 ⊂ (H', W) ⊂ M` and `0 ⊂ (H', 0) ⊂ M`; at `g = 3` their polygons are `(0, 0) → (11, 3) → (12, 3)` and `(0, 0) → (8, 0) → (12, 3)` | `RigidRep.hnUpper`, `RigidRep.hnLower`, `RigidRep.hnUpperOf`, `RigidRep.hnLowerOf`, `rigidWall_hnUpper`, `rigidWall_hnLower` |
+| The lemma on the wall group that carries the point, in the quiver model (`U` once at vertex one, `S` `p` times at vertex zero, `e(M) = 2` read as `dim End M + p(g - p) = 1`): `p ≥ g`, and `M = S^k ⊕ T_S U` (every `B_i = 0`, the `A_i` independent) or `M = S^k ⊕ T_S⁻¹ U` (every `A_i = 0`, the `B_i` independent), `k = p - g` | `IsNilpotent.A_comp_B_eq_zero`, `finrank_End_ge`, `twoExtensions_rank`, `twoExtensions` |
+| Its table of HN quotients on both sides of the wall: where `U` is higher, `U, S^p` or `T_S⁻¹ U, S^k`; where `S` is higher, `S^k, T_S U` or `S^p, U`; for any wall object with `U` once, the HN filtrations are `0 ⊂ (⟨B_i⟩, U) ⊂ M` and `0 ⊂ (⋂ ker A_i, 0) ⊂ M` | `hnUHigher`, `hnSHigher`, `isStable_bot_subSpan`, `isStable_subKer_top`, `twoExtensions_table` |
 | Fekete with a constant: the rate exists, each block certifies `ρ ≤ (K H_k)^{1/k}`, and the bounds converge | `exists_rate_of_submul`, `pow_rate_le` |
 | Transfer of rates between comparable sequences, uniformly in parameters; `o(n)` errors; polynomial growth has rate one; the rate per letter of a periodic word | `tendsto_rpow_inv_of_bounds`, `tendstoUniformly_rpow_inv_of_bounds`, `tendsto_log_div_of_bound`, `tendsto_log_div_zero_of_poly`, `tendsto_log_div_of_period` |
 | The algebra of Lemma A.1: the slope estimate `V(E) ≤ aR + d^{-1/2}√(Rm)` and the absorption of the square root | `piece_bound`, `slope_bound_of_le`, `fixedTest_of_generic` |
@@ -120,6 +122,23 @@ From these, Lean proves the induction on the length of the word:
 with a nonzero semistable object (the empty word, no walls); it shows the fields are consistent
 relative to such a slicing, which Mathlib cannot yet construct.
 
+## Walls in the quiver model
+
+The wall statements are proved for representations of the doubled Kronecker quiver with the
+preprojective relations, from Mathlib alone. Two inputs connect them to the K3 surface and are
+not formalized:
+
+- the iterated extensions of the stable wall constituents are the nilpotent representations of
+  this quiver with these relations, so that wall subobjects are subrepresentations with their
+  multiplicities as dimension vectors (formality of the `Ext`-algebra of the constituents,
+  Davison, arXiv:2106.07692, Proposition 7.8);
+- near the wall, the HN filtration of a wall object is the slope filtration for the perturbed
+  charge in the Serre subcategory of its constituents (Bayer–Bridgeland, arXiv:1310.8266,
+  Lemma 2.7 and Remark 2.8).
+
+For the wall group that carries the point, `e(M) = 2` enters through Riemann–Roch,
+`e(M) = 2 dim End M + v(M)²` with `v(M)² = 2p(g - p)` (`square_roots_plus_isotropic`).
+
 ## Layout
 
 The library mirrors Mathlib: a file sits at the Mathlib path of the API it extends, or of its
@@ -144,6 +163,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations and the HN polygon in a lattice with a slope function | `Order.SlopeFunction` |
 | `RepresentationTheory/Quiver/Kronecker/HarderNarasimhan.lean` | slope functions on subrepresentations, the two sides of a wall, the HN filtrations of the rigid representation | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, subrepresentations, dimension vectors | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the wall group that carries the point: classification and table of HN quotients | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/RigidRep.lean` | the rigid representation of dimension `(g², g)` with arrows in both directions | `Quiver.Kronecker` |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
@@ -223,4 +243,4 @@ These follow Mathlib and derived-alg-geo-lean, so that files can move to either.
 
 ## What this does not cover
 
-Visibility on the cover and the wall lemmas beyond their integer arithmetic and the rigid example are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements.
+Visibility on the cover and the wall lemmas beyond the quiver model are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements.

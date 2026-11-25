@@ -36,4 +36,5 @@ import K3Twists.Order.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.Preprojective
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
+import K3Twists.RepresentationTheory.Quiver.Kronecker.TwoExtensions
 import K3Twists.RingTheory.Polynomial.Basic

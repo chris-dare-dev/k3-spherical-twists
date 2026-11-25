@@ -287,6 +287,39 @@ structure HNFiltration where
   semistable : ∀ i : Fin n, s.IsSemistable (chain i.castSucc) (chain i.succ)
   slope_strictAnti : StrictAnti fun i : Fin n ↦ s.slope (chain i.castSucc) (chain i.succ)
 
+variable {s} in
+/-- A semistable lattice is its own HN filtration, `⊥ < ⊤`. -/
+def HNFiltration.ofSemistable (h : s.IsSemistable ⊥ ⊤) : s.HNFiltration where
+  n := 1
+  chain := ![⊥, ⊤]
+  strictMono := Fin.strictMono_iff_lt_succ.mpr fun i ↦ by
+    fin_cases i
+    exact h.1
+  chain_zero := rfl
+  chain_last := rfl
+  semistable i := by
+    fin_cases i
+    exact h
+  slope_strictAnti := Fin.strictAnti_iff_succ_lt.mpr fun i ↦ i.elim0
+
+variable {s} in
+/-- The two-step HN filtration `⊥ < x < ⊤`, from semistable factors of decreasing slopes. -/
+def HNFiltration.two {x : L} (h₁ : s.IsSemistable ⊥ x) (h₂ : s.IsSemistable x ⊤)
+    (h : s.slope x ⊤ < s.slope ⊥ x) : s.HNFiltration where
+  n := 2
+  chain := ![⊥, x, ⊤]
+  strictMono := Fin.strictMono_iff_lt_succ.mpr fun i ↦ by
+    fin_cases i
+    exacts [h₁.1, h₂.1]
+  chain_zero := rfl
+  chain_last := rfl
+  semistable i := by
+    fin_cases i
+    exacts [h₁, h₂]
+  slope_strictAnti := Fin.strictAnti_iff_succ_lt.mpr fun i ↦ by
+    fin_cases i
+    exact h
+
 namespace HNFiltration
 
 variable {s} (F : s.HNFiltration)
