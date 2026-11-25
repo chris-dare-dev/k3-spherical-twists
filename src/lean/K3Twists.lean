@@ -36,6 +36,7 @@ import K3Twists.CategoryTheory.Triangulated.ExtComparison
 import K3Twists.CategoryTheory.Triangulated.ExtComparison.Heart
 import K3Twists.CategoryTheory.Triangulated.GrothendieckGroup.Basic
 import K3Twists.CategoryTheory.Triangulated.PostnikovTower
+import K3Twists.CategoryTheory.Triangulated.SerreFunctor.CompositionTrace
 import K3Twists.CategoryTheory.Triangulated.SerreFunctor.Objects
 import K3Twists.CategoryTheory.Triangulated.SerreFunctor.TwoCalabiYau
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Budget
@@ -86,6 +87,7 @@ import K3Twists.LinearAlgebra.Matrix.SignRule
 import K3Twists.LinearAlgebra.Matrix.ZMatrix
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Integer
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Isotropic
+import K3Twists.LinearAlgebra.PoincareDuality
 import K3Twists.Order.HarderNarasimhan
 import K3Twists.Order.HarderNarasimhan.Polytope
 import K3Twists.Order.IntervalClass
@@ -102,3 +104,4 @@ import K3Twists.RepresentationTheory.Quiver.Kronecker.TwoExtensions
 import K3Twists.RingTheory.MvPowerSeries.LowerSet
 import K3Twists.RingTheory.Polynomial.Basic
 import K3Twists.RingTheory.Polynomial.Chebyshev
+import K3Twists.Topology.Spectral.ConstructibleCover
