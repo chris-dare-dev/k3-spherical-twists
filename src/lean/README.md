@@ -140,6 +140,10 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | One unit of weight: for a pre-stability condition and `w = Im(e^{-iπa} Z)` (additive, zero on `P(a)` and `P(a + 1)`, positive on `P((a, a + 1))`), if every nonzero semistable object of phase in `(a, a + 1)` has `w ≥ δ` (for instance if `w(Λ) ⊆ δℤ`) and `E` has phases in `[a, a + 1]` with `0 < w(E) < 2δ`, the HN tower of `E` is `0 → T → E' → E` with `T = E_{≥ a+1}` of phase `a + 1`, `E' = fib(E → B) = E_{>a}`, `B` of phase `a`, and `S = cofib(T → E')` stable of a phase in `(a, a + 1)` with `w(S) = w(E)` | `PreStabilityCondition.WithClassMap.imChargeAt`, `imChargeAt_triangle`, `exists_imChargeAt_eq_of_semistable`, `le_imChargeAt_of_mem_zmultiples`, `one_unit_of_weight`, `one_unit_of_weight_of_triangle` |
 | **Window dévissage**: if a triangulated functor `F` is surjective on `Hom(S, T⟦n⟧)` for `a - 1 ≤ n ≤ b` and injective for `a ≤ n ≤ b + 1`, for all `S`, `T` in a family, the same holds on the (inductive) extension closure of the family; for `a ≤ 0 ≤ b`, `F` is fully faithful there, and for `a ≤ 2`, `1 ≤ b` its essential image there is the extension closure of the images (the model is Bondal–Orlov, arXiv:alg-geom/9506012, Theorem 1.1, and Bridgeland, arXiv:math/9809114, Theorems 1.1 and 2.3); a functor commuting with shifts preserves the composition of shifted morphisms with no sign; in an abelian category the extension closure of simple objects is a Serre class | `Functor.isExtWindow_of_extensionClosure`, `Functor.IsExtWindow.of_vanishing`, `Functor.fullyFaithfulOfIsExtWindow`, `Functor.map_extensionClosure_eq`, `Functor.map_shiftedHom_comp`, `ObjectProperty.extensionProductIter_le_extensionClosure`, `ObjectProperty.isSerreClass_abelianExtensionClosure` |
 | The isotropic-family lemmas. The degree-two lemma: if `φ₂(μ(v, w)) = μ'(φ₁ v, φ₁' w)`, `dim X ≤ 1`, `φ₁` is nonzero somewhere, `φ₁'` onto and `μ'` separates its left argument, then `φ₂` is injective. The Serre pairing is composition followed by the Serre trace, and at an object with `S X ≅ X⟦2⟧` the composition–trace pairing on `Hom(X, Y⟦1⟧) × Hom(Y, X⟦1⟧)` separates both arguments, so a functor commuting with shifts that is nonzero on `Ext¹(S, U)` and onto `Ext¹(F U, F S)` is injective on `Ext²(S, S)` when `dim Ext²(S, S) ≤ 1`. Orthogonality: for `P`, `Q` with no negative extensions either way, `Hom(P, Q) = 0 = Hom(Q, P)` and `S P ≅ P⟦2⟧`, `Hom(P, Q⟦i⟧) = 0` for `i ≠ 1` and `dim Ext¹(P, Q) = -χ(P, Q)`, so `P`, `Q` are orthogonal iff `χ(P, Q) = 0`. Poincaré duality: if `A_i × A_{d-i} → A_d` separates its left argument and `dim A_d ≤ 1`, an algebra map nonzero on `A_d` is injective in every degree `i ≤ d`; with target duality, equal dimensions and `B_{⌈d/2⌉} ≠ 0`, it is nonzero on `A_d` iff it is injective in degrees `≤ ⌈d/2⌉`. In a spectral space a directed cover by constructible sets has a member equal to the space, and every constructible cover has a finite subcover | `LinearMap.injective_of_pairing_of_finrank_le_one`, `SerreFunctorData.pairing_eq_trace_comp`, `SerreFunctorData.compTrace_separating_left`, `Functor.injective_map_shiftedHom_two`, `TwoCYHypotheses.injective_map_shiftedHom_two`, `SerreFunctorData.finrank_ext_one_eq_neg_euler`, `SerreFunctorData.ext_eq_zero_iff`, `AlgHom.injOn_of_top`, `AlgHom.exists_top_ne_zero_iff`, `Topology.exists_eq_univ_of_directed_of_isConstructible`, `Topology.exists_finite_subcover_of_isConstructible` |
+| The short-step stability test, (A): in any slicing, `E ∈ P([l, r])` if and only if `Hom(P(> r), E) = 0` and `Hom(E, P(< l)) = 0`; the phase cuts of a nonzero object through its intrinsic phases `φ^±` | `Slicing.mem_closedInterval_iff`, `Slicing.leProp_iff_phiPlus_le`, `Slicing.geProp_iff_le_phiMinus`, `Slicing.semistable_of_phiPlus_le_of_le_phiMinus` |
+| The short-step stability test, (B), the Im-form test: let `τ`, `ν` be slicings with `\|φ^±_ν - φ^±_τ\| < ε ≤ 1/4` on nonzero objects and `Z` compatible with `ν`. Then `Y` with `Z(Y) ∈ ℝ_{>0} e^{iπφ}` is `ν`-semistable of phase `φ` if and only if `Y ∈ P_τ([φ - ε, φ + ε])` and no triangle `N → Y → Q` with `N, Q ≠ 0` in `P_τ([φ - 3ε, φ + 3ε])` has `Im(e^{-iπφ} Z(N)) > 0`; it is stable if and only if none has `Im(e^{-iπφ} Z(N)) ≥ 0` | `Slicing.semistable_iff_imPhase`, `Slicing.isStable_iff_imPhase`, `Slicing.PhaseClose` |
+| The mass `m_σ(E) = Σ \|Z(A_i)\|` over the HN factors is well defined, because HN filtrations agree up to zero factors on every isomorphism-invariant sum; it is invariant under isomorphisms and shifts, `\|Z(E)\| ≤ m_σ(E)` with equality for semistable `E`, positive on nonzero objects, and splits at every phase: `m(E) = m(E_{> t}) + m(E_{≤ t})` | `HNFiltration.sum_factor_eq`, `PreStabilityCondition.WithClassMap.mass_eq_sum`, `mass_iso`, `mass_shift`, `norm_charge_le_mass`, `mass_eq_norm_charge_of_semistable`, `mass_pos`, `mass_eq_add_of_triangle`, `exists_mass_split` |
+| The `2m(D)` lemma: for `m` invariant under shifts and subadditive on triangles, if `f, f' : A → B` differ by a map through `D`, their cones satisfy `\|m(cone f) - m(cone f')\| ≤ 2m(D)`; for the mass under Ikeda subadditivity | `abs_sub_mass_cone_le`, `PreStabilityCondition.WithClassMap.abs_sub_mass_cone_le` |
 | The Artin group of a Coxeter matrix (Mathlib has none) and its surjection onto the Coxeter group; the pure Artin group is the normal closure of the squares `σ_i²`; a representation whose generators are involutions factors through the Coxeter group and kills the pure Artin group | `CoxeterMatrix.ArtinGroup`, `toCoxeterGroup_surjective`, `pureArtinGroup_eq_normalClosure`, `exists_factor_of_sq`, `pure_mem_ker_of_sq` |
 | A braid relation of length `m` is one conjugation identity `u f(i') u⁻¹ = f(c)`, `u` the alternating word of length `m - 1`; a conjugation-equivariant `τ : X → G` turns one object identity per edge into the braid relations, for every Coxeter matrix; braid relations are closed under reversal, which gives the anti-automorphism `σ_i ↦ σ_i` | `CoxeterMatrix.braid_iff_conj`, `isBraidLiftable_of_equivariant`, `isBraidLiftable_op_iff`, `ArtinGroup.reverse` |
 | An Artin group acts on slicings through any family of exact autoequivalences whose classes satisfy its braid relations (from pairwise braid isomorphisms, or in the Seidel–Thomas form, arXiv:math/0001043, §2); two signed words with the same image in the Artin group are naturally isomorphic and carry HN filtrations to each other, with the same phases and isomorphic factors; the pure Artin group lands in the normal closure of the squared twists | `AutQuot.artinHom`, `AutQuot.isBraidLiftable_of_iso`, `AutQuot.isBraidLiftable_ofExt`, `AutQuot.nonempty_iso_of_ofSignedWord_eq`, `AutQuot.hn_of_ofSignedWord_eq`, `AutQuot.map_pureArtinGroup_le` |
@@ -361,6 +365,29 @@ tangent space makes the orbit full-dimensional, hence open and dense in the irre
 [K3TwistsTest/OpenOrbitModel.lean](K3TwistsTest/OpenOrbitModel.lean) proves the field for a quiver
 without arrows, where `Ext¹ = 0`; with arrows it is the open-orbit theorem itself, which needs
 algebraic groups acting on varieties in Mathlib.
+
+### The stability-space interface
+
+`StabilitySpaceHypotheses` is a metric space `Stab` of prestability conditions on
+`C` with a class map, and a group acting through exact autoequivalences, with the facts about
+Bridgeland's space as fields: the map to central charges is a covering onto its image
+(Bridgeland, arXiv:math/0212237, Theorem 1.2; arXiv:math/0307164, Theorem 1.1 for K3 surfaces);
+phases and masses move by at most the distance (Bridgeland, arXiv:math/0212237, §8); the support
+property (Kontsevich–Soibelman, arXiv:0811.2435, §1.2); `Z_{gσ}(Φ_g E) = Z_σ(E)`; and Ikeda
+subadditivity `m(B) ≤ m(A) + m(C)` on triangles (Ikeda, arXiv:1612.00995, Proposition 3.3).
+
+| Assertion | Lean |
+|---|---|
+| `m_{gσ}(Φ_g E) = m_σ(E)` | `StabilitySpaceHypotheses.mass_smul` |
+| The path layer: a path `[0, 1] → Stab` subdivides into steps with `ε`-close slicings, for any `ε > 0` | `StabilitySpaceHypotheses.exists_subdivision_phaseClose`, `phaseClose_of_dist_lt` |
+| Exponential mass growth of any sequence of objects does not depend on the stability condition | `StabilitySpaceHypotheses.tendsto_log_mass_div_iff` |
+| The `2m(D)` lemma at every point | `StabilitySpaceHypotheses.abs_sub_mass_cone_le` |
+
+No field has an instance from real objects: Mathlib has no triangulated category with a slicing,
+and the missing input is `D^b(X)` of a K3 surface with `Stab†(X)`.
+[K3TwistsTest/StabilitySpaceModel.lean](K3TwistsTest/StabilitySpaceModel.lean) builds the
+interface on the one-point space at a prestability condition with injective charge and Ikeda
+subadditivity.
 
 ### Twist systems and the exponent of the centre counts
 
@@ -748,6 +775,9 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/DivisibilityObstruction.lean` | the divisibility obstruction for a cone on a semistable object; truncations of finite biproducts |
 | `Triangulated/StabilityCondition/Foundation/OneUnitOfWeight.lean` | the rotated imaginary charge and the one-unit-of-weight lemma |
 | `Triangulated/StabilityCondition/WeylTilt.lean` | lower tilts, simple objects and torsion classes as properties of objects; `WeylGalleryHypotheses` and the Weyl-gallery induction on root-positive words |
+| `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ShortStep.lean` | the short-step stability test: closed intervals by Hom vanishing, phase closeness, stable objects, the Im-form test |
+| `Triangulated/StabilityCondition/Mass.lean` | the mass, HN sums up to zero factors, invariances, the split identity, `m ≥ \|Z\|`, Ikeda subadditivity as a predicate, the `2m(D)` lemma |
+| `Triangulated/StabilityCondition/StabilitySpace.lean` | `StabilitySpaceHypotheses`: covering, metric bound, support, action, subadditivity; equivariant mass, the path layer, σ-independent growth |
 
 Five of these files began as adaptations of mattrobball/BridgelandStability under Apache-2.0;
 their headers say so and [NOTICE](NOTICE), beside this README, carries the attribution and the
