@@ -1,5 +1,5 @@
 -- Paste these expressions into M2, or run with M2 --script data/examples/resumable-quartic.m2 from the repository root.
-path = prepend("src/", path);                -- the package is in src/ of the repository
+path = prepend("src/macaulay2/", path);      -- the package is in src/macaulay2/ of the repository
 needsPackage "K3Twists";
 K = realizeK3Surface k3Recipe hashTable {
     "family" => "quartic_with_line", "seed" => 1, "characteristic" => 32003

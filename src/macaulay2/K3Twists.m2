@@ -1,0 +1,187 @@
+newPackage(
+    "K3Twists",
+    Version => "0.2",
+    Headline => "sheaves on explicit K3 surfaces that arise from spherical twists along O and O(H)",
+    Authors => {{Name => "Christopher Dare"}},
+    PackageExports => {"Varieties"},
+    PackageImports => {"Complexes"},
+    AuxiliaryFiles => true,
+    DebuggingMode => false
+    )
+
+export {
+    -- common geometry and the quintic
+    "VarietyModel",
+    "VarietyObjectReference",
+    "VarietyNumericalClass",
+    "varietyDimension",
+    "varietyEvidence",
+    "varietyCapabilities",
+    "serreShift",
+    "distinguishedObjects",
+    "numericalClass",
+    "eulerPairing",
+    "QuinticThreefold",
+    "quinticThreefold",
+    "QuinticNumericalClass",
+    "quinticClass",
+    "QuinticObjectReference",
+    "ShiftedQuinticObject",
+    "SymbolicQuinticTwistImage",
+    -- surfaces
+    "K3Surface",
+    "k3Surface",
+    "K3FamilyRecipe",
+    "k3Recipe",
+    "k3Families",
+    "markedQuarticSpec",
+    "markedCurveClass",
+    "markedCurveSheaf",
+    "realizeK3Surface",
+    "Characteristic",
+    "Seed",
+    "SpecialQuadric",
+    -- portable artifact data
+    "k3ModelArtifact",
+    "loadK3ModelArtifact",
+    "bindK3ModelArtifact",
+    "gradedPresentationArtifact",
+    "loadGradedPresentation",
+    "gradedComplexArtifact",
+    "loadGradedComplex",
+    "gradedChainMapArtifact",
+    "loadGradedChainMap",
+    -- classes
+    "MarkedDivisorLattice",
+    "markedDivisorLattice",
+    "DivisorClass",
+    "divisorClass",
+    "divisorPairing",
+    "MukaiClass",
+    "mukaiClass",
+    "mukaiPairing",
+    "tensorByDivisor",
+    "twistVector",
+    "dualVector",
+    "chainNumber",
+    -- sheaves
+    "cohomologyDims",
+    "extDims",
+    "extViaHom",
+    "pointIdealSheaf",
+    "pointSheaf",
+    "kernelBundle",
+    "pointKernelBundle",
+    "quotientBundle",
+    "tracelessKernelBundle",
+    "quadricKernelBundle",
+    "mukaiBundle",
+    -- measured and predicted invariants
+    "DegreeObservation",
+    "ObservationPrediction",
+    "ObservationCheck",
+    "cohomologyObservation",
+    "hypercohomologyObservation",
+    "extObservation",
+    "observedDimension",
+    "degreeStatus",
+    "observationPrediction",
+    "checkObservation",
+    "Full",
+    -- catalogue
+    "catalogue",
+    "catalogueClasses",
+    "catalogueMukaiClass",
+    "catalogueEntry",
+    "extTableRow",
+    -- invariants
+    "sheafInvariants",
+    "sheafInvariantNames",
+    "sheafInvariant",
+    "Slow",
+    -- explicit twist realizations
+    "TwistRealization",
+    "realizeTwistImage",
+    "realizedHomology",
+    -- tasks
+    "expandBatch",
+    "runTask",
+    "registerTaskKind",
+    -- spherical twist words
+    "K3ObjectReference",
+    "ShiftedK3Object",
+    "SymbolicTwistImage",
+    "SphericalTwistGenerator",
+    "SphericalTwistStep",
+    "SphericalTwistWord",
+    "objectReference",
+    "catalogueObject",
+    "lineBundleObject",
+    "structureObject",
+    "shiftObject",
+    "sphericalObject",
+    "checkedSphericalObject",
+    "assumeSphericalObject",
+    "twistStep",
+    "twistWord",
+    "composeTwistWords",
+    "inverseTwistWord",
+    "mukaiReflection",
+    "applyWordToClass",
+    "applyWord",
+    "VerifiedOnly"
+    }
+
+load "./K3Twists/geometry/interface.m2"
+load "./K3Twists/numerical/lattices.m2"
+load "./K3Twists/numerical/classes.m2"
+load "./K3Twists/geometry/quartic-data.m2"
+load "./K3Twists/geometry/recipes.m2"
+load "./K3Twists/geometry/models.m2"
+load "./K3Twists/geometry/quintic.m2"
+load "./K3Twists/numerical/quintic.m2"
+load "./K3Twists/geometry/marked-quartics.m2"
+load "./K3Twists/artifacts/model.m2"
+load "./K3Twists/artifacts/graded.m2"
+load "./K3Twists/sheaves/sheaves.m2"
+load "./K3Twists/sheaves/catalogue-classes.m2"
+load "./K3Twists/sheaves/catalogue.m2"
+load "./K3Twists/sheaves/short-word-invariants.m2"
+load "./K3Twists/tasks/registry.m2"
+load "./K3Twists/tasks/ext-pair.m2"
+load "./K3Twists/tasks/invariant.m2"
+load "./K3Twists/tasks/synthetic.m2"
+load "./K3Twists/derived/objects.m2"
+load "./K3Twists/observations/degrees.m2"
+load "./K3Twists/observations/hypercohomology.m2"
+load "./K3Twists/observations/predictions.m2"
+load "./K3Twists/derived/spherical.m2"
+load "./K3Twists/derived/words.m2"
+
+load "./K3Twists/derived/quartic-derived.m2"
+load "./K3Twists/derived/quartic-cones.m2"
+load "./K3Twists/derived/quintic.m2"
+load "./K3Twists/tasks/quartic-prefix.m2"
+
+beginDocumentation()
+
+load "./K3Twists/doc/package.m2"
+load "./K3Twists/doc/marked-quartics.m2"
+load "./K3Twists/doc/artifacts.m2"
+load "./K3Twists/doc/models.m2"
+load "./K3Twists/doc/quintic.m2"
+load "./K3Twists/doc/words.m2"
+load "./K3Twists/doc/observations.m2"
+load "./K3Twists/doc/cones.m2"
+
+-- tests/macaulay2/run-tests.m2 runs these; a test whose first line is "-- slow" runs with `make test-slow`
+load "./K3Twists/tests/package.m2"
+load "./K3Twists/tests/marked-quartics.m2"
+load "./K3Twists/tests/models.m2"
+load "./K3Twists/tests/observations.m2"
+load "./K3Twists/tests/words.m2"
+load "./K3Twists/tests/cones.m2"
+load "./K3Twists/tests/derived-quartic.m2"
+load "./K3Twists/tests/quintic.m2"
+
+end--
