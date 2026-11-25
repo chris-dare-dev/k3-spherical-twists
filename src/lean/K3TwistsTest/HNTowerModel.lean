@@ -15,9 +15,12 @@ point as the only carrier), and the tower theorem applies to it.
 This is a relative check. It does not exercise the wall inputs, and it does not construct a
 slicing: Mathlib has no triangulated category with a slicing yet (for instance the bounded derived
 category of vector spaces with its standard slicing), so the slicing is a variable here.
+
+`TowerHypotheses` moved from `AlgebraicGeometry.K3.PicardRankOne` to
+`CategoryTheory.Triangulated`; the last example checks that the old names still elaborate.
 -/
 
-namespace AlgebraicGeometry.K3.PicardRankOne
+namespace CategoryTheory.Triangulated.TowerModel
 
 open CategoryTheory CategoryTheory.Limits CategoryTheory.Triangulated
 open CategoryTheory.Triangulated.WeakStabilityCondition.StabilityCondition.GroupAction
@@ -79,4 +82,12 @@ example [IsTriangulated C] (s : Slicing C) (P : C) (φ : ℝ) (hP : s.P φ P) (h
     s.CarriesOnce (isoClass P) ⊥ P :=
   (TowerHypotheses.ofSemistable s P φ hP hP0).tower
 
-end AlgebraicGeometry.K3.PicardRankOne
+set_option linter.deprecated false in
+/-- The deprecated names of the Picard-rank-one directory still elaborate. -/
+example [IsTriangulated C] (s : Slicing C) (P : C) (φ : ℝ) (hP : s.P φ P) (hP0 : ¬IsZero P) :
+    s.CarriesOnce (isoClass P) ⊥ P :=
+  let T : AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses C :=
+    TowerHypotheses.ofSemistable s P φ hP hP0
+  AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses.tower T
+
+end CategoryTheory.Triangulated.TowerModel

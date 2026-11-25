@@ -2,7 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
-import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WallCrossing
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Tower
 
 /-!
 # The Harder–Narasimhan tower of a twisted point
@@ -25,7 +25,10 @@ an exact equivalence carries `P_{V⁻¹η}(φ)` to `P_η(φ)`, so the image is t
 
 Mathlib has neither `D^b(X)` nor stability conditions on it, so `C` is an abstract triangulated
 category standing for `D^b(X)`, a stability condition enters through its slicing, and the
-geometric inputs are the fields of `TowerHypotheses`, each citing its source:
+geometric inputs are the fields of `CategoryTheory.Triangulated.TowerHypotheses`, each citing its
+source. None of them mentions the surface or its Picard rank, so the structure and the theorem
+live in `CategoryTheory/Triangulated/StabilityCondition/Tower.lean`; this file keeps the old names
+as deprecated aliases. The inputs are:
 
 * the point is stable at the anchor (Bayer–Bridgeland, arXiv:1310.8266, Theorem 2.2 and
   Lemma 6.7; the draft's "Visibility on the cover");
@@ -50,18 +53,22 @@ fields: Jordan–Hölder constituents in a phase slice and Mukai vectors are not
 open chamber the draft's stronger statement (the factor carrying the point is stable, the others
 isotypic) is the same induction with the stronger properties.
 
-## Main definitions
+## Main declarations
+
+The declarations moved to `CategoryTheory.Triangulated`; the names below are deprecated aliases.
 
 * `AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses`: the inputs.
 * `AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses.word`: the prefixes `E_j = W_j P`.
-
-## Main results
-
 * `AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses.carriesOnce_anchor`: the tower of every
   prefix at the anchor.
 * `AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses.tower`: the tower theorem.
 * `AlgebraicGeometry.K3.PicardRankOne.TowerHypotheses.tower_forall`: the same for every HN
   filtration with nonzero factors.
+
+The Mukai budget gives the at-most-once half of the conclusion at every slicing, with no wall
+input (`CategoryTheory.Triangulated.TowerHypotheses.atMostOnce_word`), so the tower theorem is the
+budget plus the existence of a carrier at the target
+(`CategoryTheory.Triangulated.TowerHypotheses.carriesOnce_target_iff`).
 
 ## Tags
 
@@ -70,120 +77,23 @@ Harder–Narasimhan filtration, spherical twist, K3 surface, stability condition
 
 namespace AlgebraicGeometry.K3.PicardRankOne
 
-open CategoryTheory CategoryTheory.Limits CategoryTheory.Triangulated
-open CategoryTheory.Triangulated.WeakStabilityCondition.StabilityCondition.GroupAction
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses := CategoryTheory.Triangulated.TowerHypotheses
 
-/-- **The inputs of the tower theorem.** `C` stands for `D^b(X)`, a slicing for the slicing of a
-stability condition in `Stab†(X)`, `point` for `P = 𝒪_x` and `letter j` for the `(j+1)`-st letter
-`V_{j+1} = T_{Y_{j+1}}^{±1}`. -/
-structure TowerHypotheses (C : Type*) [Category C] [HasZeroObject C] [HasShift C ℤ]
-    [Preadditive C] [∀ n : ℤ, (shiftFunctor C n).Additive] [Pretriangulated C] where
-  /-- The skyscraper sheaf `P = 𝒪_x`. -/
-  point : C
-  /-- The letters: `letter j` is `V_{j+1} = T_{Y_{j+1}}^{ε_{j+1}}`, an exact autoequivalence. -/
-  letter : ℕ → TriEquiv C
-  /-- The length `ℓ` of the word. -/
-  length : ℕ
-  /-- The slicing of the generic anchor `η` in the geometric chamber. -/
-  anchor : Slicing C
-  /-- The slicing of the target stability condition `σ`. -/
-  target : Slicing C
-  /-- `carrier s M`: the stable constituents of `M` in its phase slice for `s` are one isotropic
-  object, with multiplicity one, and spherical objects. -/
-  carrier : Slicing C → ObjectProperty C
-  /-- `spherical s M`: every stable constituent of `M` in its phase slice for `s` is spherical. -/
-  spherical : Slicing C → ObjectProperty C
-  carrier_iso : ∀ s, (carrier s).IsClosedUnderIsomorphisms
-  spherical_iso : ∀ s, (spherical s).IsClosedUnderIsomorphisms
-  /-- The objects with the self-extensions of a point, `e(E) = dim Ext¹(E, E) = 2`; the wall
-  inputs are stated for them. -/
-  pointLike : ObjectProperty C
-  /-- `e(𝒪_x) = 2`. -/
-  pointLike_point : pointLike point
-  /-- An exact autoequivalence preserves `Ext¹(E, E)`. -/
-  pointLike_letter : ∀ j E, pointLike E → pointLike ((letter j).e.functor.obj E)
-  /-- `𝒪_x ≠ 0`. -/
-  point_nonzero : ¬IsZero point
-  /-- `𝒪_x` is stable at the geometric anchor (Bayer–Bridgeland, arXiv:1310.8266, Theorem 2.2
-  and Lemma 6.7; the draft's "Visibility on the cover"). -/
-  point_semistable : ∃ φ, anchor.P φ point
-  /-- A stable `𝒪_x` is its own single constituent, isotropic. -/
-  carrier_point : carrier anchor point
-  /-- A letter carries `P_s(φ)` to `P_{V s}(φ)` and its stable objects to stable objects,
-  preserving the Mukai pairing, hence isotropy (Bridgeland, arXiv:math/0212237, §8). -/
-  carrier_letter : ∀ j s X,
-    carrier ((letter j).act s) ((letter j).e.functor.obj X) ↔ carrier s X
-  /-- Likewise for sphericity (Seidel–Thomas, arXiv:math/0001043: autoequivalences preserve
-  spherical objects). -/
-  spherical_letter : ∀ j s X,
-    spherical s X → spherical ((letter j).act s) ((letter j).e.functor.obj X)
-  /-- For each letter, a finite path of walls from `η` to `V⁻¹ η` with the local inputs at each
-  wall (the draft, "How to find the next wall" and "The filtration on the other side of a
-  wall"). -/
-  leg : ℕ → Leg carrier spherical pointLike
-  leg_start : ∀ j, (leg j).chamber 0 = anchor
-  leg_end : ∀ j, (leg j).chamber (leg j).n = (letter j).symm.act anchor
-  /-- The last path of walls, from `η` towards `σ`. -/
-  final : Leg carrier spherical pointLike
-  final_start : final.chamber 0 = anchor
-  /-- Arriving at `σ`: if `σ` lies in a chamber this is its chamber; if `σ` lies on walls, the
-  incoming factors of each real phase are merged into one wall group ("Evaluate at the
-  target"). -/
-  final_target : ∀ E, pointLike E →
-    (final.chamber final.n).CarriesOnce (carrier (final.chamber final.n))
-      (spherical (final.chamber final.n)) E →
-    target.CarriesOnce (carrier target) (spherical target) E
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses.word := CategoryTheory.Triangulated.TowerHypotheses.word
 
-namespace TowerHypotheses
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses.pointLike_word := CategoryTheory.Triangulated.TowerHypotheses.pointLike_word
 
-attribute [instance] carrier_iso spherical_iso
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses.carriesOnce_anchor :=
+  CategoryTheory.Triangulated.TowerHypotheses.carriesOnce_anchor
 
-variable {C : Type*} [Category C] [HasZeroObject C] [HasShift C ℤ]
-  [Preadditive C] [∀ n : ℤ, (shiftFunctor C n).Additive] [Pretriangulated C]
-  (T : TowerHypotheses C)
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses.tower := CategoryTheory.Triangulated.TowerHypotheses.tower
 
-/-- The prefixes `E_j = W_j P`: `E₀ = P` and `E_{j+1} = V_{j+1} E_j`. -/
-def word : ℕ → C
-  | 0 => T.point
-  | j + 1 => (T.letter j).e.functor.obj (word j)
-
-/-- Every prefix has the self-extensions of a point. -/
-theorem pointLike_word : ∀ j, T.pointLike (T.word j)
-  | 0 => T.pointLike_point
-  | j + 1 => T.pointLike_letter j _ (pointLike_word j)
-
-/-- **The tower at the anchor.** For every prefix `E_j`, exactly one HN factor at `η` carries the
-point and every other factor is spherical: transport the tower of `E_j` along the walls to
-`V⁻¹ η`, then apply `V`. -/
-theorem carriesOnce_anchor [IsTriangulated C] :
-    ∀ j, T.anchor.CarriesOnce (T.carrier T.anchor) (T.spherical T.anchor) (T.word j)
-  | 0 => by
-      obtain ⟨φ, hφ⟩ := T.point_semistable
-      exact T.anchor.carriesOnce_of_semistable hφ T.point_nonzero T.carrier_point
-  | j + 1 => by
-      have h₀ := carriesOnce_anchor j
-      rw [← T.leg_start j] at h₀
-      have h₁ := (T.leg j).carriesOnce (T.pointLike_word j) h₀
-      rw [T.leg_end j] at h₁
-      have h₂ := (T.letter j).carriesOnce_map (T.carrier_letter j _) (T.spherical_letter j _) h₁
-      rwa [TriEquiv.act_symm_act] at h₂
-
-/-- **The tower theorem.** At the target `σ`, exactly one HN factor of `W P` carries the point,
-once, and every other factor is spherical. -/
-theorem tower [IsTriangulated C] :
-    T.target.CarriesOnce (T.carrier T.target) (T.spherical T.target) (T.word T.length) := by
-  have h₀ := T.carriesOnce_anchor T.length
-  rw [← T.final_start] at h₀
-  exact T.final_target _ (T.pointLike_word _) (T.final.carriesOnce (T.pointLike_word _) h₀)
-
-/-- **The tower theorem for every HN filtration.** Every HN filtration of `W P` at `σ` with
-nonzero factors has exactly one factor carrying the point, and its other factors are
-spherical. -/
-theorem tower_forall [IsTriangulated C] (F : HNFiltration C T.target.P (T.word T.length))
-    (hF : ∀ i, ¬IsZero (F.factor i)) :
-    F.CarriesOnce (T.carrier T.target) (T.spherical T.target) :=
-  T.tower.forall F hF
-
-end TowerHypotheses
+@[deprecated (since := "2026-11-25")]
+alias TowerHypotheses.tower_forall := CategoryTheory.Triangulated.TowerHypotheses.tower_forall
 
 end AlgebraicGeometry.K3.PicardRankOne
