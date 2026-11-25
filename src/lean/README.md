@@ -218,6 +218,30 @@ functors. [K3TwistsTest/TwistSystemModel.lean](K3TwistsTest/TwistSystemModel.lea
 the zero count satisfies every other input but not sphericity, and that the bound for inverse
 letters does not follow without symmetry.
 
+### Count cocycles: the growth sandwich and the squeeze
+
+`CountCocycleHypotheses` packages counts `c(Y) ≥ 0` and signed vectors `v(Y)` with `|v| ≤ c`
+entrywise, nonnegative count matrices `P_a` dominating the counts, `c(T_a Y) ≤ P_a c(Y)`, and
+matrices `E_a` carrying the signed vectors, `v(T_a Y) = E_a v(Y)`. Sign coherence (a diagonal of
+signs with `D E_a D = P_a`) and tightness (`v(Y) = D c(Y)`) are named hypotheses, not fields.
+
+| Assertion | Lean |
+|---|---|
+| The squeeze, in any partial order with a modulus and a sign map: along a tight orbit every domination is an equality; the intertwining is needed only along the orbit, and in its all-`x` form it forces the count map to be additive when the signed maps are; the flag form | `Order.squeeze_orbit`, `Order.squeeze`, `Order.map_add_of_intertwine`, `Order.squeeze_flag` |
+| The sign rule: `D E_i(e) D = P_i(e)` iff `-e d_i d_b K_{ib} = \|e\| G_{ib}`, for letters and words; with the parity-graded form (`K` skew, zero diagonal) adjacent letters have opposite signs, and a 2-colouring gives `D = 1`; `\|K\| ≤ G` gives `\|E_W\| ≤ P_W` for every word | `Matrix.signRule_letter`, `signRule_word`, `signRule_opposite`, `signRule_canonical`, `abs_signedWord_le` |
+| The growth sandwich for a word `W`: `‖c(Wⁿ Y)‖ ≤ K rⁿ` for `r > ρ(P_W)`; `‖c(Wⁿ Y)‖ ≥ rⁿ` eventually for `r < ρ(E_W)` when the seed meets the top of the spectrum of `E_W`; `ρ(E_W) ≤ ρ(P_W)` when `\|E_a\| ≤ P_a` | `CountCocycleHypotheses.norm_count_pow_le`, `eventually_pow_le_norm_count`, `gelfandRadius_signedWord_le` |
+| Under sign coherence, tight orbits have exact counts `c(W Y) = P_W c(Y)`, and a tight seed with counts bounded below grows at `ρ(P_W) = ρ(E_W)`, the complex spectral radius, with no Perron–Frobenius | `CountCocycleHypotheses.tight_word`, `tendsto_tight` |
+
+The real-object instance is `eulerCountCocycle`: the Euler pairings `⟨v(S_i), Y⟩` of a class with
+`v(𝒪_X)`, `v(𝒪_X(H))` and their absolute values, under the two twists; the sandwich holds for
+every word. The sign rule fails for it with every sign diagonal
+(`eulerCountCocycle_not_signCoherent`): the Euler form of a 2-Calabi–Yau category is symmetric
+with `⟨S, S⟩ = -2`, while the squeeze needs the parity-graded form, an auxiliary `ℤ/2`-grading
+that real classes do not carry. [K3TwistsTest/CountCocycleModel.lean](K3TwistsTest/CountCocycleModel.lean)
+gives a sign-coherent model (the Kronecker wall in its canonical orientation), and
+[K3TwistsTest/SignRuleModel.lean](K3TwistsTest/SignRuleModel.lean) checks that the symmetric form
+defeats every sign diagonal and forces equal signs on adjacent letters.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -269,6 +293,9 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Analysis/SpecificLimits/GrowthRate.lean` | exponential growth rates of sequences: Fekete with a constant and with a gap, padding, a submultiplicative sequence without polynomial envelope | `Real` |
 | `GroupTheory/Commutator/ForkWord.lean` | fork words are conjugate to a two-letter period | root |
 | `GroupTheory/GroupAction/TwistSystem.lean` | twist systems, the domination recursion and the exponent of the centre counts | root |
+| `GroupTheory/GroupAction/CountCocycle.lean` | count cocycles: the growth sandwich, exact counts and rates on tight seeds | root |
+| `Order/Squeeze.lean` | the squeeze along a tight orbit, in any partial order | `Order` |
+| `LinearAlgebra/Matrix/SignRule.lean` | count and signed letters, the sign rule with the parity-graded form, word-level domination | `Matrix` |
 | `Analysis/Matrix/GelfandRadius.lean` | rates of nonnegative matrices, certificates and variational bounds for the Gelfand radius, the `SL₂` rate and the Thurston matrices | `Matrix` |
 | `Analysis/Matrix/BipartiteCompression.lean` | the compression of bipartite multitwists to Thurston matrices and the rate of their words | `Matrix.BipartiteCompression` |
 | `Analysis/Matrix/JointSpectralRadius.lean` | word maxima in a monoid, the joint spectral radius, a pair of unipotent matrices and the triangle | `Monoid`, `Matrix` |
@@ -285,6 +312,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerCountCocycle.lean` | the count cocycle of the Euler pairings with `𝒪_X` and `𝒪_X(H)`, and the failure of the sign rule for it | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem from its inputs | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/RigidWall.lean` | the example of a rigid wall at `g = 3` | same |
 | `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations and the HN polygon in a lattice with a slope function | `Order.SlopeFunction` |

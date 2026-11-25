@@ -41,8 +41,7 @@ Without any sign rule, `|K| ≤ G` entrywise gives `|E_W| ≤ P_W` entrywise for
 
 * `Matrix.signRule_letter`, `Matrix.signRule_word`: the sign rule for letters and words;
 * `Matrix.signRule_opposite`, `Matrix.signRule_canonical`: the parity-graded form;
-* `Matrix.abs_signedWord_le`: word-level domination from `|K| ≤ G`;
-* `Matrix.mulVec_mono_of_nonneg`: a nonnegative matrix is monotone on vectors.
+* `Matrix.abs_list_prod_le`, `Matrix.abs_signedWord_le`: word-level domination from `|K| ≤ G`.
 -/
 
 namespace Matrix
@@ -210,24 +209,6 @@ theorem signRule_canonical {G : Matrix ι ι ℝ} {ε : ι → ℝ} (hε : IsSig
     split_ifs with hai
     · subst hai; simp only [K, of_apply]; rw [← he']; ring
     · simp
-
-omit [DecidableEq ι] in
-/-- A nonnegative matrix is monotone on vectors. -/
-lemma mulVec_mono_of_nonneg {A : Matrix ι ι ℝ} (hA : ∀ a b, 0 ≤ A a b) {x y : ι → ℝ}
-    (h : x ≤ y) : A *ᵥ x ≤ A *ᵥ y := fun a => by
-  simp only [mulVec, dotProduct]
-  exact Finset.sum_le_sum fun b _ => mul_le_mul_of_nonneg_left (h b) (hA a b)
-
-/-- Products of nonnegative matrices are nonnegative. -/
-lemma list_prod_nonneg (L : List (Matrix ι ι ℝ)) (hL : ∀ A ∈ L, ∀ i j, 0 ≤ A i j) :
-    ∀ i j, 0 ≤ L.prod i j := by
-  induction L with
-  | nil => intro i j; simp only [List.prod_nil, Matrix.one_apply]; split_ifs <;> norm_num
-  | cons A L ih =>
-    intro i j
-    rw [List.prod_cons, Matrix.mul_apply]
-    exact Finset.sum_nonneg fun k _ =>
-      mul_nonneg (hL A (by simp) i k) (ih (fun B hB => hL B (by simp [hB])) k j)
 
 /-- **Entrywise domination of products.** If `|E_k| ≤ P_k` entrywise for each factor, then
 `|∏ E_k| ≤ ∏ P_k` entrywise. -/
