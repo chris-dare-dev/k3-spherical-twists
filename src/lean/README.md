@@ -52,6 +52,9 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | The lemma on the wall group that carries the point, in the quiver model (`U` once at vertex one, `S` `p` times at vertex zero, `e(M) = 2` read as `dim End M + p(g - p) = 1`): `p ≥ g`, and `M = S^k ⊕ T_S U` (every `B_i = 0`, the `A_i` independent) or `M = S^k ⊕ T_S⁻¹ U` (every `A_i = 0`, the `B_i` independent), `k = p - g` | `IsNilpotent.A_comp_B_eq_zero`, `finrank_End_ge`, `twoExtensions_rank`, `twoExtensions` |
 | Its table of HN quotients on both sides of the wall: where `U` is higher, `U, S^p` or `T_S⁻¹ U, S^k`; where `S` is higher, `S^k, T_S U` or `S^p, U`; for any wall object with `U` once, the HN filtrations are `0 ⊂ (⟨B_i⟩, U) ⊂ M` and `0 ⊂ (⋂ ker A_i, 0) ⊂ M` | `hnUHigher`, `hnSHigher`, `isStable_bot_subSpan`, `isStable_subKer_top`, `twoExtensions_table` |
 | From the proposition on rigid wall groups: the outgoing HN flag determines subobjects of the retained wall object independently of the representative. An isomorphism `M ≅ N` carries the HN filtration of `M` to that of `N` on either side, and every automorphism fixes the HN prefixes (in a lattice: any map preserving rank and degree fixes them) | `DoubledRep.Iso.mapSubrep`, `Iso.map_hnFiltration`, `Iso.map_hnFiltration_neg`, `Iso.mapSubrep_chain`, `HNFiltration.apply_chain_eq`, `HNFiltration.map` |
+| `Ext¹` of representations with the preprojective relations, by the standard complex `⊕ Hom(X_v, Y_v) → ⊕ Hom(X_{t(a)}, Y_{h(a)}) → ⊕ Hom(X_v, Y_v)`: `H⁰ = Hom`; an extension `0 → A → N → B → 0` is a cocycle placed in the off-diagonal block, every subrepresentation presents its representation as such an extension, and classes related by isomorphisms of the ends (cohomologous classes in particular) give isomorphic extensions | `DoubledRep.Ext1`, `ker_d₀₁`, `isPreprojective_extension_iff`, `offDiag_mem_cocycles₁`, `exists_iso_extension`, `extensionIso` |
+| From the proposition on rigid wall groups: for an extension `ξ` with middle term `N` and `Hom(A, B) = 0`, `v ↦ i v p` induces an injection `Ext¹(B, A)/(End(A)ξ + ξ End(B)) ↪ Ext¹(N, N)`; so `Ext¹(N, N) = 0` gives `Ext¹(B, A) = End(A)ξ + ξ End(B)` | `extQuotPushPull_injective`, `orbitSpan_eq_top`, `cocycles₁_le_orbitTangent` |
+| `dim Ext¹(X, Y) = dim Hom(X, Y) + dim Hom(Y, X) - (x, y)`, `(x, y) = 2x₀y₀ + 2x₁y₁ - g(x₀y₁ + x₁y₀)` (Crawley-Boevey, Amer. J. Math. 122 (2000), Lemma 1), from the duality of the two differentials under the trace pairing; Mukai's inequality with its defect, `e(N) = e(A) + e(B) + 2 dim Ext¹(B, A)/(End(A)ξ + ξ End(B))` when `Hom(A, B) = 0` (Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.5), so both ends of a rigid extension are rigid; the rigid example has `Ext¹ = 0` | `finrank_Ext1`, `dualMap_d₀₁_comp_tracePairing₁`, `finrank_Ext1_extension`, `finrank_Ext1_add_le`, `rigid_of_rigid_extension`, `subsingleton_Ext1_rigidRep` |
 | Fekete with a constant: the rate exists, each block certifies `ρ ≤ (K H_k)^{1/k}`, and the bounds converge | `exists_rate_of_submul`, `pow_rate_le` |
 | Transfer of rates between comparable sequences, uniformly in parameters; `o(n)` errors; polynomial growth has rate one; the rate per letter of a periodic word | `tendsto_rpow_inv_of_bounds`, `tendstoUniformly_rpow_inv_of_bounds`, `tendsto_log_div_of_bound`, `tendsto_log_div_zero_of_poly`, `tendsto_log_div_of_period` |
 | The algebra of Lemma A.1: the slope estimate `V(E) ≤ aR + d^{-1/2}√(Rm)` and the absorption of the square root | `piece_bound`, `slope_bound_of_le`, `fixedTest_of_generic` |
@@ -170,7 +173,10 @@ not formalized:
   Lemma 2.7 and Remark 2.8).
 
 For the wall group that carries the point, `e(M) = 2` enters through Riemann–Roch,
-`e(M) = 2 dim End M + v(M)²` with `v(M)² = 2p(g - p)` (`square_roots_plus_isotropic`).
+`e(M) = 2 dim End M + v(M)²` with `v(M)² = 2p(g - p)` (`square_roots_plus_isotropic`). For the
+rigid wall groups, between two spherical simples, `e(M) = dim Ext¹(M, M)` is computed in the model
+itself, by the standard complex of the preprojective algebra: `finrank_Ext1` gives
+`e(M) = 2 dim End M - 2(p² + q² - gpq)`, the same identity with `v(M)² = -2(p² + q² - gpq)`.
 
 ## Higher Picard rank: an elliptic K3 surface with a section
 
@@ -215,7 +221,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/RigidWall.lean` | the example of a rigid wall at `g = 3` | same |
 | `Order/HarderNarasimhan.lean` | Harder–Narasimhan filtrations and the HN polygon in a lattice with a slope function | `Order.SlopeFunction` |
 | `RepresentationTheory/Quiver/Kronecker/HarderNarasimhan.lean` | slope functions on subrepresentations, the two sides of a wall, the HN filtrations of the rigid representation | `Quiver.Kronecker` |
-| `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, subrepresentations, dimension vectors | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/Preprojective.lean` | representations of the doubled Kronecker quiver: preprojective relations, nilpotence, morphisms, isomorphisms, subrepresentations, dimension vectors, restrictions, quotients, subquotients, kernels and images | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/Ext.lean` | `Ext¹` by the standard complex, extensions as cocycles, the injection into `Ext¹(N, N)`, the dimension of `Ext¹` and Mukai's inequality | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the wall group that carries the point: classification and table of HN quotients | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/RigidRep.lean` | the rigid representation of dimension `(g², g)` with arrows in both directions | `Quiver.Kronecker` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` | punctures, clear sight lines, the lattice arguments of visibility on the cover, the finite search | same |
@@ -302,4 +309,4 @@ These follow Mathlib and derived-alg-geo-lean, so that files can move to either.
 
 ## What this does not cover
 
-The wall lemmas beyond the quiver model and the uniqueness of a rigid wall object given its incoming flag are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements.
+The wall lemmas beyond the quiver model are not formalized, nor is the socle step of the evaluation lemma (it needs the abelian length category `P(φ)`); neither is the higher-Picard-rank work. They need derived categories of K3 surfaces and stability conditions in Mathlib first. The tower algorithm is formalized from its inputs (`TowerHypotheses`), which are those statements. In the quiver model, the uniqueness of a rigid wall object given its incoming flag is not formalized: the injection into `Ext¹(N, N)` that its proof uses is proved, but the open-orbit argument for `Aut(A) × Aut(B)` acting on `Ext¹(B, A)` needs algebraic groups, which Mathlib cannot use yet.

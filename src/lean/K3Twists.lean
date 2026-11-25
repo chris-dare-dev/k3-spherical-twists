@@ -44,6 +44,7 @@ import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
 import K3Twists.LinearAlgebra.Lattice.Mukai.ProjectiveModel
 import K3Twists.LinearAlgebra.Lattice.Mukai.Reflection
 import K3Twists.Order.HarderNarasimhan
+import K3Twists.RepresentationTheory.Quiver.Kronecker.Ext
 import K3Twists.RepresentationTheory.Quiver.Kronecker.HarderNarasimhan
 import K3Twists.RepresentationTheory.Quiver.Kronecker.Preprojective
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
