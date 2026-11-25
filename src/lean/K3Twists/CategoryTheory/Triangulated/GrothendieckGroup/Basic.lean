@@ -10,7 +10,7 @@ import Mathlib.CategoryTheory.Triangulated.Triangulated
 /-!
 # The Grothendieck group of a pretriangulated category
 
-The owner-controlled `K₀ C` is the free abelian group on objects of `C`,
+`K₀ C` is the free abelian group on objects of `C`,
 quotiented by the relations `[B] = [A] + [D]` for distinguished triangles
 `A ⟶ B ⟶ D ⟶ A⟦1⟧`.
 -/

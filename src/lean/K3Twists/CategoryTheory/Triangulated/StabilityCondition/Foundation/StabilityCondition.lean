@@ -11,9 +11,9 @@ import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Foundation.PreSta
 /-!
 # Local finiteness and stability conditions
 
-This file adds the locally-finite refinement of the owner-controlled
-pre-stability API. The radius is normalized to be less than `1/2`, so every
-window has width at most one.
+This file adds the locally-finite refinement of the pre-stability conditions
+of `PreStabilityCondition.lean`. The radius is normalized to be less than `1/2`,
+so every window has width at most one.
 -/
 
 noncomputable section

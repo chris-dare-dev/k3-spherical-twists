@@ -16,7 +16,7 @@ For a slicing `s`, `s.IntervalCat C a b` is the full subcategory of objects
 whose Harder--Narasimhan factors have phase in `(a, b)`. An admissible
 subobject is one whose inclusion is the first map of a distinguished triangle
 whose quotient also lies in the same interval. This intrinsic triangulated
-description is independent of any retained quasi-abelian implementation.
+description needs no quasi-abelian structure on the interval category.
 -/
 
 noncomputable section

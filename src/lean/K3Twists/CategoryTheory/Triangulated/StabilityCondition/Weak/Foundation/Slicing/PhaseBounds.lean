@@ -5,11 +5,10 @@ Released under the MIT license.
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.IntervalCategory
 
 /-!
-# Phase bounds attached to an owner slicing
+# Phase bounds attached to a slicing
 
 This module defines the four phase-cut object properties used to construct the
-t-structure associated to a slicing.  The definitions are intrinsic to the
-repository-owned HN filtration API and have no retained-library dependency.
+t-structure associated to a slicing.
 -/
 
 noncomputable section
@@ -48,7 +47,7 @@ theorem HNFiltration.phiMinus_le_phiPlus {P : ℝ → ObjectProperty C} {E : C}
     F.phiMinus C h ≤ F.phiPlus C h :=
   (F.phase_mem_range C h ⟨0, h⟩).1
 
-/-- Transport an owner HN filtration across an isomorphism of its target. -/
+/-- Transport an HN filtration across an isomorphism of its target. -/
 def HNFiltration.ofIso {P : ℝ → ObjectProperty C} {E E' : C}
     (F : HNFiltration C P E) (e : E ≅ E') : HNFiltration C P E' where
   toPostnikovTower :=

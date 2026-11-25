@@ -10,16 +10,16 @@ import Mathlib.LinearAlgebra.Dual.Defs
 # The linear-dual functor on module categories
 
 Mathlib supplies `Module.Dual` and `LinearMap.dualMap`, but at the pinned
-revision it does not bundle them as a functor on `ModuleCat`.  This file is
-the category-theoretic owner of that functor.  In particular it has no
-dependency on algebraic geometry, so abstract Serre functors can use it.
+revision it does not bundle them as a functor on `ModuleCat`.  This file does,
+with no dependency on algebraic geometry, so that abstract Serre functors can
+use it.
 
 For `k : Type u` and modules in universe `max u w`, algebraic duality stays in
-the same module category: `Module.Dual k V` lives in `Type (max u w)`.  The
-older geometric use at `ModuleCat.{u + 1} k` is the specialization `w := u + 1`.
+the same module category: `Module.Dual k V` lives in `Type (max u w)`.  Modules
+in `ModuleCat.{u + 1} k` are the specialization `w := u + 1`.
 
-Only the functor, its two reduction lemmas, and additivity live here.  Exactness
-over a field remains in `Algebra/Category/ModuleCat/LinearDual.lean`.
+Only the functor, its two reduction lemmas, and additivity are here; exactness
+of the dual over a field is not proved.
 -/
 
 universe u w

@@ -13,11 +13,11 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
-# Owner-authored Harder--Narasimhan filtrations and slicings
+# Harder--Narasimhan filtrations and slicings
 
-These are the root data structures for the repository-owned stability API.
-They are deliberately small: operations on filtrations, interval categories,
-local finiteness, and stability conditions are migrated in later slices.
+These are the root data structures of the stability API. They are deliberately
+small: operations on filtrations, interval categories, local finiteness, and
+stability conditions are in the files that import this one.
 -/
 
 noncomputable section

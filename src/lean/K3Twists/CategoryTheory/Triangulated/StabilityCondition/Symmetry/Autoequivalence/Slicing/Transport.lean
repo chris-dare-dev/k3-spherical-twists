@@ -44,33 +44,31 @@ the endofunctors needed by the action.
 
 ### Why there is no `MulAction` here
 
-Unlike `GLTilde`, the acting object is **not** a group in Lean. `C ≌ C` under
-composition is associative only up to natural isomorphism, so it carries no
-`Group` instance and `MulAction` is the wrong target. Bridgeland's "`Aut(D)`
-acts" is a statement about the induced action on isomorphism classes; a strict
-formalisation would need to quotient, or to work with a strictified group of
-autoequivalences. That is a design decision, not an oversight.
+Unlike `G̃L⁺(2, ℝ)`, the autoequivalences do **not** form a group in Lean.
+`C ≌ C` under composition is associative only up to natural isomorphism, so it
+carries no `Group` instance and `MulAction` is the wrong target. Bridgeland's
+"`Aut(D)` acts" is a statement about the induced action on isomorphism classes;
+a strict formalisation would need to quotient, as `AutQuot` in `Quotient.lean`
+does, or to work with a strictified group of autoequivalences. That is a design
+decision, not an oversight.
 
-### From slicings to stability conditions
+### Slicings, not stability conditions
 
-The stability-condition action built on this transport is in
-`Autoequivalence/Stability/Transport.lean`. Beyond the slicing it needs:
+This file transports slicings only. Transporting a stability condition as well
+needs three more ingredients, none of which is formalized here:
 
-1. `K₀` functoriality — `K₀.map Φ`, via `K₀.lift` and an `IsTriangleAdditive`
-   proof.
+1. `K₀` functoriality: the map `K₀ C → K₀ C` induced by `Φ`, via `K₀.lift` and
+   an `IsTriangleAdditive` proof.
 2. Class-map compatibility: an autoequivalence acts on `WithClassMap C v` only
-   together with a `λ : Λ ≃+ Λ` satisfying `v ∘ K₀.map Φ = λ ∘ v`. For `v = id`
-   this is forced; in general it is extra data, exactly as `Compatible` is for
-   `GLTilde`.
+   together with a `λ : Λ ≃+ Λ` satisfying `v ∘ K₀(Φ) = λ ∘ v`. For `v = id`
+   this is forced; in general it is extra data.
 3. Local finiteness under `mapEquiv`. This is a *different* problem from
-   local finiteness under the `G̃L⁺(2, ℝ)` relabelling: the phase windows do
+   local finiteness under the `G̃L⁺(2, ℝ)` action: the phase windows do
    not move at all here, so no uniform-continuity argument is needed. What is
    needed instead is that strict finite length is invariant under an
-   equivalence of interval categories — and
-   `interval_thinFiniteLength_of_inclusion_strict` does not apply, since it
-   compares two `intervalProp`s on the *same* object.
+   equivalence of interval categories.
 
-### Why two `@[nolint unusedArguments]`s below, and one in `GrothendieckGroup/Functorial.lean`
+### Why two `@[nolint unusedArguments]`s below
 
 The environment linter reports `[F.Additive]` unused by `PostnikovTower.mapF`
 and `[Φ.inverse.Additive]` unused by `Slicing.mapEquiv`. Both are true of the
@@ -83,17 +81,12 @@ Deleting them does not remove the finding — it **moves it one caller up**:
 | `PostnikovTower.mapF` | `HNFiltration.mapF`, which passes it straight through |
 | `Slicing.mapEquiv` | `Slicing.mapEquiv_P`, whose *statement* carries it |
 
-`K₀.isTriangleAdditive_map` in `CategoryTheory/Triangulated/GrothendieckGroup/Functorial.lean`
-carries the same `@[nolint unusedArguments]` for the same stated reason.
-
-Following the chase to its end amputates the hypothesis from `K₀.map_of` and
-finally from `TriEquiv.iAdd` — a structure field whose whole purpose is to make
-the six instances of a triangulated auto-equivalence travel together.
-
 So the hypothesis set is the interface, not an artefact of how the fields were
 discharged: "triangulated functor" here means `Additive` + `CommShift ℤ` +
-`IsTriangulated`, every consumer supplies all three, and a later reproof that
-does use additivity must not be a breaking signature change.
+`IsTriangulated`, every consumer supplies all three (`TriEquiv`, in
+`Quotient.lean`, bundles the six instances of a triangulated auto-equivalence so
+that they travel together), and a later reproof that does use additivity must
+not be a breaking signature change.
 
 ## References
 
@@ -157,9 +150,7 @@ noncomputable def HNFiltration.mapF {P : ℝ → ObjectProperty C}
 /-- Transport a slicing along a triangulated auto-equivalence:
 `(Φ • s).P φ X = s.P φ (Φ⁻¹ X)`.
 
-Dual to the `G̃L⁺(2, ℝ)` relabelling of derived-alg-geo-lean
-(`WeakStabilityCondition.StabilityCondition.GroupAction.relabel`), which moves phases and fixes
-objects.
+Dual to the action of `G̃L⁺(2, ℝ)`, which moves phases and fixes objects.
 
 `[Φ.inverse.Additive]` is unused by this term and kept regardless: without it
 `Φ` is not an equivalence of *triangulated* categories, which is what
