@@ -60,9 +60,8 @@ variable {N : Type*} [AddCommGroup N] (b : N →ₗ[ℤ] N →ₗ[ℤ] ℤ)
 
 /-! ### The map
 
-`Mukai.reflect` is `BilinearForm.reflect` at `pairingBilin b`. The name is kept
-because four `SphericalTwist` modules spell it, and because "reflection in a
-spherical class" is the application's word for it. -/
+`Mukai.reflect` is `BilinearForm.reflect` at `pairingBilin b`, named for what
+it is in the application: the reflection in a spherical class. -/
 
 /-- Reflection in `s`: `ρ_s(v) = v + ⟪v, s⟫ • s`, specialising
 `BilinearForm.reflect` to the Mukai pairing. -/

@@ -28,8 +28,7 @@ Mukai lattice, without stability and without schemes.
 ## Main results
 
 * `Mukai.pairing_comm` — the extension is symmetric when `b` is.
-* `Mukai.selfPairing_mk` — the discriminant `Δ(r, c, s) = b c c - 2 r s`, which every
-  discriminant in the repository projects to.
+* `Mukai.selfPairing_mk` — the discriminant `Δ(r, c, s) = b c c - 2 r s`.
 
 ## Implementation notes
 
@@ -43,16 +42,11 @@ exist in Mathlib at the pin. **Nothing here asserts or depends on it.**
 Spherical-class vocabulary and the expected moduli dimension are application
 words sitting on this carrier, and they stay with the application.
 
-`Mukai/RealForm.lean` takes `R = ℝ` and bundles the result as a quadratic form
-for the signature theory; `realPairing` is an `abbrev` for `pairing` there.
-
 ### The generalisation is over the coefficient ring, never over the dimension
 
-The arity is fixed at three. A dimension-indexed self-pairing vanishes
-identically in odd degree, so the threefold discriminant could not reach it.
-The reason the ring has to be arbitrary at all is that three of the seven
-discriminant leaves this parents are `ℚ`- or `A`-valued rather than
-`ℝ`-valued.
+The arity is fixed at three summands, `R × M × R`. Only the coefficient ring
+is general: nothing below needs more than a commutative ring, and
+`Lattice/Mukai/Basic.lean` specialises it to `R = ℤ`.
 
 ### The namespace
 
@@ -99,10 +93,7 @@ theorem selfPairing_eq_pairing (v : R × M × R) :
     selfPairing b v = pairing b v v :=
   rfl
 
-/-- **The discriminant, once.**  `Δ(r, c, s) = b c c - 2 r s` is what every
-discriminant in the repository projects to; the leaves differ only in which
-ring `R` is, which bilinear form `b` is, and which three quantities are fed in.
--/
+/-- **The discriminant.** `Δ(r, c, s) = ⟪(r, c, s), (r, c, s)⟫ = b c c - 2 r s`. -/
 @[simp]
 theorem selfPairing_mk (r : R) (c : M) (s : R) :
     selfPairing b (r, c, s) = b c c - 2 * (r * s) := by

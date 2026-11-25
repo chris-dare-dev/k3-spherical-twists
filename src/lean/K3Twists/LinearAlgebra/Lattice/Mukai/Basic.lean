@@ -20,12 +20,10 @@ Given an additive group `N` carrying a symmetric `ℤ`-bilinear form `b`, the
 that lattice is an instance of. Taking `N = NS(X)` with the intersection form
 recovers the algebraic Mukai lattice `H⁰ ⊕ NS ⊕ H⁴`, but that identification
 needs `D^b(Coh X)`, Chern characters and Hirzebruch–Riemann–Roch, none of which
-exist in Mathlib at the pin. It is geometry, it lives in the assumption
-frontier, and nothing here discharges it or depends on it.
+exist in Mathlib at the pin. It is geometry, and nothing here asserts it,
+discharges it or depends on it.
 
-This is the same discipline `LinearAlgebra/Lattice/Numerical.lean` applies to
-`Fin 2 → ℤ`:
-every theorem below is a theorem about **an arbitrary symmetric bilinear
+Every theorem below is a theorem about **an arbitrary symmetric bilinear
 `ℤ`-lattice**, and is true whether or not any surface exists.
 
 ## Naming

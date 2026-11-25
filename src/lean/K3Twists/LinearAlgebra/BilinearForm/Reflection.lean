@@ -22,11 +22,10 @@ its rationalisation.
 
 ## This is stated over an arbitrary ambient form, not over one extension
 
-`Lattice/Mukai/Reflection.lean` used to own this argument on the single
-carrier `ℤ × N × ℤ`, even though nothing in it is about that carrier: every
-step is bilinearity, symmetry, or the one hypothesis `B s s = -2`. It is
-restated here on `(R, M, B)`, and the Mukai file specialises it at
-`B := Mukai.pairingBilin b`. There is one reflection, not two.
+Nothing in the argument is about the Mukai carrier `ℤ × N × ℤ`: every step is
+bilinearity, symmetry, or the one hypothesis `B s s = -2`. It is therefore
+stated here on `(R, M, B)`, and `Lattice/Mukai/Reflection.lean` specialises it
+at `B := Mukai.pairingBilin b`. There is one reflection, not two.
 
 **This is not the spherical twist.** On a K3 surface the Seidel--Thomas twist
 `T_E` acts on the Mukai lattice as `ρ_{v(E)}`, and that statement is the
