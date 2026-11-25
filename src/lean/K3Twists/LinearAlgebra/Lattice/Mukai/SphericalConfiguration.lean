@@ -2,10 +2,12 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import K3Twists.LinearAlgebra.BilinearForm.Gram
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Isotropic
 import Mathlib.Algebra.BigOperators.Finsupp.Basic
 import Mathlib.Data.Finsupp.Basic
+import Mathlib.Data.Finsupp.Multiset
 import Mathlib.LinearAlgebra.Matrix.Notation
 
 /-!
@@ -32,6 +34,24 @@ Anisotropy (no isotropic sphere sum) is not closed under orthogonal sums: `[-2]`
 phase at a wall does not follow from statements about the phases' blocks separately, and an
 anisotropy hypothesis for a whole wall is strictly stronger than one per phase.
 
+## One and two spheres
+
+A single sphere has no isotropic sum (`Matrix.noIsotropic_one`). Two spheres of pairing `g` have
+one exactly when `g = 2` (`Matrix.isotropicSphereSum_two_iff`): for `|g| ≥ 3` because
+`x² - gxy + y²` has no rational zero (`Matrix.noIsotropic_two`), for `g ≤ 1` because the form is
+positive on the nonnegative quadrant, while at `g = 2`, the wall of a `(-2)`-curve, `(1, 1)` is
+isotropic (`Matrix.isotropic_two`). Negative pairings are covered too: with natural coefficients
+`[[-2, -2], [-2, -2]]` is anisotropic, although `(1, -1)` is an isotropic integer vector. For three
+spheres pairwise pairings of at least `3` do not suffice (`Matrix.pairwise_three_not_sufficient`).
+
+## The lattice core of a lost carrier
+
+If an isotropic nonzero class is a sum, with natural coefficients, of the classes of the stable
+objects of one phase, and the stable spherical ones among them have no isotropic sum, then some
+constituent is not spherical (`BilinearForm.exists_nonspherical_constituent`). The form used by
+`WallStep` is `BilinearForm.isotropicSphereSum_gram_of_list`: a nonempty list of spheres whose
+classes add up to an isotropic class gives an isotropic sphere sum of their Gram matrix.
+
 ## Main definitions
 
 * `Matrix.IsotropicSphereSum`: some nonzero finitely supported `a : ι →₀ ℕ` has `aᵀGa = 0`.
@@ -45,6 +65,11 @@ anisotropy hypothesis for a whole wall is strictly stronger than one per phase.
   `Matrix.NoIsotropicSphereSum` for a wall matrix of spheres.
 * `Matrix.not_isotropicSphereSum_of_isEmpty`: a phase with no stable sphere is anisotropic.
 * `Matrix.isotropic_block`: anisotropy is not closed under orthogonal sums.
+* `Matrix.noIsotropic_one`, `Matrix.isotropicSphereSum_two_iff`, `Matrix.noIsotropic_two`,
+  `Matrix.isotropic_two`: one and two spheres.
+* `BilinearForm.apply_finsupp_sum_self`: the Tits identity for finitely supported coefficients.
+* `BilinearForm.isotropicSphereSum_gram_of_list`,
+  `BilinearForm.exists_nonspherical_constituent`: the lattice core.
 
 ## Tags
 
@@ -158,4 +183,128 @@ theorem isotropic_block : (!![(-2 : ℤ), 0, 0; 0, -2, 3; 0, 3, -2]).IsotropicSp
   (isotropicSphereSum_iff_of_fintype _).mpr
     ⟨fun _ => 1, fun h => by simpa using congrFun h 0, by decide⟩
 
+/-! ### One and two spheres -/
+
+/-- **One sphere has no isotropic sum.** -/
+theorem noIsotropic_one (G : Matrix (Fin 1) (Fin 1) ℤ) (hG : G 0 0 = -2) :
+    ¬G.IsotropicSphereSum := by
+  rw [isotropicSphereSum_iff_of_fintype]
+  rintro ⟨a, ha, h⟩
+  apply ha
+  funext i
+  fin_cases i
+  simp only [dotProduct, mulVec, Finset.univ_unique, Fin.default_eq_zero, Finset.sum_singleton,
+    hG] at h
+  simpa using h
+
+/-- **Two spheres of pairing `g` have an isotropic sum exactly when `g = 2`.** -/
+theorem isotropicSphereSum_two_iff (g : ℤ) :
+    (!![(-2 : ℤ), g; g, -2]).IsotropicSphereSum ↔ g = 2 := by
+  rw [isotropicSphereSum_iff_of_fintype]
+  constructor
+  · rintro ⟨a, ha, h⟩
+    simp only [dotProduct, mulVec, Fin.sum_univ_two, of_apply, cons_val', cons_val_zero,
+      cons_val_one, empty_val', cons_val_fin_one] at h
+    have h2 : 2 * ((a 0 : ℤ) ^ 2 + a 1 ^ 2 - g * a 0 * a 1) = 0 := by linear_combination -h
+    have hq : (a 0 : ℤ) ^ 2 + a 1 ^ 2 = g * a 0 * a 1 := by
+      linear_combination (mul_eq_zero.mp h2).resolve_left two_ne_zero
+    have hne : (a 0 : ℤ) ≠ 0 ∨ (a 1 : ℤ) ≠ 0 := by
+      by_contra h0
+      push Not at h0
+      exact ha (funext fun i => by fin_cases i <;> simp_all)
+    by_contra hg
+    rcases le_or_gt g 1 with hg1 | hg1
+    · have h0 : (0 : ℤ) ≤ a 0 * a 1 := by positivity
+      rcases hne with h' | h' <;> nlinarith [sq_pos_of_ne_zero h', sq_nonneg ((a 0 : ℤ) - a 1)]
+    · have hg3 : 3 ≤ |g| := by rw [abs_of_pos (by lia)]; lia
+      have hqℚ : (a 0 : ℚ) ^ 2 + (a 1 : ℚ) ^ 2 = (g : ℚ) * a 0 * a 1 := by exact_mod_cast hq
+      obtain ⟨h0, h1⟩ := Quiver.Kronecker.no_null_vector (g := -g) (by rwa [abs_neg])
+        (x := (a 0 : ℚ)) (y := (a 1 : ℚ)) (by push_cast; linarith)
+      rcases hne with h' | h'
+      · exact h' (by exact_mod_cast h0)
+      · exact h' (by exact_mod_cast h1)
+  · rintro rfl
+    exact ⟨fun _ => 1, fun h => by simpa using congrFun h 0, by decide⟩
+
+/-- **Two spheres of pairing `|g| ≥ 3` have no isotropic sum.** In Picard rank one a wall group
+has at most two sphere types (Bayer–Bridgeland, arXiv:1310.8266, Lemma 3.3 and Proposition 3.4). -/
+theorem noIsotropic_two {g : ℤ} (hg : 3 ≤ |g|) :
+    ¬(!![(-2 : ℤ), g; g, -2]).IsotropicSphereSum := by
+  rw [isotropicSphereSum_two_iff]
+  rintro rfl
+  norm_num at hg
+
+/-- **At pairing two, `(1, 1)` is isotropic**: the wall of a `(-2)`-curve. -/
+theorem isotropic_two : (!![(-2 : ℤ), 2; 2, -2]).IsotropicSphereSum :=
+  (isotropicSphereSum_two_iff 2).mpr rfl
+
 end Matrix
+
+namespace BilinearForm
+
+open Matrix Finsupp
+
+variable {M ι : Type*} [AddCommGroup M] (B : LinearMap.BilinForm ℤ M)
+
+/-- **The Tits identity for finitely supported coefficients.** -/
+theorem apply_finsupp_sum_self (c : ι → M) (a : ι →₀ ℕ) :
+    B (a.sum fun i n => (n : ℤ) • c i) (a.sum fun i n => (n : ℤ) • c i) =
+      a.sum fun i m => a.sum fun j n => (m : ℤ) * gram B c i j * n := by
+  simp only [Finsupp.sum, map_sum, LinearMap.sum_apply, map_zsmul, LinearMap.smul_apply,
+    smul_eq_mul, gram_apply, Finset.mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  ring
+
+/-- An isotropic nonzero sum of the family, with natural coefficients, is an isotropic sphere sum
+of its Gram matrix. -/
+theorem isotropicSphereSum_gram_of_finsupp (c : ι → M) (a : ι →₀ ℕ) (ha : a ≠ 0)
+    (h : B (a.sum fun i n => (n : ℤ) • c i) (a.sum fun i n => (n : ℤ) • c i) = 0) :
+    (gram B c).IsotropicSphereSum :=
+  ⟨a, ha, by rwa [← apply_finsupp_sum_self]⟩
+
+/-- The sum of a multiset of classes is the sum weighted by multiplicities. -/
+theorem multiset_sum_map_eq [DecidableEq ι] (c : ι → M) (s : Multiset ι) :
+    (s.map c).sum = (Multiset.toFinsupp s).sum fun i n => (n : ℤ) • c i := by
+  induction s using Multiset.induction_on with
+  | empty => simp
+  | cons x s ih =>
+    rw [Multiset.map_cons, Multiset.sum_cons, ih, ← Multiset.singleton_add,
+      Multiset.toFinsupp_add, Multiset.toFinsupp_singleton,
+      Finsupp.sum_add_index' (fun _ => by simp) (fun _ _ _ => by push_cast; exact add_smul _ _ _),
+      Finsupp.sum_single_index (by simp)]
+    simp
+
+/-- **The lattice core, list form.** If the classes of a nonempty list of members of the family
+add up to an isotropic class, the Gram matrix of the family has an isotropic sphere sum. -/
+theorem isotropicSphereSum_gram_of_list (c : ι → M) (L : List ι) (hL : L ≠ [])
+    (h : B (L.map c).sum (L.map c).sum = 0) : (gram B c).IsotropicSphereSum := by
+  classical
+  refine isotropicSphereSum_gram_of_finsupp B c (Multiset.toFinsupp L) ?_ ?_
+  · rw [Ne, ← Multiset.toFinsupp_zero, Multiset.toFinsupp.injective.eq_iff]
+    simpa using hL
+  · rwa [← multiset_sum_map_eq, Multiset.map_coe, Multiset.sum_coe]
+
+/-- **There is always a non-spherical constituent.** Let an isotropic nonzero class `f` be a sum,
+with natural coefficients `a`, of the classes `c i` of the stable objects of one phase, and let
+the spherical ones (`sph`) have no isotropic sphere sum. Then some constituent that occurs in `f`
+is not spherical. -/
+theorem exists_nonspherical_constituent (c : ι → M) (sph : ι → Prop) (a : ι →₀ ℕ) {f : M}
+    (hf : B f f = 0) (hf0 : f ≠ 0) (hsum : f = a.sum fun i n => (n : ℤ) • c i)
+    (han : ¬(gram B fun i : {i // sph i} => c i).IsotropicSphereSum) :
+    ∃ i, a i ≠ 0 ∧ ¬sph i := by
+  by_contra hne
+  push Not at hne
+  have hsupp : ∀ i ∈ a.support, sph i := fun i hi => hne i (Finsupp.mem_support_iff.mp hi)
+  have hsub : (a.subtypeDomain sph).sum (fun i n => (n : ℤ) • c i) =
+      a.sum fun i n => (n : ℤ) • c i :=
+    Finsupp.sum_subtypeDomain_index (p := sph) (v := a) (h := fun i n => (n : ℤ) • c i) hsupp
+  have hne0 : a.subtypeDomain sph ≠ 0 := fun h0 => by
+    apply hf0
+    rw [hsum, ← hsub, h0, Finsupp.sum_zero_index]
+  have key : B ((a.subtypeDomain sph).sum fun i n => (n : ℤ) • c i)
+      ((a.subtypeDomain sph).sum fun i n => (n : ℤ) • c i) = 0 := by
+    rw [hsub, ← hsum, hf]
+  exact han (isotropicSphereSum_gram_of_finsupp B (fun i : {i // sph i} => c i) _ hne0 key)
+
+end BilinearForm

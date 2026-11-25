@@ -122,7 +122,7 @@ theorem ofTwoCY_e_point {k : Type*} [Field k] [Linear k C] {Λ : Type*} [AddComm
 
 /-- **A step with free Gram matrices exists between any two slicings**: take the isotropic matrix
 of two spheres of pairing `2` at every phase. So a `CarrierStep` says nothing about the slicings
-until its Gram matrices are tied to a wall. -/
+until its Gram matrices are tied to a wall (`WallStep`). -/
 def anyStep (b : MukaiBudget C) (carrier : Slicing C → ObjectProperty C) (t₁ t₂ : Slicing C) :
     CarrierStep b carrier t₁ t₂ where
   ι := fun _ => ULift (Fin 2)
