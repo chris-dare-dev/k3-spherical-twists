@@ -12,6 +12,9 @@ import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.Visibility
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.VisibilityOnCover
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.WallArithmetic
 import K3Twists.Analysis.Complex.UpperHalfPlane.ProjectiveModel
+import K3Twists.Analysis.Matrix.BipartiteCompression
+import K3Twists.Analysis.Matrix.GelfandRadius
+import K3Twists.Analysis.Matrix.JointSpectralRadius
 import K3Twists.Analysis.SpecificLimits.GrowthRate
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Radical
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Saturation
@@ -58,3 +61,4 @@ import K3Twists.RepresentationTheory.Quiver.Kronecker.Radical
 import K3Twists.RepresentationTheory.Quiver.Kronecker.RigidRep
 import K3Twists.RepresentationTheory.Quiver.Kronecker.TwoExtensions
 import K3Twists.RingTheory.Polynomial.Basic
+import K3Twists.RingTheory.Polynomial.Chebyshev
