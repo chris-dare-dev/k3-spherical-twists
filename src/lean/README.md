@@ -95,6 +95,9 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | Evaluation of one phase, in any slicing: `Hom(S, M) ≅ Hom(S, D)` for the top quotient `M → D → C` and `S` of phases at least `φ` (and dually at the bottom); a residual of phases at most `φ` with no maps from `P(φ)` has phases below `φ`; the fibre of `D → D_final` is `M → D`; one evaluation step keeps the lower tail `C` | `Slicing.comp_bijective_of_top`, `Slicing.comp_bijective_of_bottom`, `Slicing.ltProp_of_leProp_of_hom_eq_zero`, `Slicing.exists_iso_top`, `Slicing.exists_evaluation_step` |
 | A coreflection `ε : D ⟶ R` into a class `P` (`D` in `P`, and every map from an object of `P` to `R` factors uniquely through `ε`) is the partial right adjoint of the inclusion at `R`, unique up to isomorphism over `R`. In an abelian category it is a monomorphism if `P` is closed under subobjects or under quotients, and then the largest subobject in `P`; it exists if `P` contains zero, is closed under quotients and extensions and `R` is Noetherian, or if `C` is well-powered with coproducts and `P` is closed under quotients and coproducts. `t(R)` is the supremum of the images of the maps from a generator; `Ext¹(-, K₀)` is left exact on `P` when `t(K₀) = 0`; a test class and a potential that drops on kernels give a torsion pair `(⊥F, F)` (Dickson, Trans. Amer. Math. Soc. 121 (1966)) | `ObjectProperty.IsCoreflection`, `rightAdjointObjIsDefined_ι_iff`, `isLeftAdjoint_ι_iff`, `IsCoreflection.isoOfIsCoreflection`, `IsCoreflection.mono_of_subobjects`, `IsCoreflection.mono_of_quotients`, `IsCoreflection.isGreatest`, `exists_isGreatest_subobject`, `isLeftAdjoint_ι_of_isNoetherianObject`, `isGreatest_sSup`, `isLUB_imageSubobject_of_generator`, `mk₀_comp_injective_of_rightOrthogonal`, `torsionTheory_of_potential` |
 | In a slicing, the top quotient `M → D` of the evaluation lemma is the coreflection of `D` into the objects of phases at least `t`, so it is unique over `D`; every object has a coreflection into the objects of phases above `t`, so their inclusion is a left adjoint | `Slicing.isCoreflection_geProp_of_top`, `Slicing.isoOfTop`, `Slicing.exists_isCoreflection_gtProp`, `Slicing.isLeftAdjoint_ι_gtProp` |
+| The Artin group of a Coxeter matrix (Mathlib has none) and its surjection onto the Coxeter group; the pure Artin group is the normal closure of the squares `σ_i²`; a representation whose generators are involutions factors through the Coxeter group and kills the pure Artin group | `CoxeterMatrix.ArtinGroup`, `toCoxeterGroup_surjective`, `pureArtinGroup_eq_normalClosure`, `exists_factor_of_sq`, `pure_mem_ker_of_sq` |
+| A braid relation of length `m` is one conjugation identity `u f(i') u⁻¹ = f(c)`, `u` the alternating word of length `m - 1`; a conjugation-equivariant `τ : X → G` turns one object identity per edge into the braid relations, for every Coxeter matrix; braid relations are closed under reversal, which gives the anti-automorphism `σ_i ↦ σ_i` | `CoxeterMatrix.braid_iff_conj`, `isBraidLiftable_of_equivariant`, `isBraidLiftable_op_iff`, `ArtinGroup.reverse` |
+| An Artin group acts on slicings through any family of exact autoequivalences whose classes satisfy its braid relations (from pairwise braid isomorphisms, or in the Seidel–Thomas form, arXiv:math/0001043, §2); two signed words with the same image in the Artin group are naturally isomorphic and carry HN filtrations to each other, with the same phases and isomorphic factors; the pure Artin group lands in the normal closure of the squared twists | `AutQuot.artinHom`, `AutQuot.isBraidLiftable_of_iso`, `AutQuot.isBraidLiftable_ofExt`, `AutQuot.nonempty_iso_of_ofSignedWord_eq`, `AutQuot.hn_of_ofSignedWord_eq`, `AutQuot.map_pureArtinGroup_le` |
 
 ## What is proved from stated inputs
 
@@ -253,6 +256,30 @@ that real classes do not carry. [K3TwistsTest/CountCocycleModel.lean](K3TwistsTe
 gives a sign-coherent model (the Kronecker wall in its canonical orientation), and
 [K3TwistsTest/SignRuleModel.lean](K3TwistsTest/SignRuleModel.lean) checks that the symmetric form
 defeats every sign diagonal and forces equal signs on adjacent letters.
+### Braid relations from one conjugation condition
+`TwistConjugation` is the conjugation formula for spherical twists, as a map `τ : C → AutQuot C`
+sending an object to the class of its twist:
+- `τ` depends only on the object up to isomorphism and shift, `T_{S[n]} = T_S`;
+- `τ(Φ S) = [Φ] τ(S) [Φ]⁻¹` for every exact autoequivalence `Φ` and spherical `S`, that is
+  `T_{Φ S} ≅ Φ T_S Φ⁻¹` (Seidel–Thomas, arXiv:math/0001043, Lemma 2.11).
+These fields hold for `τ ≡ 1`, so the content sits in a `TwistConjugation.Configuration` of a
+Coxeter matrix `M`: spherical objects `x_i`, autoequivalences `T_i` with the link `[T_i] = τ(x_i)`,
+and one object identity per edge, `T_i x_{i'} ≅ x_{i'}[n]` for `m = 2` and `T_{i'} T_i x_{i'} ≅ x_i[n]`
+for `m = 3` (in either orientation; `m = ∞` asks for nothing). No pairwise braid isomorphism is
+assumed. From these, for every Coxeter matrix at once:
+| The twists satisfy the braid relations of `M`, so `σ_i ↦ [T_i]` is a homomorphism `Art(M) →* AutQuot C` | `TwistConjugation.Configuration.isBraidLiftable`, `TwistConjugation.toAutQuot` |
+| Two signed words with the same image in `Art(M)` act equally on slicings and carry HN filtrations to each other, with the same phases and isomorphic factors | `TwistConjugation.nonempty_iso_of_eq`, `TwistConjugation.hn_of_eq` |
+| Twists commute when `T_X Y ≅ Y[n]` | `TwistConjugation.commute_of_iso` |
+| Any action in which the twists act as involutions, the action on the Mukai lattice included, factors through the Coxeter group `W(M)`; so it sees no element of the pure Artin group | `TwistConjugation.exists_factor`, `TwistConjugation.toAutQuot_eq_one_of_mem_pureArtinGroup` |
+[K3TwistsTest/ArtinModel.lean](K3TwistsTest/ArtinModel.lean) gives the model `τ ≡ 1`, with the
+identity autoequivalences at one object as a configuration for every Coxeter matrix, in which the
+whole Artin group acts trivially. Mathlib has no spherical twist functor (it needs functorial
+cones, from a dg or Fourier–Mukai enhancement), so no configuration of real twists is built. Its
+image on classes is: on an elliptic K3 surface with a section, `𝒪_X[1]` and `𝒪_C` form an `A₂`
+configuration, with edge identity `T_{𝒪_C} T_{𝒪_X} 𝒪_C ≅ 𝒪_X[1]`; on the Mukai lattice the
+reflections satisfy the same equivariant criterion and this identity, and `Art(A₂)` acts through
+`W(A₂) = S₃` (table of the elliptic surface below). The configurations of Picard rank one and the
+two simples of a wall of pairing two all have `m = ∞`, with no edge identity to check.
 
 ## Walls in the quiver model
 
@@ -295,6 +322,7 @@ On an elliptic K3 surface with a section `C`, fibre class `F` and `NS = ℤC ⊕
 | The charge of the curve wall is `Z = ⟨Ω, -⟩` with `Ω = (1, β + iH, -3 + i)` and `Ω² = 31/8 - 2i ≠ 0`; it is a `GL₂⁺(ℝ)`-translate of an exponential charge: `⟨exp(B + iω), v⟩ = Re Z(v) + (1/2 + i√43/4) Im Z(v)` for `B = C/4 + F`, `ω = (√43/4) H` | `charge_eq_mukaiCharge`, `selfPairing_chargeClass`, `isIsotropic_expClass`, `mukaiCharge_expClass` |
 | Near the wall phases follow `B`-fractions: `j/(2j + 1)` (for `𝒪_C(j)`) increases below `1/2`, `j/(2j - 1)` (for `T_A 𝒪_C(j)`) decreases above it, and a subobject in the section-evaluation argument has fraction at most `j/(2j + 1)` | `cross_restrictedCharge`, `curveSheaf_fraction_strictMono`, `twistCurveSheaf_fraction`, `subobject_fraction_le` |
 | `exp h_cat(T_{𝒪_C} T_{𝒪_C(2)}) = (4² - 2 + √(4⁴ - 4·4²))/2 = 7 + 4√3` (Barbacovi–Kim, arXiv:2107.06079), while points off `C` are fixed | `barbacoviKim_four`, `barbacoviKim_four_root` |
+| `v(𝒪_X[1])` and `v(𝒪_C)` pair to `1`, an `A₂` configuration: reflections in roots are conjugation-equivariant under isometries, `ρ_{v(𝒪_C)} ρ_{v(𝒪_X)} v(𝒪_C) = v(𝒪_X[1])` (the class of `T_{𝒪_C} T_{𝒪_X} 𝒪_C ≅ 𝒪_X[1]`), so `Art(A₂)` acts on the Mukai lattice, through `W(A₂)`, and every pure braid acts trivially | `reflection_smul`, `a2_edge`, `a2Hom`, `exists_factor_a2Hom`, `a2Hom_eq_one_of_mem_pureArtinGroup` |
 
 ## Layout
 
@@ -352,6 +380,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/Lattice.lean` | the Mukai lattice of an elliptic K3 with a section and the classes of its curve wall | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/CurveWall.lean` | the charge of the curve wall, its phases, and the parity argument for the tails | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/MukaiCharge.lean` | the charge of the curve wall as a Mukai charge and a `GL₂⁺(ℝ)`-translate of an exponential charge | same |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/Braid.lean` | the `A₂` configuration `𝒪_X[1]`, `𝒪_C` on classes: the Artin group acting on the Mukai lattice through the Coxeter group | same |
+| `GroupTheory/Coxeter/ArtinGroup.lean` | the Artin group of a Coxeter matrix, the pure Artin group, braid relations from one conjugation identity per edge | `CoxeterMatrix` |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
 Mathlib's representations and subrepresentations, and keep the namespace `Quiver.Kronecker` of
@@ -385,6 +415,7 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Uniqueness.lean` | uniqueness of HN filtrations |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Insertion.lean` | the homotopy pullback, concatenation and refinement of HN filtrations |
 | `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/HarderNarasimhan.lean` | HN filtrations along an exact autoequivalence |
+| `Triangulated/StabilityCondition/Symmetry/Autoequivalence/Slicing/Artin.lean` | Artin groups acting by autoequivalences; braid relations from the conjugation formula (`TwistConjugation`) |
 | `Triangulated/StabilityCondition/WallCrossing.lean` | carrying the point once across a wall, a path of walls and a letter |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Evaluation.lean` | the evaluation lemma, as far as it holds in any slicing |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/Coreflection.lean` | truncations of a slicing as coreflections; the top quotient of the evaluation lemma as a radical |
