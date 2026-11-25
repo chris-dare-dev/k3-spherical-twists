@@ -110,6 +110,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | Evaluation of one phase, in any slicing: `Hom(S, M) ≅ Hom(S, D)` for the top quotient `M → D → C` and `S` of phases at least `φ` (and dually at the bottom); a residual of phases at most `φ` with no maps from `P(φ)` has phases below `φ`; the fibre of `D → D_final` is `M → D`; one evaluation step keeps the lower tail `C` | `Slicing.comp_bijective_of_top`, `Slicing.comp_bijective_of_bottom`, `Slicing.ltProp_of_leProp_of_hom_eq_zero`, `Slicing.exists_iso_top`, `Slicing.exists_evaluation_step` |
 | A coreflection `ε : D ⟶ R` into a class `P` (`D` in `P`, and every map from an object of `P` to `R` factors uniquely through `ε`) is the partial right adjoint of the inclusion at `R`, unique up to isomorphism over `R`. In an abelian category it is a monomorphism if `P` is closed under subobjects or under quotients, and then the largest subobject in `P`; it exists if `P` contains zero, is closed under quotients and extensions and `R` is Noetherian, or if `C` is well-powered with coproducts and `P` is closed under quotients and coproducts. `t(R)` is the supremum of the images of the maps from a generator; `Ext¹(-, K₀)` is left exact on `P` when `t(K₀) = 0`; a test class and a potential that drops on kernels give a torsion pair `(⊥F, F)` (Dickson, Trans. Amer. Math. Soc. 121 (1966)) | `ObjectProperty.IsCoreflection`, `rightAdjointObjIsDefined_ι_iff`, `isLeftAdjoint_ι_iff`, `IsCoreflection.isoOfIsCoreflection`, `IsCoreflection.mono_of_subobjects`, `IsCoreflection.mono_of_quotients`, `IsCoreflection.isGreatest`, `exists_isGreatest_subobject`, `isLeftAdjoint_ι_of_isNoetherianObject`, `isGreatest_sSup`, `isLUB_imageSubobject_of_generator`, `mk₀_comp_injective_of_rightOrthogonal`, `torsionTheory_of_potential` |
 | In a slicing, the top quotient `M → D` of the evaluation lemma is the coreflection of `D` into the objects of phases at least `t`, so it is unique over `D`; every object has a coreflection into the objects of phases above `t`, so their inclusion is a left adjoint | `Slicing.isCoreflection_geProp_of_top`, `Slicing.isoOfTop`, `Slicing.exists_isCoreflection_gtProp`, `Slicing.isLeftAdjoint_ι_gtProp` |
+| **Window dévissage**: if a triangulated functor `F` is surjective on `Hom(S, T⟦n⟧)` for `a - 1 ≤ n ≤ b` and injective for `a ≤ n ≤ b + 1`, for all `S`, `T` in a family, the same holds on the (inductive) extension closure of the family; for `a ≤ 0 ≤ b`, `F` is fully faithful there, and for `a ≤ 2`, `1 ≤ b` its essential image there is the extension closure of the images (the model is Bondal–Orlov, arXiv:alg-geom/9506012, Theorem 1.1, and Bridgeland, arXiv:math/9809114, Theorems 1.1 and 2.3); a functor commuting with shifts preserves the composition of shifted morphisms with no sign; in an abelian category the extension closure of simple objects is a Serre class | `Functor.isExtWindow_of_extensionClosure`, `Functor.IsExtWindow.of_vanishing`, `Functor.fullyFaithfulOfIsExtWindow`, `Functor.map_extensionClosure_eq`, `Functor.map_shiftedHom_comp`, `ObjectProperty.extensionProductIter_le_extensionClosure`, `ObjectProperty.isSerreClass_abelianExtensionClosure` |
 | The Artin group of a Coxeter matrix (Mathlib has none) and its surjection onto the Coxeter group; the pure Artin group is the normal closure of the squares `σ_i²`; a representation whose generators are involutions factors through the Coxeter group and kills the pure Artin group | `CoxeterMatrix.ArtinGroup`, `toCoxeterGroup_surjective`, `pureArtinGroup_eq_normalClosure`, `exists_factor_of_sq`, `pure_mem_ker_of_sq` |
 | A braid relation of length `m` is one conjugation identity `u f(i') u⁻¹ = f(c)`, `u` the alternating word of length `m - 1`; a conjugation-equivariant `τ : X → G` turns one object identity per edge into the braid relations, for every Coxeter matrix; braid relations are closed under reversal, which gives the anti-automorphism `σ_i ↦ σ_i` | `CoxeterMatrix.braid_iff_conj`, `isBraidLiftable_of_equivariant`, `isBraidLiftable_op_iff`, `ArtinGroup.reverse` |
 | An Artin group acts on slicings through any family of exact autoequivalences whose classes satisfy its braid relations (from pairwise braid isomorphisms, or in the Seidel–Thomas form, arXiv:math/0001043, §2); two signed words with the same image in the Artin group are naturally isomorphic and carry HN filtrations to each other, with the same phases and isomorphic factors; the pure Artin group lands in the normal closure of the squared twists | `AutQuot.artinHom`, `AutQuot.isBraidLiftable_of_iso`, `AutQuot.isBraidLiftable_ofExt`, `AutQuot.nonempty_iso_of_ofSignedWord_eq`, `AutQuot.hn_of_ofSignedWord_eq`, `AutQuot.map_pureArtinGroup_le` |
@@ -335,6 +336,28 @@ reflections satisfy the same equivariant criterion and this identity, and `Art(A
 `W(A₂) = S₃` (table of the elliptic surface below). The configurations of Picard rank one and the
 two simples of a wall of pairing two all have `m = ∞`, with no edge identity to check.
 
+### Window dévissage into a heart
+
+`AbelianHeartHypotheses ι` lists what the abelian corollary of window dévissage uses about a fully
+faithful additive functor `ι : H ⥤ D` from an abelian category: its essential image is closed under
+extensions, short exact sequences of `H` extend to distinguished triangles, and distinguished
+triangles with vertices in the image come from short exact sequences. Every heart of a t-structure
+has these properties (Beilinson–Bernstein–Deligne, *Faisceaux pervers*, 1.2.5–1.2.6, 1.3.6), but
+Mathlib does not yet prove hearts abelian. They are proved for the standard heart
+`singleFunctor C 0 : C ⥤ D(C)` of the derived category of an abelian category
+(`DerivedCategory.abelianHeartHypotheses_singleFunctor`). From the fields:
+
+| Assertion | Lean |
+|---|---|
+| If every object of a family is the image of a simple object of `H`, the objects whose image is in the extension closure of the family form a Serre class of `H`; for a triangulated functor with window data `a ≤ 2`, `1 ≤ b` on a family with simple images, the essential image of its extension closure is a Serre class | `AbelianHeartHypotheses.isSerreClass_extensionClosure`, `AbelianHeartHypotheses.isSerreClass_image` |
+| Admissible subobjects of `X` in the extension closure (first maps of distinguished triangles with outer terms in it) go to subobjects of `F X` in `H`, and with window data `a ≤ 0`, `1 ≤ b` every subobject of `F X` arises so; this is the target heart, not a source heart (`RΓ : D^b(ℙ¹) → D^b(vect)` with the family `{𝒪}`) | `AbelianHeartHypotheses.mono_of_distinguished`, `AbelianHeartHypotheses.exists_distinguished_of_mono` |
+
+[K3TwistsTest/ExtComparisonModel.lean](K3TwistsTest/ExtComparisonModel.lean) applies window
+dévissage to the identity functor of any pretriangulated category, to one object `S` with no
+shifted self-morphisms in nonzero degrees (the model `vect → ⟨S⟩`, `V ↦ V ⊗ S`, checked on its
+hypotheses: Mathlib cannot build that functor), and the abelian corollary to the standard heart of
+`D(C)`.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -454,6 +477,10 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `CategoryTheory/Abelian/TorsionTheory/Saturation.lean` | the interval class on the subobjects of an object of a class closed under quotients and extensions; its radical and saturation | `CategoryTheory.ObjectProperty` |
 | `CategoryTheory/ObjectProperty/Coreflection.lean` | coreflections into a class of objects; the partial right adjoint of its inclusion | `CategoryTheory.ObjectProperty` |
 | `CategoryTheory/Abelian/TorsionTheory/Radical.lean` | the radical as a coreflection: monic counit, existence on Noetherian objects or from coproducts, generators, `Ext¹`, a torsion pair from a potential | `CategoryTheory.ObjectProperty` |
+| `CategoryTheory/Abelian/SerreClass/ExtensionClosure.lean` | the extension closure of a class of objects of an abelian category; for simple objects a Serre class | `CategoryTheory.ObjectProperty` |
+| `CategoryTheory/Triangulated/ExtComparison.lean` | window dévissage: the window condition on shifted morphisms spreads from a family to its extension closure; full faithfulness and the essential image there; Yoneda compatibility | `CategoryTheory.Functor`, `CategoryTheory.ObjectProperty` |
+| `CategoryTheory/Triangulated/ExtComparison/Heart.lean` | the abelian corollary under the heart-type fields `AbelianHeartHypotheses`: Serre images, admissible subobjects | `CategoryTheory.Triangulated` |
+| `Algebra/Homology/DerivedCategory/AbelianHeart.lean` | the heart-type fields for the standard heart `C ⥤ D(C)` | `DerivedCategory` |
 | `RingTheory/Polynomial/Basic.lean` | multiplication by `X` enlarges every nonzero finite-dimensional subspace of `K[X]` | `Polynomial` |
 | `RingTheory/Polynomial/Chebyshev.lean` | powers under `x² = tx - 1` through Chebyshev polynomials; `2 × 2` Cayley–Hamilton | `Polynomial.Chebyshev`, `Matrix` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
