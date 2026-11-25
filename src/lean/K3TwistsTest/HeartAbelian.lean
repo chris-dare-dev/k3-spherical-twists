@@ -16,6 +16,8 @@ import Mathlib.Algebra.Homology.DerivedCategory.TStructure
   torsion class and the thin interval `P((a, a+1))` a torsion-free class.
 * In the heart `P((0, 1])` of a prestability condition, `P(1)` is a Serre class (the kernel of
   `Im Z`), closed under subobjects, quotients and extensions.
+* The converse of the tilting theorem applies to the hearts of one slicing at base points
+  `a ≤ b ≤ a + 1`; the hypotheses of `heart_eq_of_le` hold for the t-structure of `σ` itself.
 
 Built by `lake test`.
 -/
@@ -80,7 +82,34 @@ example {X Y : σ.slicing.HeartCat C 0} (f : X ⟶ Y) [Mono f]
   have := σ.isSerreClass_heartTop 0
   (σ.slicing.heartTop C 0).prop_of_mono f hY
 
+/-- The hypotheses of `heart_eq_of_le` are met by the t-structure of `σ` itself. -/
+example : (σ.slicing.toTStructure C 0).heart = σ.slicing.heartProp C 0 :=
+  σ.heart_eq_of_le _ le_rfl (σ.slicing.toTStructure C 0).le_zero_le fun E hE hEZ => σ.charge_mem_of_heartProp
+      ((σ.slicing.toTStructure_mem_heart_iff C 0 E).1 hE) hEZ
+
 end Charge
+
+section Tilt
+
+variable {C : Type*} [Category C] [HasZeroObject C] [HasShift C ℤ] [Preadditive C]
+  [∀ n : ℤ, (shiftFunctor C n).Additive] [Pretriangulated C] [IsTriangulated C]
+  (s : Slicing C) {a b : ℝ}
+
+/-- The heart at `b ∈ [a, a+1]` is the tilt of the heart at `a`. -/
+example (h₁ : a ≤ b) (h₂ : b ≤ a + 1) (E : C) :
+    (s.toTStructure C b).heart E ↔ (s.toTStructure C a).le 0 E ∧ (s.toTStructure C a).ge (-1) E ∧
+      (s.toTStructure C b).le 0 (((s.toTStructure C a).truncGE 0).obj E) ∧
+      (s.toTStructure C b).ge 0 (((s.toTStructure C a).truncLT 0).obj E) :=
+  TStructure.mem_heart_iff_of_le (s.toTStructure_le_neg_one_le C h₂) (s.toTStructure_le_le C h₁) E
+
+/-- The torsion pair of that tilt, in the abelian category `P((a, a+1])`. -/
+example (h₁ : a ≤ b) (h₂ : b ≤ a + 1) :
+    Abelian.TorsionTheory (((s.toTStructure C b).le 0).inverseImage (s.heartProp C a).ι)
+      (((s.toTStructure C b).ge 1).inverseImage (s.heartProp C a).ι) :=
+  TStructure.torsionTheory_of_le (H := s.HeartCat C a) (s.toTStructure_le_neg_one_le C h₂)
+    (s.toTStructure_le_le C h₁)
+
+end Tilt
 
 end HeartAbelianModel
 
