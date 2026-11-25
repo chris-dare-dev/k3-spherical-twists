@@ -22,6 +22,10 @@ least `-2` has charge zero, and the support property of `Lattice/Mukai/Support.l
 In the coordinate `z = b + ia` of the upper half-plane, `height(p) = a²`, so the condition reads
 `d (Im z)² > 1`. It is the condition of `rayClear_of_one_lt`: the punctures of roots lie at
 heights `1/(dr²) ≤ 1/d`.
+
+**Strata in Picard rank one are `A₁`** (`eq_or_eq_neg_of_modelCharge_eq_zero`): the kernel of
+`Z_p` is the line of `κ_p`, so two roots whose charges vanish at `p` are equal or opposite, and
+the kernel root system at a puncture is `{±δ}`.
 -/
 
 namespace AlgebraicGeometry.K3.PicardRankOne
@@ -155,5 +159,35 @@ theorem exists_supportProperty_modelCharge {d : ℤ} (hd : 0 < d) {p : ℝ × �
       rw [modelCharge_eq_normalizedCharge (d : ℝ) hp']
       exact norm_le_of_eq_mk ha
   exact key _ hmem
+
+/-- **Strata in Picard rank one are `A₁`.** Above the parabola, two roots whose charges vanish at
+`p` are equal or opposite: both are multiples of the kernel vector `κ_p`, of the same square. -/
+theorem eq_or_eq_neg_of_modelCharge_eq_zero {d : ℤ} (hd : 0 < d) {p : ℝ × ℝ}
+    (hp : p.1 ^ 2 < p.2) {δ δ' : MukaiVector ℤ} (hδ : IsRoot d δ) (hδ' : IsRoot d δ')
+    (hZ : modelCharge d p δ.toReal = 0) (hZ' : modelCharge d p δ'.toReal = 0) :
+    δ' = δ ∨ δ' = -δ := by
+  have hd' : (d : ℝ) ≠ 0 := by exact_mod_cast hd.ne'
+  rw [modelCharge_eq_zero_iff hd' hp] at hZ hZ'
+  have h1 := isRoot_toReal.mpr hδ
+  have h2 := isRoot_toReal.mpr hδ'
+  unfold IsRoot at h1 h2
+  rw [hZ, MukaiVector.pairing_smul_left, MukaiVector.pairing_smul_right] at h1
+  rw [hZ', MukaiVector.pairing_smul_left, MukaiVector.pairing_smul_right] at h2
+  have hsq : (δ'.r : ℝ) ^ 2 = (δ.r : ℝ) ^ 2 := by
+    have hκ : MukaiVector.pairing (d : ℝ) (kernelVector d p) (kernelVector d p) ≠ 0 := by
+      intro h0
+      rw [h0] at h1
+      norm_num at h1
+    apply mul_right_cancel₀ hκ
+    simp only [toReal_r] at h1 h2
+    linarith
+  have hsq' : δ'.r ^ 2 = δ.r ^ 2 := by exact_mod_cast hsq
+  rcases sq_eq_sq_iff_eq_or_eq_neg.mp hsq' with h | h
+  · left
+    apply toReal_injective
+    rw [hZ, hZ', toReal_r, toReal_r, h]
+  · right
+    apply toReal_injective
+    rw [toReal_neg, hZ, hZ', toReal_r, toReal_r, h, Int.cast_neg, neg_smul]
 
 end AlgebraicGeometry.K3.PicardRankOne

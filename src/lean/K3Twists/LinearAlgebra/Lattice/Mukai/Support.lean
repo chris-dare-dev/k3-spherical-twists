@@ -39,6 +39,12 @@ Kontsevich and Soibelman (arXiv:0811.2435).
 * `not_supportProperty_of_mem_ker`: the second hypothesis is necessary for any constant `D`. It is
   necessary for a constant `D` and for estimates whose only input is `D`; through root
   hyperplanes the punctured form of the support bound applies instead.
+* `exists_finsler_ball`, `exists_punctured_supportBound`, **the punctured support bound**: at a
+  charge `Z₀` with negative-definite kernel there are `η > 0` and `K` with `‖v‖ ≤ K ‖Z v‖` for
+  every charge `Z` with `‖Z - Z₀‖ < η` and every class of `Γ` with `q(v) ≥ -2` and `Z₀ v ≠ 0`,
+  that is, off the roots `R_*` of the kernel. So the only root hyperplanes meeting the ball are
+  those of `R_*` (`exists_ball_ker_subset`). `exists_supportProperty` is proved as its case
+  `R_* = ∅`, at `Z = Z₀`.
 * `negDef_orthogonal_of_posPlane`, **signature `(2, n)`**: if `B` is symmetric and nondegenerate
   with no positive-definite subspace of dimension `3` (`sigPos ≤ 2`), the orthogonal complement
   of a positive-definite plane is negative definite. So the kernel of the charge
@@ -245,6 +251,128 @@ theorem not_supportProperty_of_mem_ker {Z : V → W} {S : Set V} {v : V} (hv : v
 
 end SupportProperty
 
+section Punctured
+
+variable {V W : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
+  [NormedAddCommGroup W] [NormedSpace ℝ W]
+
+/-- **Finsler's bound on a ball of charges.** If `B` is negative definite on the kernel of `Z₀`,
+there are `ε, η > 0` and `C ≥ 0` with `B v v ≤ -ε ‖v‖² + C ‖Z v‖²` for every `v` and every charge
+`Z` with `‖Z - Z₀‖ ≤ η`. -/
+theorem exists_finsler_ball (B : LinearMap.BilinForm ℝ V) (Z₀ : V →L[ℝ] W)
+    (hB : ∀ v, Z₀ v = 0 → v ≠ 0 → B v v < 0) :
+    ∃ ε > 0, ∃ η > 0, ∃ C ≥ 0, ∀ Z : V →L[ℝ] W, ‖Z - Z₀‖ ≤ η →
+      ∀ v, B v v ≤ -ε * ‖v‖ ^ 2 + C * ‖Z v‖ ^ 2 := by
+  obtain ⟨ε, hε, C, hC, hF⟩ := exists_finsler B (Z₀ : V →ₗ[ℝ] W) hB
+  set η := min 1 (ε / (4 * C + 1))
+  have hη : 0 < η := lt_min one_pos (by positivity)
+  have hη1 : η ≤ 1 := min_le_left _ _
+  have hη2 : 2 * C * η ^ 2 ≤ ε / 2 := by
+    have h1 : η ^ 2 ≤ η := by nlinarith
+    have h2 : η ≤ ε / (4 * C + 1) := min_le_right _ _
+    have h3 : 2 * C * (ε / (4 * C + 1)) ≤ ε / 2 := by
+      rw [mul_div_assoc', div_le_div_iff₀ (by positivity) two_pos]
+      nlinarith
+    nlinarith [mul_le_mul_of_nonneg_left (h1.trans h2) (by positivity : (0 : ℝ) ≤ 2 * C)]
+  refine ⟨ε / 2, by positivity, η, hη, 2 * C, by positivity, fun Z hZ v => ?_⟩
+  have h1 : ‖Z₀ v‖ ≤ ‖Z v‖ + η * ‖v‖ := by
+    have : ‖(Z₀ - Z) v‖ ≤ η * ‖v‖ :=
+      ((Z₀ - Z).le_opNorm v).trans
+        (mul_le_mul_of_nonneg_right (by rwa [norm_sub_rev]) (norm_nonneg _))
+    calc ‖Z₀ v‖ = ‖Z v + (Z₀ - Z) v‖ := by simp
+      _ ≤ ‖Z v‖ + ‖(Z₀ - Z) v‖ := norm_add_le _ _
+      _ ≤ ‖Z v‖ + η * ‖v‖ := by linarith
+  have h2 : ‖Z₀ v‖ ^ 2 ≤ 2 * ‖Z v‖ ^ 2 + 2 * η ^ 2 * ‖v‖ ^ 2 := by
+    have h0 : 0 ≤ ‖Z₀ v‖ := norm_nonneg _
+    nlinarith [sq_nonneg (‖Z v‖ - η * ‖v‖)]
+  have h3 := hF v
+  change B v v ≤ -ε * ‖v‖ ^ 2 + C * ‖Z₀ v‖ ^ 2 at h3
+  nlinarith [mul_le_mul_of_nonneg_left h2 hC, sq_nonneg ‖v‖]
+
+/-- **The punctured support bound.** Let `B` be negative definite on the kernel of a charge `Z₀`,
+and let the classes `Γ` have finitely many points in every ball. There are `η > 0` and `K` such
+that `‖v‖ ≤ K ‖Z v‖` for every charge `Z` with `‖Z - Z₀‖ < η` and every class `v ∈ Γ` with
+`B v v ≥ -2` and `Z₀ v ≠ 0`. In particular the only classes of `Γ` with `B v v ≥ -2` whose charge
+vanishes somewhere on the ball are those with `Z₀ v = 0`: at a stratum, the roots `R_*` of the
+kernel.
+
+Proof: Finsler's bound on a ball handles the long classes; the short classes are finitely many,
+and those with `Z₀ v ≠ 0` keep `‖Z v‖ ≥ min ‖Z₀ v‖/2` on a small enough ball. -/
+theorem exists_punctured_supportBound (B : LinearMap.BilinForm ℝ V) (Z₀ : V →L[ℝ] W)
+    (hB : ∀ v, Z₀ v = 0 → v ≠ 0 → B v v < 0) {Γ : Set V}
+    (hΓ : ∀ R : ℝ, {v | v ∈ Γ ∧ ‖v‖ ≤ R}.Finite) :
+    ∃ η > 0, ∃ K, ∀ Z : V →L[ℝ] W, ‖Z - Z₀‖ < η →
+      ∀ v ∈ Γ, -2 ≤ B v v → Z₀ v ≠ 0 → ‖v‖ ≤ K * ‖Z v‖ := by
+  obtain ⟨ε, hε, η₁, hη₁, C, hC, hF⟩ := exists_finsler_ball B Z₀ hB
+  set R := max 1 (4 / ε)
+  have hR : 1 ≤ R := le_max_left _ _
+  -- the short classes off the kernel of `Z₀`
+  set F := {v | v ∈ Γ ∧ ‖v‖ ≤ R ∧ Z₀ v ≠ 0}
+  have hFfin : F.Finite := (hΓ R).subset fun v hv => ⟨hv.1, hv.2.1⟩
+  obtain ⟨m, hm, hmle⟩ : ∃ m > 0, ∀ v ∈ F, m ≤ ‖Z₀ v‖ := by
+    rcases F.eq_empty_or_nonempty with hFe | hFne
+    · exact ⟨1, one_pos, fun v hv => by rw [hFe] at hv; exact absurd hv (Set.notMem_empty _)⟩
+    · obtain ⟨v₀, hv₀, hmin⟩ := Set.exists_min_image F (fun v => ‖Z₀ v‖) hFfin hFne
+      exact ⟨‖Z₀ v₀‖, norm_pos_iff.mpr hv₀.2.2, hmin⟩
+  set η₂ := m / (2 * R)
+  have hη₂ : 0 < η₂ := by positivity
+  set D₁ := Real.sqrt (2 * C / ε)
+  refine ⟨min η₁ η₂, lt_min hη₁ hη₂, max D₁ (2 * R / m), fun Z hZ v hvΓ hv2 hZ₀ => ?_⟩
+  have hZ₁ : ‖Z - Z₀‖ ≤ η₁ := hZ.le.trans (min_le_left _ _)
+  have hZ₂ : ‖Z - Z₀‖ ≤ η₂ := hZ.le.trans (min_le_right _ _)
+  by_cases hvR : ‖v‖ ≤ R
+  · -- a short class: its charge stays away from zero on the ball
+    have hmv := hmle v ⟨hvΓ, hvR, hZ₀⟩
+    have hdiff : ‖(Z - Z₀) v‖ ≤ m / 2 := by
+      calc ‖(Z - Z₀) v‖ ≤ ‖Z - Z₀‖ * ‖v‖ := (Z - Z₀).le_opNorm v
+        _ ≤ η₂ * R := mul_le_mul hZ₂ hvR (norm_nonneg _) hη₂.le
+        _ = m / 2 := by simp only [η₂]; field_simp
+    have hZv : m / 2 ≤ ‖Z v‖ := by
+      have : ‖Z₀ v‖ ≤ ‖Z v‖ + ‖(Z - Z₀) v‖ := by
+        calc ‖Z₀ v‖ = ‖Z v - (Z - Z₀) v‖ := by simp
+          _ ≤ ‖Z v‖ + ‖(Z - Z₀) v‖ := norm_sub_le _ _
+      linarith
+    calc ‖v‖ ≤ R := hvR
+      _ = 2 * R / m * (m / 2) := by field_simp
+      _ ≤ 2 * R / m * ‖Z v‖ := mul_le_mul_of_nonneg_left hZv (by positivity)
+      _ ≤ max D₁ (2 * R / m) * ‖Z v‖ :=
+        mul_le_mul_of_nonneg_right (le_max_right _ _) (norm_nonneg _)
+  · -- a long class: Finsler's bound is homogeneous
+    push Not at hvR
+    have h1 : 1 < ‖v‖ := hR.trans_lt hvR
+    have h4 : 4 / ε < ‖v‖ ^ 2 := by
+      have : 4 / ε < ‖v‖ := (le_max_right _ _).trans_lt hvR
+      nlinarith
+    have h4' : 4 < ε * ‖v‖ ^ 2 := by rwa [div_lt_iff₀' hε] at h4
+    have hsq : ‖v‖ ^ 2 ≤ 2 * C / ε * ‖Z v‖ ^ 2 := by
+      have := hF Z hZ₁ v
+      rw [div_mul_eq_mul_div, le_div_iff₀ hε]
+      nlinarith
+    have hD₁ : ‖v‖ ≤ D₁ * ‖Z v‖ := by
+      have hc : 0 ≤ 2 * C / ε := by positivity
+      rw [← abs_norm v, ← abs_of_nonneg (mul_nonneg (Real.sqrt_nonneg _) (norm_nonneg (Z v)))]
+      apply sq_le_sq.mp
+      rw [mul_pow, Real.sq_sqrt hc]
+      exact hsq
+    exact hD₁.trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (norm_nonneg _))
+
+/-- **Root hyperplanes near a period.** Under the hypotheses of the punctured support bound, a
+class of `Γ` with `B v v ≥ -2` whose charge vanishes for some `Z` near `Z₀` is in the kernel of
+`Z₀`: the only root hyperplanes meeting a small ball around `Z₀` are those of `R_*`. -/
+theorem exists_ball_ker_subset (B : LinearMap.BilinForm ℝ V) (Z₀ : V →L[ℝ] W)
+    (hB : ∀ v, Z₀ v = 0 → v ≠ 0 → B v v < 0) {Γ : Set V}
+    (hΓ : ∀ R : ℝ, {v | v ∈ Γ ∧ ‖v‖ ≤ R}.Finite) :
+    ∃ η > 0, ∀ Z : V →L[ℝ] W, ‖Z - Z₀‖ < η →
+      ∀ v ∈ Γ, -2 ≤ B v v → Z v = 0 → Z₀ v = 0 := by
+  obtain ⟨η, hη, K, hK⟩ := exists_punctured_supportBound B Z₀ hB hΓ
+  refine ⟨η, hη, fun Z hZ v hvΓ hv2 hZv => ?_⟩
+  by_contra hZ₀
+  have := hK Z hZ v hvΓ hv2 hZ₀
+  rw [hZv, norm_zero, mul_zero] at this
+  exact hZ₀ (by rw [norm_le_zero_iff.mp this, map_zero])
+
+end Punctured
+
 section Existence
 
 variable {V W : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimensional ℝ V]
@@ -255,44 +383,19 @@ kernel of `Z`, the classes `Γ` have finitely many points in every ball, and no 
 `Γ` with `B v v ≥ -2` lies in the kernel of `Z`, then the support property holds on the classes
 of `Γ` with `B v v ≥ -2`.
 
-Proof: Finsler's lemma bounds `ε ‖v‖² ≤ 2 + C ‖Z v‖²`, which is homogeneous for long `v`; the
-short classes are finitely many and none is in the kernel. -/
+This is the punctured support bound (`exists_punctured_supportBound`) at `Z = Z₀` when the root
+set `R_*` of the kernel is empty. -/
 theorem exists_supportProperty (B : LinearMap.BilinForm ℝ V) (Z : V →ₗ[ℝ] W)
     (hB : ∀ v, Z v = 0 → v ≠ 0 → B v v < 0) {Γ : Set V}
     (hΓ : ∀ R : ℝ, {v | v ∈ Γ ∧ ‖v‖ ≤ R}.Finite)
     (hZ : ∀ v ∈ Γ, v ≠ 0 → -2 ≤ B v v → Z v ≠ 0) :
     ∃ D, SupportProperty Z {v | v ∈ Γ ∧ -2 ≤ B v v} D := by
-  obtain ⟨ε, hε, C, hC, hF⟩ := exists_finsler B Z hB
-  set R := max 1 (4 / ε)
-  obtain ⟨D₂, hD₂⟩ := ((hΓ R).image fun v => ‖v‖ / ‖Z v‖).bddAbove
-  set D₁ := Real.sqrt (2 * C / ε)
-  refine ⟨max D₁ D₂, fun v ⟨hvΓ, hv2⟩ => ?_⟩
-  by_cases hvR : ‖v‖ ≤ R
-  · -- a short class: one of finitely many
-    by_cases hv0 : v = 0
-    · simp [hv0]
-    have hZv : 0 < ‖Z v‖ := norm_pos_iff.mpr (hZ v hvΓ hv0 hv2)
-    have h1 : ‖v‖ / ‖Z v‖ ≤ D₂ := hD₂ ⟨v, ⟨hvΓ, hvR⟩, rfl⟩
-    rw [div_le_iff₀ hZv] at h1
-    exact h1.trans (mul_le_mul_of_nonneg_right (le_max_right _ _) hZv.le)
-  · -- a long class: Finsler's bound is homogeneous
-    push Not at hvR
-    have h1 : 1 < ‖v‖ := (le_max_left _ _).trans_lt hvR
-    have h4 : 4 / ε < ‖v‖ ^ 2 := by
-      have : 4 / ε < ‖v‖ := (le_max_right _ _).trans_lt hvR
-      nlinarith
-    have h4' : 4 < ε * ‖v‖ ^ 2 := by rwa [div_lt_iff₀' hε] at h4
-    have hsq : ‖v‖ ^ 2 ≤ 2 * C / ε * ‖Z v‖ ^ 2 := by
-      have := hF v
-      rw [div_mul_eq_mul_div, le_div_iff₀ hε]
-      nlinarith
-    have hD₁ : ‖v‖ ≤ D₁ * ‖Z v‖ := by
-      have hc : 0 ≤ 2 * C / ε := by positivity
-      rw [← abs_norm v, ← abs_of_nonneg (mul_nonneg (Real.sqrt_nonneg _) (norm_nonneg (Z v)))]
-      apply sq_le_sq.mp
-      rw [mul_pow, Real.sq_sqrt hc]
-      exact hsq
-    exact hD₁.trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (norm_nonneg _))
+  set Z' : V →L[ℝ] W := LinearMap.toContinuousLinearMap Z
+  obtain ⟨η, hη, K, hK⟩ := exists_punctured_supportBound B Z' hB hΓ
+  refine ⟨K, fun v ⟨hvΓ, hv2⟩ => ?_⟩
+  by_cases hv0 : v = 0
+  · simp [hv0]
+  exact hK Z' (by rwa [sub_self, norm_zero]) v hvΓ hv2 (hZ v hvΓ hv0 hv2)
 
 end Existence
 
