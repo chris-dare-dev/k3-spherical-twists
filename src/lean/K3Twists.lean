@@ -60,6 +60,7 @@ import K3Twists.Combinatorics.DT.FramedMultiplier
 import K3Twists.Combinatorics.DT.Inversion
 import K3Twists.Combinatorics.DT.Quivers
 import K3Twists.Combinatorics.DT.TwoVertex
+import K3Twists.Combinatorics.Quiver.ChebyshevSeries
 import K3Twists.Combinatorics.Quiver.Kronecker.CartanMatrix
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import K3Twists.Combinatorics.Quiver.TypeA.Roots
