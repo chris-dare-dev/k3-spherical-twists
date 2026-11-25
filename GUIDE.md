@@ -127,6 +127,7 @@ M2 --script data/examples/own-surface.m2
 | `data/examples/own-pair.m2` | the Ext groups between sheaves of the catalogue chosen by name, with the Euler characteristic predicted from their classes | 2 s |
 | `data/examples/own-surfaces.toml` | a batch file: the fast invariants and six pairs on four surfaces with other seeds and primes, 84 tasks | 20 s |
 | `data/examples/resumable-quartic.m2` | a marked quartic, a twist realized as a complex, and its cohomology ([below](#resumable-marked-quartic-study)) | 1 s |
+| `data/examples/elliptic-wall-word.m2` | both signed twists of a point on a Picard-rank-two elliptic K3, with exact phase windows and comparisons of the tower maps | under 1 s |
 
 What can be changed: `d` is 2, 3 or 4, the characteristic is any prime, and another seed gives another surface of the same family. A value outside these ends with one line, for example `expected d = 2, 3 or 4`. The predictions are formulas in n = d + 2, so they hold for every prime and seed; the committed records all use seed 1 and p = 32003, and the batch file is there to try others.
 
@@ -141,6 +142,14 @@ make report BATCH=data/examples/own-surfaces.toml
 The tasks of that file belong to no claim, so it is kept outside `data/batches/` and nothing of it is in `data/records/`. `make examples` runs the four scripts.
 
 The cost of an Ext group grows quickly with the degree and with the ranks of the two sheaves. Measured here on the surfaces with seed 1 and p = 32003: a pair with a line bundle as its source takes a second or two for every d; on the quartic the four pairs among M_H and M_x take 4 to 22 seconds; for d = 3 and d = 4 none of those four finished within two minutes. `make plan` prints the cost of each task, which orders the tasks and is not a time; give such pairs their own `limits`, or keep them to the quartic.
+
+### Two twists at the elliptic curve wall
+
+Run `M2 --script data/examples/elliptic-wall-word.m2` on the elliptic K3 $y^2=x^3+t^{12}-t$, with zero section $C$, fibre class $F$, and $x$ the point of $C$ above $t=2$. Use the Tramel–Xia heart with $H=C+2F$, $\beta=-C/4$, $z=2-i$, $k=-1$, on the sheet where point sheaves have phase one. The word applies $T_L$ and then $T_K^{-1}$, with $L=\mathcal O_X(-2C)$ and $K=\mathcal O_X(-C+2F)$. [Meinsma–Shinder, Example 3.13](https://doi.org/10.1093/imrn/rnae061) · [Tramel–Xia, §§3, 6–7](https://arxiv.org/abs/1702.06252)
+
+The script computes the signed Mukai reflections, lifted phase endpoints and grouped masses by exact arithmetic. Its geometric inputs are the point and line-bundle sequences, the stability of the two wall simples, and the absence of phase-one subobjects in $\mathcal O_X[1]$, $K$ and $V=K(F)$. Imaginary part one then gives stability of the first two. For $V$ the script excludes a decomposition into two spherical roots by testing the parity of their pairings. Each printed phase is a sheet integer and the charge of the representative in the heart. A mass term $(d,c)$ means $c\sqrt d$. [Rigidity of the stable factors, Lemma 2.6](https://arxiv.org/pdf/1310.8266#page=12)
+
+Writing $I=\mathcal I_xL$, the first upper inclusion $R=\mathcal O_X/I\to I[1]$ is the boundary of the ideal sequence. A quasi-isomorphism identifies the source of the second coevaluation with that same evaluation cone. In the resulting fibre $Y$, saturation of the ordinary coevaluation gives the middle sheaf $M_{2,x}=\mathcal O_X(-C)/I$. Pulling it back gives the map $J\to Y$ with quotient $V^{\oplus2}$. The preceding inclusion $K[1]\to J$ has quotient $M_{2,x}$. The example checks these chain maps on the regular parameter chart at $x$ and the binary syzygies over the whole base. The global heart and vanishing certificates give the HN interpretation. [Executable comparisons](data/examples/elliptic-wall-word.m2)
 
 ## Requirements
 

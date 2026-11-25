@@ -90,6 +90,8 @@ For the six local examples the supplied geometric window puts all punctual sheav
 
 Run `make run BATCH=data/batches/hn-arrows.toml` from the repository root. Each record includes the module presentations, differentials, input map, computed and reference inclusions, the two comparison maps, and the projection onto the identified lower quotient. The four fibre records also give the first Koszul lift in the ordered parameters $u,v$. [Batch and expected values](data/batches/hn-arrows.toml) · [Recorded matrices](data/records/hn-arrows/results.jsonl)
 
+The elliptic example also exercises these methods on the rank-two surface $y^2=x^3+t^{12}-t$. It computes the phase bounds from the specified Tramel–Xia heart and the geometric certificates for the factors. It compares the two twist complexes on the marked point chart and checks the exterior quotient using the global binary syzygies. The first proper wall inclusion has an ordinary sheaf as its source, although the positive twist has ordinary homology only in degree one. Thus an integer homological cut cannot return that inclusion. The regression runs in `make test`. [Executable example](data/examples/elliptic-wall-word.m2) · [Marking and scope](GUIDE.md#two-twists-at-the-elliptic-curve-wall)
+
 ## What the tasks do not cover
 
 - **Stability.** Computing the phases or testing semistability in an arbitrary geometric heart remains outside the recorded calculations.
