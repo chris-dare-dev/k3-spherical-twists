@@ -46,8 +46,8 @@ For a surface, a word, a pair of sheaves or a batch of your own, start from the 
 
 | | |
 |---|---|
-| [src/K3Twists/](src/K3Twists/) | The Macaulay2 package: surfaces, sheaves, catalogue, invariants, Ext tables |
-| [src/k3batch/](src/k3batch/) | The scheduler: batch files, limits, records, reports |
+| [src/macaulay2/](src/macaulay2/) | The Macaulay2 package K3Twists: surfaces, sheaves, catalogue, invariants, twists, Ext tables |
+| [src/batch/](src/batch/) | Runs the package's computations in batches under time and memory limits, keeps a record of each, and writes the claim tables from them |
 | [src/lean/](src/lean/) | Lean 4 proofs: lattice and charge identities, the integers of rigid walls, and the point-mass corollary from its stated inputs |
 | [CLAIMS.md](CLAIMS.md) | Each claim, and what the committed records say about it |
 | [GUIDE.md](GUIDE.md) | Full reference: what is computed, batches, records, design, layout |
