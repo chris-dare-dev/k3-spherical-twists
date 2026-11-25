@@ -8,10 +8,11 @@ import Mathlib.CategoryTheory.Adjunction.Unique
 /-!
 # `AutQuot C` as an honest group, by quotienting
 
-The sibling `Slicing/Strict.lean` of derived-alg-geo-lean (not copied here) bought a
-`MulAction` by *restricting* to autoequivalences
-with strict inverses — isomorphisms of categories — which excludes Serre
-functors and spherical twists, i.e. the cases that actually matter downstream.
+A `MulAction` on slicings needs a group, and triangulated auto-equivalences
+form one only up to natural isomorphism (see `Transport.lean`). Restricting to
+autoequivalences with strict inverses — isomorphisms of categories — would give
+a group, but it excludes Serre functors and spherical twists, the cases that
+matter here.
 
 This file does the general thing instead: quotient triangulated
 auto-equivalences by natural isomorphism. `AutQuot C` is a genuine `Group`, and
@@ -154,7 +155,7 @@ quotients by a bare natural isomorphism of the *underlying functors*, leaving th
 autoequivalences modulo isomorphism of exact functors. Coarser makes the action
 theorem stronger, not weaker -- but it is a different group.
 
-Unlike `StrictAut`, this excludes nothing. -/
+Unlike a restriction to autoequivalences with strict inverses, this excludes nothing. -/
 def AutQuot (C : Type u) [Category.{w} C] [HasZeroObject C] [HasShift C ℤ]
     [Preadditive C] [∀ n : ℤ, (shiftFunctor C n).Additive] [Pretriangulated C] :=
   _root_.Quotient (TriEquiv.setoid (C := C))

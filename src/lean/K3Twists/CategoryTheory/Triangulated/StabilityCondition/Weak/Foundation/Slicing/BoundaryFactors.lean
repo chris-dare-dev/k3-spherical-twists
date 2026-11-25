@@ -5,9 +5,9 @@ Released under the MIT license.
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.FiltrationOperations
 
 /-!
-# Boundary factors of owner HN filtrations
+# Boundary factors of HN filtrations
 
-This module removes zero factors at either end of a repository-owned
+This module removes zero factors at either end of a
 Harder--Narasimhan filtration.  Consequently every nonzero object admits an
 HN filtration whose highest and lowest factors are nonzero.
 -/
