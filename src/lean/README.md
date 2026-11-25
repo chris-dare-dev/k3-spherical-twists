@@ -164,15 +164,17 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 
 ## What is proved from stated inputs
 
-`PointMassHypotheses` lists what the corollary uses about `D^b(X)`. Mathlib does not yet have derived categories of coherent sheaves on a K3 surface, Bridgeland stability or categorical entropy, so these are hypotheses (fields), each with its source in its docstring:
+`PointMassHypotheses` lists what the corollary uses about `D^b(X)`. Mathlib does not yet have derived categories of coherent sheaves on a K3 surface, Bridgeland stability or categorical entropy, so these are hypotheses (fields), each with its source in its docstring. It extends `MassComparisonHypotheses` (below) by the rank-one point fields:
 
 - Serre duality `h(U, V) = h(V, U)`, invariance of total Hom under autoequivalences, additivity on `G = S₀ ⊕ S₁ ⊕ S₂`;
 - the diagonal estimate `h(U, V) ≤ K h(U, G) h(G, V)` (Orlov, arXiv:0804.1163, Theorem 4, with regularity for `K`);
-- the point test `h(E, 𝒪_x) = R(E)` and `ν R(E) ≤ h(E, G)` for spherical `E`, and `m_τ ≍ h(G, ·)` (the article's point-measurement lemma);
+- the point test `h(E, 𝒪_x) = R(E)` and `ν R(E) ≤ h(E, G)` for spherical `E` (the article's point-measurement lemma);
 - Lemma A.1 (for spherical `E`) and Lemma A.2 of the article;
 - standard words: their powers are standard, they move points to shifted points, their `H_n` grows quadratically;
-- Bridgeland's metric bound on masses (arXiv:math/0212237, Proposition 8.1), the action on stability conditions, positive masses;
-- the entropy formula for smooth proper categories (Dimitrov–Haiden–Katzarkov–Kontsevich, arXiv:1307.8418, Theorem 2.6).
+- a distance bound `m_σ ≤ e^{δ(σ, σ')} m_{σ'}` with `δ` at most Bridgeland's metric (arXiv:math/0212237, Proposition 8.1), the action on stability conditions, positive masses;
+- the twist triangles of the summands `S_i` read through the mass (from Ikeda subadditivity, arXiv:1612.00995, Proposition 3.3), and the upper comparison `C₁ m_σ(U) ≤ m_σ(G) h(G, U)` (Ikeda, Proposition 3.4, with Dimitrov–Haiden–Katzarkov–Kontsevich, arXiv:1307.8418, eq. (9)).
+
+The two-sided comparison `c h(G, V) ≤ m_τ(V) ≤ C h(G, V)` and the entropy `h_cat(Φ) = lim log h(G, Φⁿ G)/n` are not inputs: `C = m_τ(G)/C₁`, `c` comes from the twist triangles of the `S_i` (`PointMassHypotheses.hom_le_mass`), and the limit exists by Fekete's lemma (`PointMassHypotheses.hcat_spec`; by DHKK's Theorem 2.6 it is categorical entropy at `t = 0`).
 
 From these, Lean proves every assertion of the corollary:
 
@@ -418,6 +420,43 @@ functors. [K3TwistsTest/TwistSystemModel.lean](K3TwistsTest/TwistSystemModel.lea
 the zero count satisfies every other input but not sphericity, and that the bound for inverse
 letters does not follow without symmetry.
 
+### The mass comparison and Theorem C
+
+`MassComparisonHypotheses` adds masses to the twist-system layer: objects with a group of
+autoequivalences acting on them and on the points of a space of stability conditions, total Hom
+`h`, masses `m_σ` with a distance bound `m_σ ≤ e^{δ(σ, σ')} m_{σ'}` (`δ ≥ 0` symmetric; Bridgeland's
+metric is one), a split generator `G = ⊕ S_k` with spherical summands, the twist `T_E` along a
+spherical `E` with the conjugation formula `T_{gE} = g T_E g⁻¹` (Seidel–Thomas,
+arXiv:math/0001043, Lemma 2.11) and `T_E V = V` when `h(E, V) = 0`; the mass forms of the
+twist-triangle bounds `m(T_E V) ≤ m(V) + h(E, V) m(E)` (and for `T_E⁻¹`) and
+`h(E, V) m(E) ≤ m(V) + m(T_E V)` (Ikeda subadditivity, arXiv:1612.00995, Proposition 3.3); the
+diagonal estimate (Orlov, arXiv:0804.1163, Theorem 4); and the upper comparison
+`C₁ m_σ(U) ≤ m_σ(G) h(G, U)` as the single field `dhkk_comparison` (Ikeda, Proposition 3.4, with
+Dimitrov–Haiden–Katzarkov–Kontsevich, arXiv:1307.8418, eq. (9)).
+
+| Assertion | Lean |
+|---|---|
+| The lower comparison `h(G, V) ≤ L_σ m_σ(V)` from the twist triangles of the summands, and `h(U, V) ≤ K h(U, G) L_σ m_σ(V)` for every `U` | `MassComparisonHypotheses.hom_G_le_mul_mass`, `hom_le_mul_mass` |
+| The uniform estimate `e^{-δ(σ,τ)} h(G, V) ≤ L_τ m_σ(V)` and `m_σ(V) ≤ e^{δ(σ,τ)} (m_τ(G)/C₁) h(G, V)`, for any distance bound | `MassComparisonHypotheses.uniform_estimate` |
+| Categorical entropy `lim log h(G, Φⁿ G)/n` exists, `h_cat(Φ⁻¹) = h_cat(Φ)`; twists at Ext-orthogonal spherical objects commute | `MassComparisonHypotheses.tendsto_hcat`, `hcat_inv`, `twist_commute` |
+| The masses form a domination system, with tests `m_σ` pulled back by `σ ↦ T_a⁻¹ σ` | `MassComparisonHypotheses.IsTwistSystem.toDomination` |
+| **The twist-system exponent theorem in mass form**: `log max_{\|W\| ≤ N, j} m_σ(W S_j) / N → η`, the exponent of the centre counts, at every `σ` | `MassComparisonHypotheses.IsTwistSystem.tendsto_log_massMax` |
+| σ-independence of exponential mass growth along any sequence of objects, and of `M_n(E) = max_{\|W\| = n} m_σ(W E)` | `MassDistanceBound.tendsto_log_mass_div_iff`, `MassComparisonHypotheses.tendsto_log_lenMax_iff` |
+| The component decomposition: if the components of the centres are Ext-orthogonal, `h(S_b, W E) = h(S_b, W_B E)` for the subword `W_B` of the component of `b` | `MassComparisonHypotheses.IsTwistSystem.hom_word_eq_hom_filter`, `List.prod_map_eq_filter_mul_filter` |
+| **Theorem C**: with an inverse-closed alphabet and Ext-orthogonal components each connected, `log M_n(E)/n → max({0} ∪ {η_B : B meets E})` for every `E ≠ 0` | `MassComparisonHypotheses.IsTwistSystem.tendsto_log_lenMax` |
+| The envelope over any monoid: `μ₀ = sup_k e^{-ηk} M_k` dominates `m`, is a sub-eigenfunction and is subadditive on relations invariant under the whole monoid, given `BddAbove (e^{-ηk} M_k(P))`; a comparable sub-eigenfunction bounds `M_k` | `Monoid.le_extremal`, `extremal_smul_le`, `extremal_tri`, `lenMax_le_of_subeigen` |
+| The periodic witness: two letters with `M = h(S, B) ≥ 2` give `h(B, (T_S T_B)ⁿ S) ≥ M (M - 1)^{2n}`, so `η ≥ log(M - 1)`; for `𝒪_X`, `𝒪_X(H)` read through `\|χ\|`, `η ≥ log(d + 1)` | `HomTwistSystem₀.theta_le_count`, `log_sub_one_le_homExponent`, `eulerTwistSystem_log_le_homExponent` |
+
+The instance from the library's objects is `eulerMass`, at the level of classes: formal direct sums of Mukai
+vectors of a K3 surface of Picard rank one, the isometry group, reflections as twists,
+`G = 𝒪_X ⊕ 𝒪_X(H) ⊕ 𝒪_X(2H)`, the count `Σ |χ|` and the mass `m_g = h(gG, -)` of the moved
+generator. Every field is proved there, the diagonal estimate with `K = 21`
+(`abs_pairing_le`); Theorem C then gives the point class an exact rate `η ≥ log(d + 1)`
+(`eulerClass_exists_tendsto_log_lenMax`). The fields `hom`, `mass` and `twist` have no geometric
+instance: the Ext counts, Bridgeland masses and twist functors need `D^b(X)`.
+[K3TwistsTest/MassComparisonModel.lean](K3TwistsTest/MassComparisonModel.lean) runs the theorems
+on both models.
+
 ### Count cocycles: the growth sandwich and the squeeze
 
 `CountCocycleHypotheses` packages counts `c(Y) ≥ 0` and signed vectors `v(Y)` with `|v| ≤ c`
@@ -630,6 +669,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Algebra/PoincareParity.lean` | `P(1)`, `P(-1)` of a family of dimensions and their parity | `Finsupp` |
 | `Analysis/Complex/Crofton.lean` | the Crofton constant, the barycentre identity and the directional ratio | `Complex` |
 | `GroupTheory/GroupAction/TwistSystem.lean` | twist systems, the domination recursion and the exponent of the centre counts | root |
+| `GroupTheory/GroupAction/MassComparison.lean` | `MassDistanceBound`, `MassComparisonHypotheses`: the two comparisons, the mass domination system and the exponent theorem in mass form | root |
+| `GroupTheory/GroupAction/MassGrowth.lean` | Theorem C: σ-independence, the component decomposition, the analytic core; the envelope over a monoid; subsystems | root |
 | `GroupTheory/GroupAction/CountCocycle.lean` | count cocycles: the growth sandwich, exact counts and rates on tight seeds | root |
 | `Order/Squeeze.lean` | the squeeze along a tight orbit, in any partial order | `Order` |
 | `LinearAlgebra/Matrix/SignRule.lean` | count and signed letters, the sign rule with the parity-graded form, word-level domination | `Matrix` |
@@ -679,9 +720,11 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `RingTheory/Polynomial/Chebyshev.lean` | powers under `x² = tx - 1` through Chebyshev polynomials; `2 × 2` Cayley–Hamilton | `Polynomial.Chebyshev`, `Matrix` |
 | `Combinatorics/Quiver/ChebyshevSeries.lean` | the matrix Chebyshev series, reachability at the graph distance, the Euler characteristic of the bar complex, the Koszul shadow | `Matrix`, `SimpleGraph` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
-| `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs (`PointMassHypotheses` extends `MassComparisonHypotheses`) | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/PeriodicWitness.lean` | the periodic witness `(T_S T_B)ⁿ` and the bound `η ≥ log(d + 1)` for the Euler-pairing system | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerMass.lean` | the lattice instance of `MassComparisonHypotheses` and Theorem C for the point class | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerCountCocycle.lean` | the count cocycle of the Euler pairings with `𝒪_X` and `𝒪_X(H)`, and the failure of the sign rule for it | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/HNTower.lean` | the tower theorem of the draft: deprecated aliases for `CategoryTheory/Triangulated/StabilityCondition/Tower.lean` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/AnisotropicWall.lean` | two roots of pairing two are opposite; every rank-one wall is anisotropic; the tower theorem through the split tower theorem; the wall of `𝒪_X` and `𝒪_X(-H)[1]` | same |

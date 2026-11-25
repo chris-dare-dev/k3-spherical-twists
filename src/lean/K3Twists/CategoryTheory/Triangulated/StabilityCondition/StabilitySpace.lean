@@ -2,8 +2,8 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
-import K3Twists.Analysis.SpecificLimits.GrowthRate
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Mass
+import K3Twists.GroupTheory.GroupAction.MassComparison
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Symmetry.Autoequivalence.Slicing.HarderNarasimhan
 import Mathlib.Topology.Covering.Basic
 import Mathlib.Topology.UniformSpace.HeineCantor
@@ -61,6 +61,8 @@ central charge and Ikeda subadditivity (the one-point space).
 * `StabilitySpaceHypotheses.tendsto_log_mass_div_iff`: `log m_σ(E_n)/n` and `log m_τ(E_n)/n` have
   the same limits, for any objects `E_n`.
 * `StabilitySpaceHypotheses.abs_sub_mass_cone_le`: the `2m(D)` lemma at every point.
+* `StabilitySpaceHypotheses.toMassDistanceBound`: the masses with Bridgeland's metric as the
+  distance bound of the mass comparison (`MassDistanceBound`), so its σ-independence applies.
 
 ## Tags
 
@@ -207,6 +209,16 @@ theorem exists_subdivision_phaseClose (γ : ℝ → Stab) (hγ : ContinuousOn γ
     rw [div_lt_iff₀ hNpos]
     rw [div_lt_iff₀ hδ] at hN
     linarith
+
+/-- The masses of the space with its metric as distance bound: the input of the σ-independence
+of mass growth in the mass comparison (`MassDistanceBound.tendsto_log_mass_div_iff`). -/
+noncomputable def toMassDistanceBound : MassDistanceBound Stab C where
+  mass σ E := (I.cond σ).mass E
+  mass_nonneg σ E := (I.cond σ).mass_nonneg E
+  δ := dist
+  δ_nonneg _ _ := dist_nonneg
+  δ_symm := dist_comm
+  mass_le_exp_δ := I.mass_le_exp_dist
 
 /-- **The `2m(D)` lemma** at every point of the space. -/
 theorem abs_sub_mass_cone_le [IsTriangulated C] (σ : Stab) {A B D K K' : C} {f f' : A ⟶ B}
