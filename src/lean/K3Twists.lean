@@ -1,5 +1,6 @@
 import K3Twists.Algebra.Category.ModuleCat.LinearDual.Basic
 import K3Twists.Algebra.PoincareParity
+import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.AffineWeyl
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.Braid
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.CurveWall
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.FramedMultiplier
@@ -96,6 +97,10 @@ import K3Twists.LinearAlgebra.BilinearForm.Hyperbolic
 import K3Twists.LinearAlgebra.BilinearForm.Reflection
 import K3Twists.LinearAlgebra.Dimension.ExactSequenceDefect
 import K3Twists.LinearAlgebra.Lattice.Arithmetic.TorsionFree
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Group
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Index
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.LengthZero
 import K3Twists.LinearAlgebra.Lattice.Mukai.Basic
 import K3Twists.LinearAlgebra.Lattice.Mukai.CentralCharge
 import K3Twists.LinearAlgebra.Lattice.Mukai.Eichler
@@ -105,10 +110,12 @@ import K3Twists.LinearAlgebra.Lattice.Mukai.Reflection
 import K3Twists.LinearAlgebra.Lattice.Mukai.Slice
 import K3Twists.LinearAlgebra.Lattice.Mukai.SphericalConfiguration
 import K3Twists.LinearAlgebra.Matrix.Cartan.Basic
+import K3Twists.LinearAlgebra.Matrix.Cartan.Determinant
 import K3Twists.LinearAlgebra.Matrix.SignRule
 import K3Twists.LinearAlgebra.Matrix.ZMatrix
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Integer
 import K3Twists.LinearAlgebra.Matrix.ZMatrix.Isotropic
+import K3Twists.LinearAlgebra.Matrix.ZMatrix.SignCoherence
 import K3Twists.Order.HarderNarasimhan
 import K3Twists.Order.HarderNarasimhan.Polytope
 import K3Twists.Order.IntervalClass
