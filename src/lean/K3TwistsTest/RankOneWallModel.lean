@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WallAlgorithm
 import K3TwistsTest.WallStepModel
 
 /-!
@@ -11,9 +12,10 @@ import K3TwistsTest.WallStepModel
 be roots and that each phase have at most two sphere types. On the wall step that crosses no wall
 (`CategoryTheory.Triangulated.WallStepModel.stayWall`), relative to a pre-stability condition on
 which no nonzero semistable object is rigid, there are no stable spheres: the fields hold, and
-the wall is anisotropic by `RankOneWall.anisotropic`. Like the other wall models it is relative
-to these variables; an instance from real objects needs the bounded derived category of a K3
-surface of Picard rank one.
+the wall is anisotropic by `RankOneWall.anisotropic`, and so is the transport step of the trivial
+grouping and this wall (`CarrierStep.ofGrouping`), whose Gram matrices are those of the wall. Like
+the other wall models it is relative to these variables; an instance from real objects needs the
+bounded derived category of a K3 surface of Picard rank one.
 
 Built by `lake test`.
 -/
@@ -62,6 +64,16 @@ example {d : ℤ} (hd : 0 < d) (σ : PreStabilityCondition.WithClassMap C v) (b 
     (hrig : ∀ φ M, σ.slicing.P φ M → ¬IsZero M → b.e M ≠ 0) :
     (stayWall (q := mukaiForm d) σ b P φ₀ hP hP0 hiso).Anisotropic :=
   (rankOneWall_stayWall σ b P φ₀ hP hP0 hiso hrig).anisotropic hd
+
+/-- The transport step of the trivial grouping and the model wall is anisotropic. -/
+example {d : ℤ} (hd : 0 < d) (σ : PreStabilityCondition.WithClassMap C v) (b : MukaiBudget C)
+    (P : C) (φ₀ : ℝ) (hP : σ.slicing.P φ₀ P) (hP0 : ¬IsZero P)
+    (hiso : mukaiForm d (classOf C v P) (classOf C v P) = 0)
+    (hrig : ∀ φ M, σ.slicing.P φ M → ¬IsZero M → b.e M ≠ 0) :
+    (CarrierStep.ofGrouping (t₁ := σ.slicing) (fun _ _ h ↦ h)
+      (stayWall (q := mukaiForm d) σ b P φ₀ hP hP0 hiso)).Anisotropic :=
+  CarrierStep.anisotropic_ofGrouping _
+    ((rankOneWall_stayWall σ b P φ₀ hP hP0 hiso hrig).anisotropic hd)
 
 end CategoryTheory.Triangulated.WallStepModel
 
