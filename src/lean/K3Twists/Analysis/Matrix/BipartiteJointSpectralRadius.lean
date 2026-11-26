@@ -59,6 +59,30 @@ theorem jointSpectralRadius_le_of_sphereMax_le {κ α β : Type*} [Fintype κ] [
   exact Real.rpow_le_rpow (Monoid.sphereMax_nonneg A (fun _ => norm_nonneg _) n) (h n)
     (by positivity)
 
+/-- **Exponential bound below the joint spectral radius.** If `JSR(A) < R`, then every word
+maximum satisfies `max_{|w| = n} ‖A_w‖ ≤ C Rⁿ` for one constant `C`. -/
+theorem exists_sphereMax_le_mul_pow {α : Type*} [Fintype α] [Nonempty α] (A : α → Matrix ι ι ℝ)
+    {R : ℝ} (hR : jointSpectralRadius A < R) :
+    ∃ C, ∀ n, Monoid.sphereMax A (‖·‖) n ≤ C * R ^ n := by
+  have hR0 : 0 < R := (jointSpectralRadius_nonneg A).trans_lt hR
+  obtain ⟨N, hN⟩ := eventually_atTop.1
+    (((tendsto_jointSpectralRadius A).eventually (gt_mem_nhds hR)).and (eventually_ne_atTop 0))
+  have hS : ∀ n, 0 ≤ Monoid.sphereMax A (‖·‖) n := Monoid.sphereMax_nonneg A fun _ => norm_nonneg _
+  set C₀ := ∑ k ∈ Finset.range N, Monoid.sphereMax A (‖·‖) k / R ^ k with hC₀
+  have hC₀0 : 0 ≤ C₀ := Finset.sum_nonneg fun k _ => div_nonneg (hS k) (by positivity)
+  refine ⟨1 + C₀, fun n => ?_⟩
+  rcases lt_or_ge n N with hn | hn
+  · have h1 : Monoid.sphereMax A (‖·‖) n / R ^ n ≤ C₀ :=
+      Finset.single_le_sum (f := fun k => Monoid.sphereMax A (‖·‖) k / R ^ k)
+        (fun k _ => div_nonneg (hS k) (by positivity)) (Finset.mem_range.2 hn)
+    rw [div_le_iff₀ (by positivity)] at h1
+    nlinarith [pow_pos hR0 n]
+  · obtain ⟨h1, h2⟩ := hN n hn
+    have := (Real.rpow_inv_le_iff_of_pos (hS n) hR0.le
+      (by exact_mod_cast Nat.pos_of_ne_zero h2)).1 h1.le
+    rw [Real.rpow_natCast] at this
+    nlinarith [pow_pos hR0 n]
+
 /-! ### Single twists on count vectors -/
 
 /-- The single twist at the vertex `k` of a weighted graph `G` on count vectors:
