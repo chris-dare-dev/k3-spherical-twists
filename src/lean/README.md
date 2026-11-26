@@ -739,6 +739,9 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `RepresentationTheory/Quiver/Kronecker/IncomingFlag.lean` | a rigid wall object is determined by its incoming flag, from the open-orbit input | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Budget.lean` | the Mukai budget lemma in the quiver model: `e = dim Ext¹` invariant under isomorphism, even, Riemann–Roch, superadditive along flags and HN filtrations | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/TwoExtensions.lean` | the exact endomorphism count and the one-copy lemma; the wall group that carries the point: classification and table of HN quotients; the rank-one form with one copy of a spherical simple | `Quiver.Kronecker` |
+| `LinearAlgebra/Dual/PairOrbit.lean` | the splitting `V ≃ k × ker φ`; `GL(V)` is transitive on pairs `(φ, w)` of a nonzero functional and a nonzero vector it kills | `LinearMap` |
+| `RepresentationTheory/Quiver/Kronecker/OneCopyClassification.lean` | semirigid wall objects with one copy of a spherical simple: the decomposition `M_α ⊕ S^{p-2}`, its converse, and the isomorphism class determined by the line of the classes | `Quiver.Kronecker` |
+| `RepresentationTheory/Quiver/Kronecker/TwoCopyExclusion.lean` | no semirigid wall object with two copies of each simple: `dim End ≥ 2` at dimension vector `(2, 2)`; exchanging the vertices; socle and top of a nilpotent representation | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/HomProfile.lean` | relabelling the arrows; the profile `dim Hom(A, -)` and its translates | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/FibreFunctorProfile.lean` | `Ext²` of the standard complex and its dimension; the fibre-functor profile of `RHom(A, -)` | `Quiver.Kronecker` |
 | `RepresentationTheory/Quiver/Kronecker/Radical.lean` | the saturation and radical of the representations supported at vertex zero; the top HN step as a radical | `Quiver.Kronecker` |
@@ -746,13 +749,20 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` | punctures, clear sight lines, the lattice arguments of visibility on the cover, the finite search | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/VisibilityOnCover.lean` | the lemma "Visibility on the cover" from its inputs | same |
 | `Analysis/Complex/Sector.lean` | sectors, the projection onto a ray, the sector budget | `Complex` |
+| `Analysis/Complex/PhaseGap.lean` | a ray determines its phase modulo two; the phase gap of finitely many charges at finitely many phases | `Complex` |
 | `Topology/Order/Selection.lean` | the selection lemma in increment form | root |
 | `LinearAlgebra/Lattice/Mukai/Support.lean` | the support property, Finsler's lemma, signature `(2, n)`, constituents in a sector, the completed square and the root test, the real model of an integral Mukai lattice | `Mukai` |
+| `LinearAlgebra/Lattice/Mukai/PhaseGap.lean` | the lattice-gap lemma: finitely many classes of square at least `-2` and bounded charge, and the phase gap of their charges | `Mukai` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/SupportProperty.lean` | the support property of the central charge in Picard rank one | `AlgebraicGeometry.K3.PicardRankOne` |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/StratumRootSystem.lean` | every stratum is `A₁`: the kernel root systems over `ℤ` and `ℚ` at a puncture and their bases | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/SupportProperty.lean` | the root test and the support property at the curve wall | `AlgebraicGeometry.K3.EllipticWithSection` |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/PhaseGap.lean` | the lattice gap at the curve wall | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `LinearAlgebra/RootSystem/Spherical.lean` | root pairings of `(-2)`-vectors, definite lattices, Cartan matrices of a base, the kernel root system, the root system over `ℚ` | `RootPairing` |
+| `LinearAlgebra/RootSystem/Stratum.lean` | the root system of a stratum over `ℚ` on `ℚ ⊗ (ker Z ∩ N)`; bases and Cartan matrices of `A₁` pairings and strata | `RootPairing` |
 | `LinearAlgebra/Lattice/Arrangement.lean` | positive periods, the stratum trichotomy, two roots | `Mukai` |
+| `LinearAlgebra/Lattice/Arrangement/Lorentzian.lean` | two roots with pairing above two: the orthogonal complement of their span has one positive direction | `Mukai` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/KernelRootSystem.lean` | signature `(2, 2)`, an `A₁` stratum and its punctured support bound, roots that meet and roots that do not | `AlgebraicGeometry.K3.EllipticWithSection` |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/StratumRootSystem.lean` | the bases of the `A₁` stratum over `ℤ` and `ℚ`; its Cartan matrix | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `Analysis/Complex/UpperHalfPlane/ProjectiveModel.lean` | the projective model `(Re z, \|z\|²)` of the half-plane, whose geodesics are straight | `UpperHalfPlane` |
 | `Analysis/Complex/QuadraticModulus.lean` | the polynomial modulus lemma: square-root approximation, forward differences, Gregory–Newton, the monic quadratic | `Polynomial` |
 | `LinearAlgebra/Lattice/Mukai/ProjectiveModel.lean` | the signature, negative cone and projective model of the Mukai lattice; reverse Cauchy–Schwarz | `MukaiVector` |
@@ -814,12 +824,14 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/HeartRadical.lean` | the radical of `P(a+1)` in the heart without a chain condition; interval classes and the charge function `(Im Z, -Re Z)` on the subobjects of heart objects |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ExtensionClosure.lean` | the `(≥ t, < t)` split; the four phase cuts as orthogonals, closed under extensions |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ConeHN.lean` | the cut criterion for cones |
+| `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ConeHNStrict.lean` | the cut criterion for cones at a strict cut `(> t, ≤ t)`; the interval below a phase bound and the heart |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/DivisibilityObstruction.lean` | the divisibility obstruction for a cone on a semistable object; truncations of finite biproducts |
 | `Triangulated/StabilityCondition/Foundation/OneUnitOfWeight.lean` | the rotated imaginary charge and the one-unit-of-weight lemma |
 | `Triangulated/StabilityCondition/WeylTilt.lean` | lower tilts, simple objects and torsion classes as properties of objects; `WeylGalleryHypotheses` and the Weyl-gallery induction on root-positive words |
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ShortStep.lean` | the short-step stability test: closed intervals by Hom vanishing, phase closeness, stable objects, the Im-form test |
 | `Triangulated/StabilityCondition/Mass.lean` | the mass, HN sums up to zero factors, invariances, the split identity, `m ≥ \|Z\|`, Ikeda subadditivity as a predicate, the `2m(D)` lemma |
 | `Triangulated/StabilityCondition/StabilitySpace.lean` | `StabilitySpaceHypotheses`: covering, metric bound, support, action, subadditivity; equivariant mass, the path layer, σ-independent growth |
+| `Triangulated/StabilityCondition/IntersectingWalls.lean` | intersecting ordinary walls: phase gaps, the `τ`-HN factors near `σ` stay in `P_σ(φ)`, the greedy rule, the rotated charge function on the subobjects in the heart |
 
 Five of these files began as adaptations of mattrobball/BridgelandStability under Apache-2.0;
 their headers say so and [NOTICE](NOTICE), beside this README, carries the attribution and the
