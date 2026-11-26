@@ -182,6 +182,16 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | A finite set mapped into itself by each `ρ(s_i)` except at one point bounds lengths from below: the number of its elements `ρ(w)` moves out is at most `ℓ(w)`. The word `[0] ++ [1, 0] ++ ⋯ ++ [n-1, …, 0]` has length `n(n+1)/2`; for `n ≤ 6` it is a reduced, root-positive word of `w₀` in `W(A_n)` with `w₀(α_i) = -α_{n-1-i}` (by computation) | `CoxeterSystem.inversionCount_le_length`, `CoxeterSystem.isReduced_of_length_le_inversionCount`, `CoxeterMatrix.longestWordA`, `CoxeterMatrix.isReduced_longestWordA`, `CoxeterMatrix.isRootPositive_longestWordA`, `CoxeterMatrix.stdWord_longestWordA` |
 | The deletion argument for words of reflections: if each `ρ_i` maps `P ∖ {α_i}` into a set `P ∋ α_i`, a word whose last prefix root leaves `P` acts as a word two letters shorter; so a word with no shorter word of the same action keeps every prefix root in `P`, and if `P` has no pair `v, -v` a word keeping every `α_i` in `P` acts trivially. A statement about the action, not the abstract Coxeter group | `BilinearForm.exists_split_of_reflectWord_notMem`, `BilinearForm.exists_reflectWord_eq_of_notMem`, `BilinearForm.prefixRoots_mem_of_minimal`, `BilinearForm.reflectWord_eq_one_of_forall_mem`, `BilinearForm.exists_reflectWord_of_mem_closure` |
 | Real roots of a loopless quiver on its root form `rootForm e`: the images of the simple roots under words of simple reflections, among them the prefix roots of every word, have norm `-2` (`q = 1`); the form is sign coherent (every vector of norm `-2` has coordinates of one sign) when the Tits form is positive semidefinite with isotropic vectors zero or of full support, as in finite and connected affine type; then, by descent on the height, every positive vector of norm `-2` is a real root, and a function invariant under the simple reflections between positive vectors takes there its value at a simple root | `CoxeterMatrix.IsRealRoot`, `CoxeterMatrix.IsRealRoot.rootForm_self`, `CoxeterMatrix.isRealRoot_of_mem_stdPrefixRoots`, `CoxeterMatrix.IsSignCoherent`, `CoxeterMatrix.isSignCoherent_of_posSemidef`, `CoxeterMatrix.exists_eq_stdRoot_of_reflect_invariant` |
+| Integrality over `ℤ[1/N]`: the elements with `N ^ j x` an algebraic integer form a subalgebra, integrally closed in the ring and preserved by ring maps; a root of a monic polynomial with algebraic-integer coefficients is an algebraic integer; if `α ≠ 0` is a root of a monic `P ∈ ℤ[X]` irreducible over `ℚ` and `α⁻¹` is integral over `ℤ[1/N]`, then `P(0)` divides a power of `N`, with no number field; elements with the same minimal polynomial over `ℚ` have the same integral integer multiples | `integralClosureAway`, `mem_integralClosureAway_of_isIntegral`, `map_mem_integralClosureAway`, `Polynomial.Monic.isIntegral_of_isIntegral_coeff`, `coeff_zero_dvd_pow`, `isIntegral_mul_of_minpoly_eq` |
+| Specialization: a finitely generated subring `R` of a field of characteristic zero has one `N > 0` such that every element algebraic over `ℚ` and integral over `R` is integral over `ℤ[1/N]`, from Zariski's lemma and lying over (no transcendence basis); for generators algebraic over `ℚ`, `N` is a common denominator | `exists_specialization`, `exists_specialization_of_isAlgebraic`, `adjoin_le_integralClosureAway` |
+| Eigenvalues of a matrix are integral over the ring of its entries; with the entries of `M⁻¹` and `(M̄)⁻¹` in `R`, the inverse modulus `\|z\|⁻¹` of every eigenvalue is integral over `R`. The unit test: with the entries of `M` and `M⁻¹` algebraic integers, every eigenvalue modulus is an algebraic unit, so a real number whose inverse is not an algebraic integer is not the modulus of an eigenvalue of an integer matrix of determinant `±1` | `Matrix.isIntegral_of_mem_spectrum`, `Matrix.isIntegral_norm_inv_of_mem_spectrum`, `Matrix.isIntegral_norm_of_mem_spectrum_of_isIntegral`, `Matrix.isIntegral_norm_inv_of_mem_spectrum_of_isIntegral`, `Matrix.norm_ne_of_not_isIntegral_inv` |
+| The S-unit theorem for spectral moduli: for finitely many invertible complex matrices there is `N > 0` such that whenever the modulus of an eigenvalue of a product is a root of a monic `P ∈ ℤ[X]` irreducible over `ℚ`, `P(0)` divides a power of `N`; only the inverse letters enter, and `N` may be any common denominator of their entries when these are integral over `ℤ[1/N]`; the family form | `Matrix.spectral_moduli_norms_divide_pow`, `Matrix.spectral_moduli_norms_divide_pow_of_mem`, `Matrix.no_invertible_family` |
+| The singular reduction: if letters map to a group with an inverse-closed alphabet and `λ` on the group gives the spectral radius of every product, invertible letter matrices (on the image of a least-rank product representing the identity) give the same spectral radii; an endomorphism with range in `U` has the spectral radius of its restriction to `U`; a positive spectral radius is the modulus of an eigenvalue | `Matrix.singular_reduction`, `Module.End.spectralRadius_restrict`, `Matrix.exists_mem_spectrum_norm_eq` |
+| The cubics `P_s = t³ - (65s - 8)t² - (9s - 8)t - (16s - 1)` of the double-plane block family: `P_s` is the characteristic polynomial of the integer pencil `M_s = M₁ + (s - 1) u vᵀ`, `det M_s = 16s - 1`, `tr M_s = 65s - 8`; for `s ≥ 1` it has exactly one real root, which is positive; it is irreducible over `ℚ` for every `s ≥ 1` (rational roots) and modulo `19` for `s ≡ 1 (mod 19)`; every prime `p ∉ {2, 19}` divides some `16s - 1` with `s ≡ 1 (mod 19)`; its roots are algebraic integers and not units | `Polynomial.DoublePlane.charpoly_blockMatrix`, `blockMatrix_eq`, `det_blockMatrix`, `trace_blockMatrix`, `pos_of_aeval_cubic`, `eq_of_aeval_cubic`, `exists_aeval_cubic_eq_zero`, `irreducible_cubic`, `irreducible_map_zmod_nineteen`, `irreducible_cubic_of_mod_nineteen`, `exists_dvd_of_prime`, `exists_prime_dvd_not_dvd`, `not_isIntegral_inv_of_aeval_cubic` |
+| Monotone homogeneous maps of the orthant (Gaubert–Gunawardena, Trans. Amer. Math. Soc. 356 (2004)): closed under composition, maxima and minima, with nonnegative matrices as examples; `‖f^{m+n} 𝟙‖ ≤ ‖fᵐ 𝟙‖ ‖fⁿ 𝟙‖`, so the cycle time `R(f) = lim ‖fⁿ 𝟙‖^{1/n} = inf ‖fⁿ 𝟙‖^{1/n}` exists; starts with `c 𝟙 ≤ u ≤ C 𝟙` have rate `R(f)` and every `v ≥ 0` at most `R(f)`; a nonnegative sub-solution `c_{n+1} ≤ f(c_n)` satisfies `c_n ≤ fⁿ c_0`, also along a sequence of dominated maps | `MonotoneHomogeneous`, `cycleTime`, `MonotoneHomogeneous.norm_iterate_add_le`, `tendsto_cycleTime`, `cycleTime_le`, `tendsto_cycleTime_of_bounds`, `limsup_le_cycleTime`, `le_iterate_of_le`, `limsup_le_cycleTime_of_le`, `le_iterate_of_dominated` |
+| Collatz–Wielandt for monotone homogeneous maps, both directions and no Brouwer: `x ≥ m > 0` with `f x ≤ s x` gives `‖fⁿ 𝟙‖ ≤ (‖x‖/m) sⁿ` and `R(f) ≤ s`; `0 ≤ v ≠ 0` with `t v ≤ f v` gives `t ≤ R(f)`; a positive eigenvector gives `R(f)`; the ratio test `min (f v)_i/v_i ≤ R(f) ≤ max (f v)_i/v_i`; for a nonnegative matrix `R = gelfandRadius` | `MonotoneHomogeneous.norm_iterate_one_le_of_le_smul`, `cycleTime_le_of_le_smul`, `le_cycleTime_of_smul_le`, `cycleTime_eq_of_eigenvector`, `cycleTime_mem_Icc_of_ratio`, `cycleTime_mem_Icc_inf_sup`, `cycleTime_mulVec` |
+| Maximum operators: for finitely many self-maps of any type, `(Fμ)(x) = max_a μ(f_a x)` has `Fⁿμ(x) = max_{\|w\| = n} μ(f_w x)`; for nonnegative matrices `Φ(x) = max_a A_a x` is monotone homogeneous with `JSR ≤ R(Φ)`; for the letters `[[1, 2], [0, 1]]`, `[[1, 0], [2, 1]]` of a wall of two spheres pairing to two, `Φ = I + G` on the orthant with `R(Φ) = 3`, while `JSR = 1 + √2` | `iterate_maxOperator_apply`, `monotoneHomogeneous_maxMulVec`, `jointSpectralRadius_le_cycleTime_maxMulVec`, `maxMulVec_affine`, `cycleTime_maxMulVec_affine`, `jointSpectralRadius_affine`, `jointSpectralRadius_lt_cycleTime_affine` |
+| Monotone homogeneous maps preserve parts of the orthant (vectors with one support) and do not increase the Thompson and Hilbert pseudometrics on them, nor on the open orthant (Bushell, Arch. Rational Mech. Anal. 52 (1973)) | `MonotoneHomogeneous.pos_iff_of_le_smul`, `thompsonEDist_map_le`, `hilbertEDist_map_le`, `thompsonEDist_map_le_of_pos`, `hilbertEDist_map_le_of_pos` |
 
 ## What is proved from stated inputs
 
@@ -642,6 +652,44 @@ of quiver representations with its derived category, no dg categories).
 [K3TwistsTest/FormalWallModel.lean](K3TwistsTest/FormalWallModel.lean) checks the instance and the
 Euler forms of the Jordan and Kronecker quivers.
 
+### The letter-matrix obstruction on the double plane
+
+On a double plane, write `λ(w)` for the point-mass multiplier of a word in `T₀^{±1}, T₁^{±1},
+T₃^{±1}`, `T_j` the twist by `𝒪(jH)`. The one geometric input, from the computation of `W_s =
+T₀T₁T₃ˢ` on the standard cohomology of line bundles, is that `λ(W_s)` is a root of `P_s`, for
+`s ≥ 1` with `s ≡ 1 (mod 19)`; it is a hypothesis (`hroot`), since it needs `D^b(X)` and twist
+functors. `P_s` has one real root, so the input fixes `λ(W_s)` to be the Perron root.
+
+| Statement | Lean |
+|---|---|
+| No invertible complex letter matrices have, for `s ≥ 1`, `s ≡ 1 (mod 19)`, an eigenvalue of `A_{W_s}` of modulus `λ(W_s)`: only the positive spellings `W_s` and only some eigenvalue modulus are used | `AlgebraicGeometry.K3.PicardRankOne.DoublePlane.no_invertible_letter_matrices` |
+| For `λ` on a group containing the three twists, no complex matrices of any size, possibly singular, give `ρ(A_{a₁} ⋯ A_{a_j}) = λ(a₁ ⋯ a_j)` on every spelling; no hypothesis `λ(1) ≠ 0` | `AlgebraicGeometry.K3.PicardRankOne.DoublePlane.no_letter_matrices` |
+| The unit test: no integer matrix of determinant `±1` has spectral radius a real root of `P_s`, `s ≥ 1`; given the lower bound by such a matrix (the action on the numerical lattice; Kikuta–Shiraishi–Takahashi, Ikeda), it is strict | `AlgebraicGeometry.K3.PicardRankOne.DoublePlane.not_isIntegral_inv_of_root`, `spectralRadius_ne_of_isUnit_det`, `spectralRadius_lt_of_isUnit_det` |
+
+[K3TwistsTest/LetterObstructionModel.lean](K3TwistsTest/LetterObstructionModel.lean) shows the
+hypotheses of `no_letter_matrices` are satisfiable, realizes each single `P_s` by `M_s`, and runs
+the S-unit theorem with `N = 1` on integer letters of determinant `±1`.
+
+### Piecewise-linear integral models
+
+A `PLModel f κ` is a finite family of cones covering the orthant with nonnegative integer cell
+matrices that agree with `f` on their cells. `EigAtRate f`, an eigenvector `0 ≤ v ≠ 0` at the
+cycle time, is a hypothesis: for continuous monotone homogeneous maps it follows from Brouwer's
+fixed point theorem (Lemmens–Nussbaum, *Nonlinear Perron–Frobenius theory*, Chapter 5), which
+Mathlib does not have.
+
+| Statement | Lean |
+|---|---|
+| The cycle time is an algebraic integer, a root of the characteristic polynomial of a cell matrix | `PLModel.isIntegral_cycleTime` |
+| `R(f) = max {t : v ∈ C_k, v ≥ 0, Σ v = 1, A_k v = t v}`, and `R(f) = ρ(A_k[J, J])` on the support `J` of an eigenvector at the rate, also on a face | `PLModel.isGreatest_cycleTime`, `PLModel.gelfandRadius_submatrix_eq_cycleTime` |
+
+[K3TwistsTest/MonotoneHomogeneousModel.lean](K3TwistsTest/MonotoneHomogeneousModel.lean) builds a
+one-cell model with `EigAtRate` from the count letters of a wall of two spheres pairing to two and a
+two-cell model whose eigenvector at the rate lies on a face; it re-derives the Gelfand-radius
+certificates as the linear case, brackets the rate of `M₂` by the ratio test in `[121, 123]`, and
+gives a non-additive monotone homogeneous count map that satisfies the squeeze along one orbit. The
+polynomial envelope of a piecewise-linear model is not proved.
+
 ## Walls in the quiver model
 
 The wall statements are proved for representations of the doubled Kronecker quiver with the
@@ -916,6 +964,18 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/AffineWeyl.lean` | the fundamental cycle of the curve wall, its alcove, affine Weyl group, translation lattices and length-zero element | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/LengthZeroGroup.lean` | the length-zero group `ℤ/2` and the Coxeter group `Ã₁` of the curve wall | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/BPS.lean` | the BPS interface of the curve wall from its `Ext`-quiver and the Kac polynomials of that quiver | same |
+| `RingTheory/IntegralClosure/Away.lean` | integrality over `ℤ[1/N]`, integrally closed; the arithmetic core of the S-unit theorem | root |
+| `RingTheory/IntegralClosure/Specialization.lean` | one `N` for a finitely generated subring of a field of characteristic zero, by Zariski's lemma and lying over | root |
+| `LinearAlgebra/Matrix/UnitSpectrum.lean` | eigenvalues integral over the entries, inverse moduli, the unit test | `Matrix` |
+| `NumberTheory/SUnitSpectral.lean` | the S-unit theorem for spectral moduli of a matrix semigroup and its family form | `Matrix` |
+| `LinearAlgebra/Matrix/SingularReduction.lean` | spectral radius of a restriction; invertible letter matrices from singular ones | `Module.End`, `Matrix` |
+| `RingTheory/Polynomial/DoublePlaneCubics.lean` | the cubics `P_s` and block matrices `M_s` of the double plane: real roots, irreducibility, primes, units | `Polynomial.DoublePlane` |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/LetterObstruction.lean` | no fixed letter matrices for `T₀^{±1}, T₁^{±1}, T₃^{±1}`; the unit test | `AlgebraicGeometry.K3.PicardRankOne.DoublePlane` |
+| `Analysis/Topical/Basic.lean` | monotone homogeneous maps, the cycle time, other starts, sub-solutions | `MonotoneHomogeneous` |
+| `Analysis/Topical/CollatzWielandt.lean` | Collatz–Wielandt bounds, the ratio test, the linear case | `MonotoneHomogeneous` |
+| `Analysis/Topical/MaxOperator.lean` | the dual maximum operator over words; the forward operator and the joint spectral radius | root |
+| `Analysis/Topical/PiecewiseLinear.lean` | piecewise-linear integral models, `EigAtRate`, algebraicity of the rate | `PLModel` |
+| `Analysis/Topical/Nonexpansive.lean` | Thompson and Hilbert nonexpansiveness on parts of the orthant | `MonotoneHomogeneous` |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
 Mathlib's representations and subrepresentations, and keep the namespace `Quiver.Kronecker` of
