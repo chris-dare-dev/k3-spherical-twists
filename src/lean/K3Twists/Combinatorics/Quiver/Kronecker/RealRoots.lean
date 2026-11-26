@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.LinearAlgebra.Matrix.IsotropicRankTwo
 import Mathlib.RingTheory.Polynomial.Chebyshev
 import Mathlib.Data.Rat.Lemmas
 import Mathlib.Tactic.FieldSimp
@@ -397,18 +398,28 @@ lemma not_isSquare_sq_sub_four {g : ℤ} (hg : 3 ≤ |g|) : ¬ IsSquare (g ^ 2 -
 
 /-- **No isotropic vector in a rational span of two spherical classes.** If two spherical
 classes pair to `±g` with `|g| ≥ 3`, a rational combination `x s₀ + y s₁` has square
-`-2(x² ∓ gxy + y²)`; this vanishes only for `x = y = 0`. -/
+`-2(x² ∓ gxy + y²)`; this vanishes only for `x = y = 0`. The proof is the rank-two wall
+criterion `Matrix.isSquare_neg_det_of_isotropic`: `(x, y)` would be isotropic for the wall matrix
+`[[2, g], [g, 2]]`, whose negated determinant `g² - 4` is not a square. -/
 theorem no_null_vector {g : ℤ} (hg : 3 ≤ |g|) {x y : ℚ} (h : x ^ 2 + g * x * y + y ^ 2 = 0) :
     x = 0 ∧ y = 0 := by
-  by_cases hy : y = 0
-  · subst hy
-    exact ⟨by simpa using h, rfl⟩
-  · exfalso
-    apply not_isSquare_sq_sub_four hg
-    rw [← Rat.isSquare_intCast_iff]
-    refine ⟨(2 * x + g * y) / y, ?_⟩
-    push_cast
-    field_simp
-    linear_combination (-4 : ℚ) * h
+  by_contra hxy
+  have hne : ![x, y] ≠ 0 := fun h0 =>
+    hxy ⟨by simpa using congrFun h0 0, by simpa using congrFun h0 1⟩
+  have hsymm : (!![2, (g : ℚ); g, 2]).IsSymm := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  have hiso : ![x, y] ⬝ᵥ Matrix.mulVec !![2, (g : ℚ); g, 2] ![x, y] = 0 := by
+    rw [Matrix.dotProduct_mulVec_fin_two]
+    simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.empty_val', Matrix.cons_val_fin_one]
+    linear_combination 2 * h
+  have hsq := Matrix.isSquare_neg_det_of_isotropic hsymm hne hiso
+  rw [Matrix.det_fin_two_of] at hsq
+  apply not_isSquare_sq_sub_four hg
+  rw [← Rat.isSquare_intCast_iff]
+  convert hsq using 1
+  push_cast
+  ring
 
 end Quiver.Kronecker
