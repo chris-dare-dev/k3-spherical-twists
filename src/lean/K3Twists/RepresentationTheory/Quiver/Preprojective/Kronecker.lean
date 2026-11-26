@@ -18,7 +18,7 @@ files are the two cases used by the notes:
   (`Quiver.Kronecker.DoubledRep`) is a representation of the double of `wallArrow ι PEmpty`
   (`Quiver.Preprojective.ofKronecker`). The preprojective relations, the morphisms, the
   subrepresentations with their dimension vectors and `e = dim Ext¹(M, M)` agree
-  (`isPreprojective_ofKronecker_iff`, `finrank_Hom_ofKronecker`, `ofKronecker_subrepsIso`,
+  (`isPreprojective_ofKronecker_iff`, `finrank_Hom_ofKronecker`, `ofKroneckerSubrepsIso`,
   `selfExtDim_ofKronecker`). In particular the rigid representation of dimension `(g², g)` is
   rigid in the general model (`selfExtDim_ofKronecker_rigidRep`).
 * **A sphere and an isotropic object** (`L` one loop): the wall group that carries the point. The
@@ -230,8 +230,8 @@ theorem finrank_Hom_ofKronecker (M : Kronecker.DoubledRep k ι V₀ V₁)
 
 omit [Fintype ι] [Fintype L] in
 /-- **The subrepresentations agree**, with their dimension vectors
-(`dimVec_ofKronecker_subrepsIso`). -/
-def ofKronecker_subrepsIso (M : Kronecker.DoubledRep k ι V₀ V₁) :
+(`dimVec_ofKroneckerSubrepsIso`). -/
+def ofKroneckerSubrepsIso (M : Kronecker.DoubledRep k ι V₀ V₁) :
     (ofKronecker M).subreps ≃o M.subreps where
   toFun P := ⟨((P : ∀ i, Submodule k (kroneckerSpace V₀ V₁ i)) false,
       (P : ∀ i, Submodule k (kroneckerSpace V₀ V₁ i)) true), fun i ↦ P.2 false true i⟩
@@ -254,9 +254,9 @@ def ofKronecker_subrepsIso (M : Kronecker.DoubledRep k ι V₀ V₁) :
     exacts [h.1, h.2]
 
 omit [Fintype ι] [Fintype L] in
-lemma dimVec_ofKronecker_subrepsIso (M : Kronecker.DoubledRep k ι V₀ V₁)
+lemma dimVec_ofKroneckerSubrepsIso (M : Kronecker.DoubledRep k ι V₀ V₁)
     (P : (ofKronecker M).subreps) :
-    Kronecker.DoubledRep.dimVec (ofKronecker_subrepsIso M P) = (dimVec P false, dimVec P true) :=
+    Kronecker.DoubledRep.dimVec (ofKroneckerSubrepsIso M P) = (dimVec P false, dimVec P true) :=
   rfl
 
 omit [Fintype L] in

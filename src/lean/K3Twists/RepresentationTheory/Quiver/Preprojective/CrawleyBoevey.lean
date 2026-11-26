@@ -618,8 +618,8 @@ theorem Iso.extMap_symm_extMap (u : Iso X X') (x : Ext1 X X) :
     · refine LinearMap.ext fun x ↦ ?_
       simp [Iso.symm]
 
-theorem Iso.selfExtDim_le [∀ i, FiniteDimensional k (V i)] [∀ i, FiniteDimensional k (V' i)]
-    (u : Iso X X') : selfExtDim X ≤ selfExtDim X' :=
+theorem Iso.selfExtDim_le [∀ i, FiniteDimensional k (V' i)] (u : Iso X X') :
+    selfExtDim X ≤ selfExtDim X' :=
   LinearMap.finrank_le_finrank_of_injective
     (f := u.extMap) fun x y h ↦ by
       rw [← u.extMap_symm_extMap x, ← u.extMap_symm_extMap y, h]
