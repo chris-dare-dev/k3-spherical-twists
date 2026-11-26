@@ -91,7 +91,8 @@ example (c : α → ι) (G : α → ι → ℕ) (w : List α) (j : ι) (φ : ι 
 def pairCoupling (a k : Fin 2) : ℕ := if k = a then 0 else 3
 
 /-- On the pair of pairing `3`, `T₀ T₁` sends `S₀ = (1, 0)` to `(10, 3)`. -/
-example : (countModel id pairCoupling).word [0, 1] • (countModel id pairCoupling).S 0 = ![10, 3] := by
+example :
+    (countModel id pairCoupling).word [0, 1] • (countModel id pairCoupling).S 0 = ![10, 3] := by
   decide
 
 /-- The recursion predicts the same count vector `(10, 3)`. -/

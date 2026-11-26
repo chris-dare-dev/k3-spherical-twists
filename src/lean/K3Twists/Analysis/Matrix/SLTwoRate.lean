@@ -38,7 +38,8 @@ lemma sq_sqrt_sq_sub_four {t : ℝ} (ht : 2 ≤ t) : √(t ^ 2 - 4) ^ 2 = t ^ 2 
   Real.sq_sqrt (by nlinarith)
 
 /-- `sl2Rate t` is a root of `x² - t x + 1`. -/
-theorem sl2Rate_sq_sub_mul_add_one {t : ℝ} (ht : 2 ≤ t) : sl2Rate t ^ 2 - t * sl2Rate t + 1 = 0 := by
+theorem sl2Rate_sq_sub_mul_add_one {t : ℝ} (ht : 2 ≤ t) :
+    sl2Rate t ^ 2 - t * sl2Rate t + 1 = 0 := by
   have h := sq_sqrt_sq_sub_four ht
   unfold sl2Rate
   linear_combination h / 4

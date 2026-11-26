@@ -58,7 +58,8 @@ section Matrix
 
 variable {R : Type*} [CommRing R]
 
-lemma reflectionProductMatrix_eq (g : R) : reflectionProductMatrix g = !![-1, g; -g, g ^ 2 - 1] := by
+lemma reflectionProductMatrix_eq (g : R) :
+    reflectionProductMatrix g = !![-1, g; -g, g ^ 2 - 1] := by
   ext i j
   fin_cases i <;> fin_cases j <;> simp [reflectionProductMatrix]
   ring

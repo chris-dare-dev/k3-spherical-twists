@@ -85,7 +85,8 @@ lemma exists_gelfandRadius_rpow_inv_le {X : ℕ → Matrix ι ι ℝ} {lam : ℝ
 
 /-- **The variational formula, convergence.** If `‖X n‖^{1/n} → λ ≥ 1`, every period `q ≥ 1` has
 a leaf matrix `L q ≥ 0` with `X (n + q) ≤ X n (L q)`, and `‖L q‖ ≤ 1 + A ∑_{k<q} ‖X k‖`, then
-`gelfandRadius(L q)^{1/q} → λ`, and every period gives an upper bound `λ ≤ gelfandRadius(L q)^{1/q}`. -/
+`gelfandRadius(L q)^{1/q} → λ`, and every period gives an upper bound
+`λ ≤ gelfandRadius(L q)^{1/q}`. -/
 theorem tendsto_gelfandRadius_rpow_inv_of_le_mul {X : ℕ → Matrix ι ι ℝ}
     (hX : ∀ n i j, 0 ≤ X n i j) {lam : ℝ} (hlam : 1 ≤ lam)
     (hlim : Tendsto (fun n : ℕ => ‖X n‖ ^ (n : ℝ)⁻¹) atTop (𝓝 lam)) {L : ℕ → Matrix ι ι ℝ}

@@ -4,6 +4,7 @@ Released under the MIT license.
 -/
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.EulerMass
 import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.EulerTwistSystem
+import K3Twists.AlgebraicGeometry.Surface.K3.PicardRankOne.PeriodicWitness
 import K3Twists.Analysis.Matrix.StarWord
 import K3Twists.GroupTheory.GroupAction.MassComparison.FixedWord
 import K3Twists.GroupTheory.GroupAction.TwistSystem.Bipartite
@@ -15,7 +16,8 @@ The bipartite bound, the fixed-word formula and the bipartite joint spectral rad
 instances of the library, so that their hypotheses are checked to be satisfiable:
 
 * the Euler-count system of `𝒪_X` and `𝒪_X(H)` on a K3 surface of Picard rank one, two centres of
-  count `d + 2`, has `e^η ≤ ρ_{d+2} < d + 3`;
+  count `d + 2`, has `e^η ≤ ρ_{d+2}`; with the periodic witness
+  (`eulerTwistSystem_log_le_homExponent`) this gives `d + 1 ≤ e^η ≤ ρ_{d+2} < d + 3`;
 * the fixed-word formula holds for the point class under every word of the lattice mass instance
   `eulerMass`;
 * the single twists of the `D₄` diagram, a star with three leaves, have joint spectral radius the
@@ -30,7 +32,7 @@ namespace K3TwistsTest.GrowthBoundModel
 open AlgebraicGeometry.K3.PicardRankOne MukaiVector Filter Topology Real Matrix
 
 /-- **The bipartite bound on the Euler-count system**: `e^η ≤ ρ_{d+2}`. -/
-example (d : ℤ) (hd : 0 ≤ d) :
+theorem eulerTwistSystem_exp_homExponent_le (d : ℤ) (hd : 0 ≤ d) :
     exp (eulerTwistSystem d).homExponent ≤ ((d + 2 : ℝ) + √((d + 2 : ℝ) ^ 2 + 4)) / 2 := by
   refine (eulerTwistSystem d).exp_homExponent_le_of_bipartite (eulerTwistSystem_lowerBound d)
     (eulerTwistSystem_isSpherical d) (eulerTwistSystem_directedConnected d hd)
@@ -52,6 +54,14 @@ example (d : ℤ) (hd : 0 ≤ d) :
     have : ((eulerTwistSystem d).h ((eulerTwistSystem d).S i) ((eulerTwistSystem d).S k) : ℝ) =
         d + 2 := by exact_mod_cast hpair
     rw [this]
+
+/-- Both bounds on the Euler-count system: `d + 1 ≤ e^η ≤ ρ_{d+2}`. -/
+example (d : ℤ) (hd : 0 ≤ d) :
+    (d : ℝ) + 1 ≤ exp (eulerTwistSystem d).homExponent ∧
+      exp (eulerTwistSystem d).homExponent ≤ ((d + 2 : ℝ) + √((d + 2 : ℝ) ^ 2 + 4)) / 2 := by
+  refine ⟨?_, eulerTwistSystem_exp_homExponent_le d hd⟩
+  have h := exp_le_exp.2 (eulerTwistSystem_log_le_homExponent d hd)
+  rwa [exp_log (by have h0 : (0 : ℝ) ≤ d := Int.cast_nonneg hd; linarith)] at h
 
 /-- **The fixed-word formula on the lattice mass instance**, for the point class. -/
 example (d : ℤ) (hd : 1 ≤ d) (g : mukaiIsometries d) (w : List (Fin 2)) :

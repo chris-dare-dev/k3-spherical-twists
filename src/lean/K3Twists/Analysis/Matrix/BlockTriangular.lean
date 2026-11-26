@@ -116,7 +116,8 @@ theorem norm_pow_le_of_blockTriangular {L : Matrix ι ι ℝ} (hL : ∀ i j, 0 �
     have hout : ∑ j ∈ Finset.univ.filter (fun j => ¬blk j = blk i), L i j * v' j ≤
         ε ^ (blk i + 1) * (K * v i) := by
       calc ∑ j ∈ Finset.univ.filter (fun j => ¬blk j = blk i), L i j * v' j
-          ≤ ∑ j ∈ Finset.univ.filter (fun j => ¬blk j = blk i), ε ^ (blk i + 1) * (L i j * v j) := by
+          ≤ ∑ j ∈ Finset.univ.filter (fun j => ¬blk j = blk i),
+              ε ^ (blk i + 1) * (L i j * v j) := by
             refine Finset.sum_le_sum fun j hj => ?_
             have hne := (Finset.mem_filter.1 hj).2
             rcases lt_or_gt_of_ne hne with hlt | hgt
