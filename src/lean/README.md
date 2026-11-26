@@ -167,6 +167,7 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | Vectors of norm `-2` with pairings `e i j ∈ ℕ` under a symmetric form give the reflection representation `W(ofExt e) →* GL(Λ)` (for `Λ = ℤ^B` the geometric representation of the Weyl group of the generalized Cartan matrix `2 - e`), with `ρ_s ρ_t ρ_s = ρ_{ρ_s t}`; root-positive words (every prefix root a nonempty sum of simple roots); root-positivity transfers along any map matching the Gram matrices, and on `ℤ^B` it is a finite check. Tits' positivity theorem (reduced iff root-positive) is stated, not proved | `CoxeterMatrix.reflectionRep`, `BilinearForm.reflect_reflect_reflect`, `BilinearForm.IsRootPositive`, `BilinearForm.IsRootPositive.of_rootForm`, `CoxeterMatrix.isRootPositive_rootForm_iff`, `CoxeterMatrix.CoxeterPositivity` |
 | A finite set mapped into itself by each `ρ(s_i)` except at one point bounds lengths from below: the number of its elements `ρ(w)` moves out is at most `ℓ(w)`. The word `[0] ++ [1, 0] ++ ⋯ ++ [n-1, …, 0]` has length `n(n+1)/2`; for `n ≤ 6` it is a reduced, root-positive word of `w₀` in `W(A_n)` with `w₀(α_i) = -α_{n-1-i}` (by computation) | `CoxeterSystem.inversionCount_le_length`, `CoxeterSystem.isReduced_of_length_le_inversionCount`, `CoxeterMatrix.longestWordA`, `CoxeterMatrix.isReduced_longestWordA`, `CoxeterMatrix.isRootPositive_longestWordA`, `CoxeterMatrix.stdWord_longestWordA` |
 | The deletion argument for words of reflections: if each `ρ_i` maps `P ∖ {α_i}` into a set `P ∋ α_i`, a word whose last prefix root leaves `P` acts as a word two letters shorter; so a word with no shorter word of the same action keeps every prefix root in `P`, and if `P` has no pair `v, -v` a word keeping every `α_i` in `P` acts trivially. A statement about the action, not the abstract Coxeter group | `BilinearForm.exists_split_of_reflectWord_notMem`, `BilinearForm.exists_reflectWord_eq_of_notMem`, `BilinearForm.prefixRoots_mem_of_minimal`, `BilinearForm.reflectWord_eq_one_of_forall_mem`, `BilinearForm.exists_reflectWord_of_mem_closure` |
+| Real roots of a loopless quiver on its root form `rootForm e`: the images of the simple roots under words of simple reflections, among them the prefix roots of every word, have norm `-2` (`q = 1`); the form is sign coherent (every vector of norm `-2` has coordinates of one sign) when the Tits form is positive semidefinite with isotropic vectors zero or of full support, as in finite and connected affine type; then, by descent on the height, every positive vector of norm `-2` is a real root, and a function invariant under the simple reflections between positive vectors takes there its value at a simple root | `CoxeterMatrix.IsRealRoot`, `CoxeterMatrix.IsRealRoot.rootForm_self`, `CoxeterMatrix.isRealRoot_of_mem_stdPrefixRoots`, `CoxeterMatrix.IsSignCoherent`, `CoxeterMatrix.isSignCoherent_of_posSemidef`, `CoxeterMatrix.exists_eq_stdRoot_of_reflect_invariant` |
 
 ## What is proved from stated inputs
 
@@ -663,6 +664,45 @@ keeps the counterexamples: over `ℤ/2`, `(1 - x)² = 1 - x²`, so injectivity n
 zero; over `ℚ`, `1 + x/2` is no multiplier with integer exponents; the `(1, 1)` formula fails for
 `a = b`; and an exponent proportional to `p·α` need not be an integer multiple of it.
 
+### The BPS interface of a wall block
+
+For stable spherical objects of one phase with `Ext`-quiver `Q` (`e i j = e j i` arrows between
+distinct vertices, no loops), `Quiver.KacData` holds the Kac polynomials `A_α(q)` on `ℤ^σ` with
+their published properties, stated on the root form of `Q`: `A = 1` on the positive real roots,
+`A = 0` where `q(α) ≥ 2`, and `A_{sᵢα} = A_α` for `α ≠ eᵢ` (Kac, *Infinite root systems,
+representations of graphs and invariant theory*, Invent. Math. 56, 1980, with the reflection
+functors of Bernstein, Gelfand and Ponomarev). `Quiver.BPSHypotheses` adds three numerical fields:
+- Mozgovoy's formula localized to the nilpotent locus: the nilpotent framed series of the tripled
+  quiver, framed by `w ≥ 0`, is `Z_w` with exponents `-(w·α) A_α(1)` (Mozgovoy, arXiv:1107.6044,
+  Theorem 5.1, Corollary 2.8; the localization by the `ℂ*`-action adapts the
+  Behrend–Bryan–Szendrői argument; Davison, arXiv:1602.02110, Proposition 8.3 with Theorem B,
+  proves a cohomological form for the preprojective algebra, and Bozec–Schiffmann–Vasserot,
+  arXiv:1701.01797, Proposition 1.2, the agreement of nilpotent and ordinary Kac polynomials at
+  `q = 1`);
+- the framed/unframed identity: the same series is `Z_w` with exponents `(w·α) Ω^Q_α` for the
+  nilpotent BPS invariants `Ω^Q` of the tripled quiver (Mozgovoy, arXiv:1104.4335,
+  Corollary 4.17);
+- the CY3 local model `localModel`: the local BPS invariants `Ω` of the wall block on `X × 𝔸¹`
+  are those of the tripled quiver with its potential. This statement has no published proof and
+  no human review, and a theorem over it is only as good as the field. Its `2`-Calabi–Yau form,
+  the objects filtered by the simples as nilpotent representations of the preprojective algebra of
+  a half of `Q`, is Davison–Hennecart–Schlegel Mejia, arXiv:2212.07668, Corollary 7.2.
+
+| Statement | Lean |
+|---|---|
+| `Ω^Q = -A(1)` from the two framed fields at the one framing `(1, …, 1)`, and `Ω = -A(1)` with the CY3 local model; the interface says no more: for given Kac data and `Ω` the fields can be met iff `Ω = -A(1)` on the positive classes | `Quiver.BPSHypotheses.bpsQ_eq`, `Quiver.BPSHypotheses.omega_eq`, `Quiver.BPSHypotheses.exists_iff` |
+| Weyl descent: for a sign-coherent root form, `A = 1` on the real roots follows from `A_{eᵢ} = 1` and the reflection invariance; with the CY3 local model, `Ω = -1` on the simple objects and on every positive real root, in particular on the prefix roots of a root-positive word, the classes of the new simple objects along a Weyl gallery; `Ω_{sᵢα} = Ω_α`; `Ω = 0` where `q ≥ 2` | `Quiver.KacData.ofSignCoherent`, `omega_single`, `omega_eq_neg_one_of_isRealRoot`, `omega_eq_neg_one_of_isRootPositive`, `omega_reflect`, `omega_eq_zero` |
+| The curve wall of the elliptic K3, an instance from a quiver: the `Ext`-quiver computed from `⟨v(A), v(B)⟩ = 2` is the affine Kronecker quiver, with root form `-2(a - b)²`, sign coherent; the Kronecker Kac polynomials `1`, `q + 1`, `0` give its Kac data, with `A = 1` on the real roots by descent; the affine Kronecker indices are `-A(1)` and give the interface, with the curve-wall multiplier as framed series; `Ω = -1` on the real roots, `Ω = -2` at `(n, n)`, and `Ω = 0` at `(a, b)` with `\|a - b\| ≥ 2`, the classes `(0, kC, n)` with `\|k\| ≥ 2` | `curveWallExt_eq`, `rootForm_curveWallExt`, `isSignCoherent_curveWallExt`, `curveWallKac`, `kroneckerBPS_eq_neg_kac`, `curveWallBPS`, `curveWallMultiplier_eq`, `curveWall_omega_real`, `curveWall_omega_null`, `curveWall_omega_eq_zero` |
+
+Unqualified names of the second row are in `Quiver.BPSHypotheses`, those of the last row in
+`AlgebraicGeometry.K3.EllipticWithSection`. Every theorem about `Ω` uses the CY3 local model and
+says so in its docstring. [K3TwistsTest/BPSModel.lean](K3TwistsTest/BPSModel.lean) gives the
+consistency model of one spherical object and checks the curve wall at `(2, 1)`, `(2, 2)`,
+`(3, 1)` and along an alternating word. The three numerical fields have no geometric instance:
+the framed moduli of the tripled quiver, the Behrend function and the moduli of objects on
+`X × 𝔸¹` are not in the library, and at the curve wall the fields are met by taking the framed
+series to be the multiplier and `Ω` to be the quiver's.
+
 ## Layout
 
 The library mirrors Mathlib: a file sits at the Mathlib path of the API it extends, or of its
@@ -717,6 +757,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Combinatorics/DT/Inversion.lean` | injectivity in characteristic zero, the big Witt bijection over `ℤ`, recovering `Ω` from one framing, the framed DT statement | same |
 | `Combinatorics/DT/TwoVertex.lean` | coefficients of the multiplier of a two-vertex quiver by a computable table recursion | same |
 | `Combinatorics/DT/Quivers.lean` | the multiplier of the Jordan, type-`A_n` and affine Kronecker quivers | same |
+| `Combinatorics/DT/BPS.lean` | the Kac data of a loopless quiver and the BPS interface of a wall block: `Ω = -A(1)` from its fields, Weyl descent | `Quiver` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
 | `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two, its two HN filtrations and that of the point | `AlgebraicGeometry.K3` |
@@ -784,10 +825,12 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `GroupTheory/Coxeter/ArtinGroup.lean` | the Artin group of a Coxeter matrix, the pure Artin group, braid relations from one conjugation identity per edge | `CoxeterMatrix` |
 | `GroupTheory/Coxeter/GeometricRepresentation.lean` | the reflection representation of `W(ofExt e)`, root-positive words, lengths from a finite root set, explicit longest words of `A_n` | `CoxeterMatrix`, `BilinearForm`, `CoxeterSystem` |
 | `GroupTheory/Coxeter/Deletion.lean` | the first sign change, deletion, positivity of minimal words and the trivial stabilizer, for words of reflections | `BilinearForm` |
+| `GroupTheory/Coxeter/RealRoots.lean` | real roots of the root form of a loopless quiver, sign coherence from semidefiniteness, descent on the height | `CoxeterMatrix` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/WeylGallery.lean` | the `A₂` Weyl gallery on classes: root-positive reduced words of `w₀` on `v(𝒪_X[1])`, `v(𝒪_C)` | `AlgebraicGeometry.K3.EllipticWithSection` |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/FramedMultiplier.lean` | the framed multiplier of the curve wall and of a point, from the classes of the lattice | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/AffineWeyl.lean` | the fundamental cycle of the curve wall, its alcove, affine Weyl group, translation lattices and length-zero element | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/LengthZeroGroup.lean` | the length-zero group `ℤ/2` and the Coxeter group `Ã₁` of the curve wall | same |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/BPS.lean` | the BPS interface of the curve wall from its `Ext`-quiver and the Kac polynomials of that quiver | same |
 
 Quiver representations are not in Mathlib. They sit under `RepresentationTheory/Quiver/`, beside
 Mathlib's representations and subrepresentations, and keep the namespace `Quiver.Kronecker` of

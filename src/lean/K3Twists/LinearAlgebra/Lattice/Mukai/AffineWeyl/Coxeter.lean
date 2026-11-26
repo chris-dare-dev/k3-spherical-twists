@@ -48,7 +48,7 @@ geometry and is not formalized.
 * P. Seidel and R. Thomas, *Braid group actions on derived categories of coherent sheaves*,
   arXiv:math/0001043, §2.
 * J. E. Humphreys, *Reflection groups and Coxeter groups*, §4.6, §5.4.
-* V. G. Kac, *Infinite dimensional Lie algebras*, §3.6, Proposition 5.1.
+* V. G. Kac, *Infinite dimensional Lie algebras*, §3.7, §5.1.
 -/
 
 namespace BilinearForm

@@ -41,7 +41,7 @@ and move the middle one by a class of `⊕ ℤCᵢ` (`apply_snd_fst_sub_mem_of_m
 ## References
 
 * J. E. Humphreys, *Reflection groups and Coxeter groups*, §1.4–§1.7 and §4.6.
-* V. G. Kac, *Infinite dimensional Lie algebras*, §3.6, §5.1.
+* V. G. Kac, *Infinite dimensional Lie algebras*, §3.7, §5.1.
 -/
 
 open Matrix
