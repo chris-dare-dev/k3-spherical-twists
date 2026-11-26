@@ -3,6 +3,7 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import K3Twists.LinearAlgebra.BilinearForm.Eichler
+import K3Twists.LinearAlgebra.BilinearForm.ReflectionGrowth
 import K3Twists.LinearAlgebra.Lattice.Mukai.PicardRankOne
 import K3Twists.Combinatorics.Quiver.Kronecker.RealRoots
 import Mathlib.Algebra.BigOperators.Fin
@@ -136,19 +137,18 @@ theorem psi_cubic {R : Type*} [CommRing R] (d : R) :
     show (-(d * (1 - 0) ^ 2 + 2)) ^ 2 = (d + 2) ^ 2 by ring] at h
 
 /-- The trace `t = (d + 2)² - 2` exceeds `2` for `d ≥ 1`, so the characteristic polynomial
-`x² - tx + 1` has a root `ρ > 1` (and `ρ⁻¹ < 1`). -/
+`x² - tx + 1` has a root `ρ > 1` (and `ρ⁻¹ < 1`). The root is the rate of `Ψ`: in the basis
+`(v(L), v(𝒪_X))` of pairing `-(d + 2)` (`pairing_O_L`), `Ψ` acts by the product `s₁ s₀` of the two
+simple reflections of the rank-two wall (`psi_action`), and `ρ` is its Gelfand radius, by the
+`SL₂` rate lemma (`BilinearForm.gelfandRadius_reflectionProductMatrix_root`). -/
 theorem psi_eigenvalue {d : ℝ} (hd : 1 ≤ d) :
     ∃ ρ : ℝ, 1 < ρ ∧ ρ ^ 2 - ((d + 2) ^ 2 - 2) * ρ + 1 = 0 := by
-  set t := (d + 2) ^ 2 - 2 with ht
-  have ht2 : 2 < t := by rw [ht]; nlinarith
-  have hdisc : 0 ≤ t ^ 2 - 4 := by nlinarith
-  refine ⟨(t + √(t ^ 2 - 4)) / 2, ?_, ?_⟩
-  · have := Real.sqrt_nonneg (t ^ 2 - 4)
+  have hg : 2 < |(-(d + 2) : ℝ)| := by
+    rw [abs_neg, abs_of_pos (by linarith)]
     linarith
-  · have h := Real.sq_sqrt hdisc
-    ring_nf
-    ring_nf at h
-    nlinarith [h]
+  refine ⟨_, BilinearForm.one_lt_gelfandRadius_reflectionProductMatrix hg, ?_⟩
+  have h := BilinearForm.gelfandRadius_reflectionProductMatrix_root hg
+  rwa [neg_sq] at h
 
 /-- The discriminant `(d + 2)² - 4 = d(d + 4)` is not a perfect square for `d ≥ 1`: the
 eigenlines of `Ψ` are irrational, so `v(𝒪_x)` has a nonzero expanding component. -/

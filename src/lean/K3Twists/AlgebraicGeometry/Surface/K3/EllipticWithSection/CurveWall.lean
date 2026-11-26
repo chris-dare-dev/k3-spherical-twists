@@ -3,6 +3,7 @@ Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.Lattice
+import K3Twists.LinearAlgebra.BilinearForm.ReflectionGrowth
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 
@@ -406,9 +407,16 @@ lemma barbacoviKim_four : ((4 : ℝ) ^ 2 - 2 + √(4 ^ 4 - 4 * 4 ^ 2)) / 2 = 7 +
       Real.sqrt_sq (by norm_num)]
   rw [h]; ring
 
-/-- `7 + 4√3` is the larger root of `x² - 14x + 1`. -/
+/-- `7 + 4√3` is the larger root of `x² - 14x + 1`: by `barbacoviKim_four` it is
+`sl2Rate (4² - 2)`, the Gelfand radius of the product `s₁ s₀` of the two simple reflections of the
+rank-two wall at pairing `4` (`BilinearForm.gelfandRadius_reflectionProductMatrix`), which is a
+root of the quadratic factor `x² - (4² - 2)x + 1` of the cubic of two reflections
+(`BilinearForm.gelfandRadius_reflectionProductMatrix_root`). -/
 lemma barbacoviKim_four_root : (7 + 4 * √3 : ℝ) ^ 2 - 14 * (7 + 4 * √3) + 1 = 0 := by
-  have h3 : √3 ^ 2 = (3 : ℝ) := Real.sq_sqrt (by norm_num)
-  linear_combination 16 * h3
+  have h4 : (2 : ℝ) < |4| := by norm_num
+  have h := BilinearForm.gelfandRadius_reflectionProductMatrix_root h4
+  rw [BilinearForm.gelfandRadius_reflectionProductMatrix h4, Matrix.sl2Rate_sq_sub_two,
+    barbacoviKim_four] at h
+  linear_combination h
 
 end AlgebraicGeometry.K3.EllipticWithSection
