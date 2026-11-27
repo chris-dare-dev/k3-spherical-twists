@@ -23,9 +23,12 @@ ordinary marginal walls meet.
   (`Complex.exists_phaseGap`).
 
 With `R = 2 max |Z(B_i)|` for the HN factors `B_i` of an object at the intersection, this is the
-choice of neighbourhood in the lemma on intersecting ordinary walls: within distance `ε` the
-stable constituents of the new HN factors keep the phases `φ_i`
-(`CategoryTheory/Triangulated/StabilityCondition/IntersectingWalls.lean`).
+lattice form of the neighbourhood in the lemma on intersecting ordinary walls
+(`CategoryTheory/Triangulated/StabilityCondition/IntersectingWalls.lean`). The theorems there do not
+pass through stable constituents. They take a phase gap for the phases of `σ`-semistable objects of
+bounded charge (`PreStabilityCondition.WithClassMap.IsPhaseGap`), which holds when the charges of
+those objects are finitely many, for instance under the support property, and through it they bound
+the `σ`-HN factors of each new HN factor: every new HN factor of `B_i` lies in `P_σ(φ_i)`.
 -/
 
 open Complex Real
