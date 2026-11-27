@@ -32,8 +32,9 @@ points of Bridgeland's period domain `P⁺` (arXiv:math/0307164, §8), root hype
   indefinite: `B(u, u) = 2|a| - 4 > 0` (`pos_add_of_two_lt`).
 
 This is the stated form on `P⁺`; on the component `P₀⁺` with the root hyperplanes removed the
-question is vacuous. That the orthogonal complement is Lorentzian for `|a| > 2` is not
-formalized here.
+question is vacuous. For `|a| > 2` the orthogonal complement of the two roots is Lorentzian of
+signature `(1, n - 1)` and contains no positive semidefinite plane
+(`LinearAlgebra/Lattice/Arrangement/Lorentzian.lean`).
 -/
 
 open Module

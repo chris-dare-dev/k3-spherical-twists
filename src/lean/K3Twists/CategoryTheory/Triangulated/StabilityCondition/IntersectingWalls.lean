@@ -8,7 +8,9 @@ import K3Twists.CategoryTheory.Abelian.Subobject.Valuation
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.StabilitySpace
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.ExtensionClosure
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.Heart
+import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.Insertion
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.Weak.Foundation.Slicing.ShortStep
+import K3Twists.Order.HarderNarasimhan.Destabilizer
 
 /-!
 # Intersecting ordinary walls
@@ -17,7 +19,8 @@ Let `σ` be a stability condition at which several ordinary walls of marginal st
 `E` an object with `σ`-HN factors `B_i ∈ P_σ(φ_i)`. The lemma on intersecting ordinary walls says
 that in a small neighbourhood of `σ` the HN tower of `E` at every nearby `τ` is computed inside the
 abelian categories `P_σ(φ_i)`, one subobject calculation in each (Bridgeland, arXiv:math/0212237,
-§8, for the deformation estimates). This file proves its two steps for one factor `B ∈ P_σ(φ)`.
+§8, for the deformation estimates). This file proves its steps (a) and (b) for one factor
+`B ∈ P_σ(φ)`, and step (c), which assembles the factors into the `τ`-HN filtration of `E`.
 
 ## (a) The lattice gap
 
@@ -36,7 +39,8 @@ abelian categories `P_σ(φ_i)`, one subobject calculation in each (Bridgeland, 
   `τ`-HN filtration all of whose factors lie in `P_σ(φ)`: their `σ`-mass is at most
   `e^{2ε} |Z_σ(B)| < 2M` and their `σ`-phases are within `2ε` of `φ`.
   `StabilitySpaceHypotheses.exists_hnFiltration_semistable_of_isPhaseGap` is the same for two points
-  of a stability space at distance less than `ε`.
+  of a stability space at distance less than `ε`. The `τ`-phases of the factors are moreover within
+  `ε` of `φ` (`exists_hnFiltration_semistable_abs_sub_lt_of_isPhaseGap`).
 
 ## (b) The τ-HN statement near σ
 
@@ -54,10 +58,29 @@ abelian categories `P_σ(φ_i)`, one subobject calculation in each (Bridgeland, 
   filtration exists from the ascending chain condition and an attained maximal phase
   (`nonempty_hnFiltration_rotatedChargeFunction`, from `Order.ChargeFunction.nonempty_hnChain`),
   not from finiteness of the range of the charge.
+* `isMaxDestabilizer_subobjectOfTriangle`: **the greedy rule in the frame of charge functions.**
+  The first `τ`-HN subobject `U`, as a subobject of `B` in the heart (`subobjectOfTriangle`), is
+  the maximal destabilizer of `rotatedChargeFunction` (`Order.ChargeFunction.IsMaxDestabilizer`).
+  So it is the first step of the HN filtration of the rotated charge
+  (`exists_chain_one_eq_subobjectOfTriangle`, and `exists_chain_one_eq_of_isPhaseGap` under a phase
+  gap), which is how the frame identifies first steps
+  (`Order.ChargeFunction.HNChain.isMaxDestabilizer_chain_one`, through Topkis's theorem). In
+  Topkis's form, `U` is the greatest maximizer of the weight of slope `Im w(U) / Re w(U)`
+  (`isGreatest_weight_subobjectOfTriangle`).
 
-The homotopy pullbacks that assemble the factors over the different `B_i` into the `τ`-HN tower of
-`E` are the cut criterion for cones (`Slicing/ConeHN.lean`, `Slicing/ConeHNStrict.lean`); the
-assembly itself is not done here.
+## (c) The τ-HN filtration of `E`
+
+* `exists_hnFiltration_of_isPhaseGap`: **insertion by homotopy pullback.** Let `E` have `σ`-HN
+  factors `B_k ∈ P_σ(φ_k)`, with phase gaps at the `φ_k` and phases at least `2ε` apart. The
+  `τ`-HN filtrations of the `B_k` from (a) have phases within `ε` of `φ_k`, so later pieces have
+  lower phases, and the insertion lemma `HNFiltration.exists_refinement`
+  (`Slicing/Insertion.lean`), which takes the homotopy pullbacks `B ×_M M_i` along the `σ`-HN
+  filtration, assembles them into a `τ`-HN filtration of `E`. Each of its factors is a factor of
+  one piece, in `P_σ(φ_k)`.
+* `exists_forall_hnFiltration_of_finite`: **the lemma on intersecting ordinary walls.** When the
+  charges of `σ`-semistable objects of bounded charge are finitely many, one `ε ∈ (0, 1/8)` serves
+  every `τ` one short step from `σ`. `StabilitySpaceHypotheses.exists_forall_dist_lt_hnFiltration`
+  is the same on a ball around `σ` in a space of stability conditions, from the support property.
 
 ## Tags
 
@@ -192,6 +215,38 @@ theorem mass_lt_of_mass_le (hε : ε ≤ 1 / 8)
       rw [hmB, ← mul_assoc, ← Real.exp_add, two_mul]
     _ < 2 * ‖σ.charge B‖ := mul_lt_mul_of_pos_right (exp_two_mul_lt_two hε) hpos
 
+/-- **The τ-HN factors of `B ∈ P_σ(φ)` stay in `P_σ(φ)`, with phases near `φ`.** Let `τ` be one
+short step from `σ` (`ε`-close slicings, masses within `e^ε`, `ε ≤ 1/8`), let `B ∈ P_σ(φ)` with
+`|Z_σ(B)| ≤ M`, and let `σ` have a phase gap at `φ` below `2M`. Then some `τ`-HN filtration of `B`
+has all its factors in `P_σ(φ)` and all its phases within `ε` of `φ`. -/
+theorem exists_hnFiltration_semistable_abs_sub_lt_of_isPhaseGap (hε : ε ≤ 1 / 8)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε)
+    (hστ : ∀ E, σ.mass E ≤ Real.exp ε * τ.mass E) (hτσ : ∀ E, τ.mass E ≤ Real.exp ε * σ.mass E)
+    (hgap : σ.IsPhaseGap φ (2 * M) ε) {B : C} (hB : σ.slicing.P φ B) (hBM : ‖σ.charge B‖ ≤ M) :
+    ∃ F : HNFiltration C τ.slicing.P B, ∀ j, σ.slicing.P φ (F.factor j) ∧ |F.φ j - φ| < ε := by
+  by_cases hB0 : IsZero B
+  · exact ⟨HNFiltration.zero C B hB0, fun j => j.elim0⟩
+  obtain ⟨F, hn, -, -, -, -, hb⟩ := τ.slicing.exists_hn_phase_bounds hB0
+  -- the `τ`-phases of `B` are within `ε` of `φ`
+  obtain ⟨hpσ, hmσ⟩ := σ.slicing.phiPlus_eq_phiMinus_of_semistable hB0 hB
+  obtain ⟨h₁, h₂⟩ := hclose B hB0
+  rw [hpσ] at h₁
+  rw [hmσ] at h₂
+  have hψ : ∀ j, |F.φ j - φ| < ε := fun j => by
+    obtain ⟨hlo, hhi⟩ := hb j
+    rw [abs_lt] at h₁ h₂ ⊢
+    constructor <;> linarith
+  refine ⟨F, fun j => ⟨?_, hψ j⟩⟩
+  by_cases hG0 : IsZero (F.factor j)
+  · exact σ.slicing.zero_mem_of_isZero C φ _ hG0
+  obtain ⟨hp, hm⟩ := σ.abs_phi_sub_lt_of_phaseClose τ hclose (F.semistable j) hG0 (hψ j)
+  -- its `σ`-mass is less than `2M`
+  have hmass : τ.mass (F.factor j) ≤ τ.mass B := by
+    rw [τ.mass_eq_norm_charge_of_semistable (F.semistable j)]
+    exact τ.norm_charge_factor_le_mass F j
+  have hlt := σ.mass_lt_of_mass_le τ hε hστ hτσ hB hB0 hmass
+  exact σ.semistable_of_isPhaseGap hgap hG0 (hlt.trans_le (by linarith)) hp hm
+
 /-- **The τ-HN factors of `B ∈ P_σ(φ)` stay in `P_σ(φ)`.** Let `τ` be one short step from `σ`
 (`ε`-close slicings, masses within `e^ε`, `ε ≤ 1/8`), let `B ∈ P_σ(φ)` with `|Z_σ(B)| ≤ M`, and
 let `σ` have a phase gap at `φ` below `2M`. Then some `τ`-HN filtration of `B` has all its
@@ -200,31 +255,84 @@ theorem exists_hnFiltration_semistable_of_isPhaseGap (hε : ε ≤ 1 / 8)
     (hclose : σ.slicing.PhaseClose τ.slicing ε)
     (hστ : ∀ E, σ.mass E ≤ Real.exp ε * τ.mass E) (hτσ : ∀ E, τ.mass E ≤ Real.exp ε * σ.mass E)
     (hgap : σ.IsPhaseGap φ (2 * M) ε) {B : C} (hB : σ.slicing.P φ B) (hBM : ‖σ.charge B‖ ≤ M) :
-    ∃ F : HNFiltration C τ.slicing.P B, ∀ j, σ.slicing.P φ (F.factor j) := by
-  by_cases hB0 : IsZero B
-  · exact ⟨HNFiltration.zero C B hB0, fun j => j.elim0⟩
-  obtain ⟨F, hn, -, -, -, -, hb⟩ := τ.slicing.exists_hn_phase_bounds hB0
-  refine ⟨F, fun j => ?_⟩
-  by_cases hG0 : IsZero (F.factor j)
-  · exact σ.slicing.zero_mem_of_isZero C φ _ hG0
-  -- the `τ`-phase of the factor is within `ε` of `φ`
-  obtain ⟨hpσ, hmσ⟩ := σ.slicing.phiPlus_eq_phiMinus_of_semistable hB0 hB
-  obtain ⟨h₁, h₂⟩ := hclose B hB0
-  rw [hpσ] at h₁
-  rw [hmσ] at h₂
-  have hψ : |F.φ j - φ| < ε := by
-    obtain ⟨hlo, hhi⟩ := hb j
-    rw [abs_lt] at h₁ h₂ ⊢
-    constructor <;> linarith
-  obtain ⟨hp, hm⟩ := σ.abs_phi_sub_lt_of_phaseClose τ hclose (F.semistable j) hG0 hψ
-  -- its `σ`-mass is less than `2M`
-  have hmass : τ.mass (F.factor j) ≤ τ.mass B := by
-    rw [τ.mass_eq_norm_charge_of_semistable (F.semistable j)]
-    exact τ.norm_charge_factor_le_mass F j
-  have hlt := σ.mass_lt_of_mass_le τ hε hστ hτσ hB hB0 hmass
-  exact σ.semistable_of_isPhaseGap hgap hG0 (hlt.trans_le (by linarith)) hp hm
+    ∃ F : HNFiltration C τ.slicing.P B, ∀ j, σ.slicing.P φ (F.factor j) :=
+  (σ.exists_hnFiltration_semistable_abs_sub_lt_of_isPhaseGap τ hε hclose hστ hτσ hgap hB
+    hBM).imp fun _ hF j => (hF j).1
+
+/-! ### (c) The τ-HN filtration of `E`, by homotopy pullback -/
+
+/-- **The τ-HN filtration of `E` near an intersection of walls, by homotopy pullback.** Let `τ` be
+one short step from `σ` (`ε`-close slicings, masses within `e^ε`, `ε ≤ 1/8`), and let `E` have a
+`σ`-HN filtration `F` whose factors `B_k ∈ P_σ(φ_k)` have `|Z_σ(B_k)| ≤ M`, with a phase gap of `σ`
+at every `φ_k` below `2M` and phases at least `2ε` apart. Then each `B_k` has a `τ`-HN filtration
+`G_k` with all factors in `P_σ(φ_k)` and phases within `ε` of `φ_k`
+(`exists_hnFiltration_semistable_abs_sub_lt_of_isPhaseGap`), and the homotopy pullbacks along `F`
+(`HNFiltration.exists_refinement`) assemble the `G_k` into a `τ`-HN filtration `H` of `E`: each
+factor of `H` is, up to isomorphism and with the same phase, a factor of some `G_k`, so it lies in
+`P_σ(φ_k)` with phase within `ε` of `φ_k`, and every isomorphism-closed property of factors is
+counted as the sum over `k`. -/
+theorem exists_hnFiltration_of_isPhaseGap [IsTriangulated C] (hε : ε ≤ 1 / 8)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε)
+    (hστ : ∀ E, σ.mass E ≤ Real.exp ε * τ.mass E) (hτσ : ∀ E, τ.mass E ≤ Real.exp ε * σ.mass E)
+    {E : C} (F : HNFiltration C σ.slicing.P E) (hM : ∀ k, ‖σ.charge (F.factor k)‖ ≤ M)
+    (hgap : ∀ k, σ.IsPhaseGap (F.φ k) (2 * M) ε)
+    (hsep : ∀ k l : Fin F.n, k < l → 2 * ε ≤ F.φ k - F.φ l) :
+    ∃ (G : ∀ k : Fin F.n, HNFiltration C τ.slicing.P (F.factor k))
+      (H : HNFiltration C τ.slicing.P E),
+      (∀ k j, σ.slicing.P (F.φ k) ((G k).factor j) ∧ |(G k).φ j - F.φ k| < ε) ∧
+      (∀ i, ∃ k j, H.φ i = (G k).φ j ∧ Nonempty (H.factor i ≅ (G k).factor j)) ∧
+      (∀ i, ∃ k, σ.slicing.P (F.φ k) (H.factor i) ∧ |H.φ i - F.φ k| < ε) ∧
+      ∀ (R : ObjectProperty C) [R.IsClosedUnderIsomorphisms],
+        H.count R = ∑ k, (G k).count R := by
+  have hpieces := fun k => σ.exists_hnFiltration_semistable_abs_sub_lt_of_isPhaseGap τ hε hclose
+    hστ hτσ (hgap k) (F.semistable k) (hM k)
+  choose G hG using hpieces
+  -- the phases of a later piece lie below those of an earlier one
+  have hsep' : ∀ k l : Fin F.n, k < l → ∀ i j, (G l).φ j < (G k).φ i := fun k l hkl i j => by
+    have h₁ := (hG k i).2
+    have h₂ := (hG l j).2
+    have h₃ := hsep k l hkl
+    rw [abs_lt] at h₁ h₂
+    linarith
+  obtain ⟨H, hH, hcount⟩ := HNFiltration.exists_refinement F G hsep'
+  refine ⟨G, H, hG, hH, fun i => ?_, hcount⟩
+  obtain ⟨k, j, hφ, ⟨e⟩⟩ := hH i
+  exact ⟨k, (σ.slicing.P (F.φ k)).prop_of_iso e.symm (hG k j).1, hφ ▸ (hG k j).2⟩
 
 end Factors
+
+/-- **The lemma on intersecting ordinary walls.** Let the charges of the nonzero `σ`-semistable
+objects with `‖Z‖ < 2M` lie in a finite set (for instance under the support property,
+`finite_charges_of_hasSupport`), and let `E` have a `σ`-HN filtration `F` whose factors have charges
+of modulus at most `M`. Then there is `ε ∈ (0, 1/8)` such that at every `τ` one short step from `σ`
+of width `ε` (`ε`-close slicings, masses within `e^ε`) the `τ`-HN filtration of `E` is computed
+inside the abelian categories `P_σ(φ_k)`: it is assembled by homotopy pullback from `τ`-HN
+filtrations of the factors `B_k` with all factors in `P_σ(φ_k)`, as in
+`exists_hnFiltration_of_isPhaseGap`. -/
+theorem exists_forall_hnFiltration_of_finite [IsTriangulated C] (σ : WithClassMap C v) {E : C}
+    (F : HNFiltration C σ.slicing.P E) {M : ℝ} (hM : ∀ k, ‖σ.charge (F.factor k)‖ ≤ M)
+    {S : Set ℂ} (hS : S.Finite)
+    (hcls : ∀ ⦃ψ : ℝ⦄ ⦃G : C⦄, σ.slicing.P ψ G → ¬IsZero G → ‖σ.charge G‖ < 2 * M →
+      σ.charge G ∈ S) :
+    ∃ ε : ℝ, 0 < ε ∧ ε < 1 / 8 ∧ ∀ τ : WithClassMap C v, σ.slicing.PhaseClose τ.slicing ε →
+      (∀ E, σ.mass E ≤ Real.exp ε * τ.mass E) → (∀ E, τ.mass E ≤ Real.exp ε * σ.mass E) →
+      ∃ (G : ∀ k : Fin F.n, HNFiltration C τ.slicing.P (F.factor k))
+        (H : HNFiltration C τ.slicing.P E),
+        (∀ k j, σ.slicing.P (F.φ k) ((G k).factor j) ∧ |(G k).φ j - F.φ k| < ε) ∧
+        (∀ i, ∃ k j, H.φ i = (G k).φ j ∧ Nonempty (H.factor i ≅ (G k).factor j)) ∧
+        (∀ i, ∃ k, σ.slicing.P (F.φ k) (H.factor i) ∧ |H.φ i - F.φ k| < ε) ∧
+        ∀ (R : ObjectProperty C) [R.IsClosedUnderIsomorphisms],
+          H.count R = ∑ k, (G k).count R := by
+  classical
+  obtain ⟨ε, hε, hε8, hgap, hsep⟩ := σ.exists_isPhaseGap hS hcls (Finset.univ.image F.φ)
+  refine ⟨ε, hε, hε8, fun τ hclose hστ hτσ => σ.exists_hnFiltration_of_isPhaseGap τ hε8.le hclose
+    hστ hτσ F hM (fun k => hgap _ (Finset.mem_image_of_mem _ (Finset.mem_univ k)))
+    fun k l hkl => ?_⟩
+  have hlt : F.φ l < F.φ k := F.hφ hkl
+  have h := hsep _ (Finset.mem_image_of_mem _ (Finset.mem_univ k)) _
+    (Finset.mem_image_of_mem _ (Finset.mem_univ l)) hlt.ne'
+  rw [abs_of_pos (sub_pos.mpr hlt)] at h
+  exact h.le
 
 /-! ### (b) The greedy rule -/
 
@@ -531,7 +639,187 @@ theorem nonempty_hnFiltration_rotatedChargeFunction (hε : ε ≤ 1 / 2)
     Nonempty (σ.rotatedChargeFunction τ hε hclose hB).HNFiltration :=
   (σ.rotatedChargeFunction τ hε hclose hB).nonempty_hnFiltration hatt
 
+/-! ### (b) The greedy rule as the maximal destabilizer of the rotated charge -/
+
+omit [IsTriangulated C] in
+/-- The underlying object of a zero object of the heart is zero. -/
+lemma isZero_obj_of_isZero {a : ℝ} {X : σ.slicing.HeartCat C a} (hX : IsZero X) :
+    IsZero X.obj := by
+  rw [IsZero.iff_id_eq_zero] at hX ⊢
+  exact congrArg (fun f => f.hom) hX
+
+/-- A distinguished triangle `U → B → Q → U[1]` with `U, B, Q ∈ P_σ(φ)` is a short exact sequence
+of the heart `P_σ((φ - 1, φ])`, so `U → B` is a monomorphism there. -/
+theorem mono_homMk_of_distTriang {B U Q : C} (hB : σ.slicing.P φ B) (hU : σ.slicing.P φ U)
+    (hQ : σ.slicing.P φ Q) {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧}
+    (hT : Triangle.mk i p δ ∈ distTriang C) :
+    Mono (ObjectProperty.homMk i : σ.heartObj hU ⟶ σ.heartObj hB) :=
+  (Slicing.HeartCat.shortExact_of_distTriang (X₃ := σ.heartObj hQ) (g := ObjectProperty.homMk p)
+    hT).mono_f
+
+/-- **The subobject of `B` given by a triangle in `P_σ(φ)`.** For a distinguished triangle
+`U → B → Q → U[1]` with `U, B, Q ∈ P_σ(φ)`, the subobject `U → B` of `B` in the heart
+`P_σ((φ - 1, φ])`. -/
+def subobjectOfTriangle {B U Q : C} (hB : σ.slicing.P φ B) (hU : σ.slicing.P φ U)
+    (hQ : σ.slicing.P φ Q) {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧}
+    (hT : Triangle.mk i p δ ∈ distTriang C) : Subobject (σ.heartObj hB) :=
+  haveI := σ.mono_homMk_of_distTriang hB hU hQ hT
+  Subobject.mk (ObjectProperty.homMk i : σ.heartObj hU ⟶ σ.heartObj hB)
+
+/-- The underlying object of `subobjectOfTriangle` is `U`. -/
+def subobjectOfTriangleIso {B U Q : C} (hB : σ.slicing.P φ B) (hU : σ.slicing.P φ U)
+    (hQ : σ.slicing.P φ Q) {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧}
+    (hT : Triangle.mk i p δ ∈ distTriang C) :
+    ((σ.subobjectOfTriangle hB hU hQ hT : Subobject (σ.heartObj hB)) :
+      σ.slicing.HeartCat C (φ - 1)).obj ≅ U :=
+  haveI := σ.mono_homMk_of_distTriang hB hU hQ hT
+  (σ.slicing.heartProp C (φ - 1)).ι.mapIso (Subobject.underlyingIso _)
+
+/-- The rotated charge of the bottom subobject is zero. -/
+lemma rotatedChargeFunction_bot (hε : ε ≤ 1 / 2) (hclose : σ.slicing.PhaseClose τ.slicing ε)
+    {B : C} (hB : σ.slicing.P φ B) :
+    (σ.rotatedChargeFunction τ hε hclose hB).rk ⊥ = 0 ∧
+      (σ.rotatedChargeFunction τ hε hclose hB).deg ⊥ = 0 := by
+  have hbot : IsZero ((⊥ : Subobject (σ.heartObj hB)) : σ.slicing.HeartCat C (φ - 1)).obj :=
+    σ.isZero_obj_of_isZero (IsZero.of_iso (isZero_zero _) Subobject.botCoeIsoZero)
+  exact ⟨τ.imPhase_isZero _ hbot, τ.imPhase_isZero _ hbot⟩
+
+/-- The rotated charge of `subobjectOfTriangle` is the rotated charge of `U`. -/
+lemma rotatedChargeFunction_subobjectOfTriangle (hε : ε ≤ 1 / 2)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε) {B U Q : C} (hB : σ.slicing.P φ B)
+    (hU : σ.slicing.P φ U) (hQ : σ.slicing.P φ Q) {i : U ⟶ B} {p : B ⟶ Q}
+    {δ : Q ⟶ U⟦(1 : ℤ)⟧} (hT : Triangle.mk i p δ ∈ distTriang C) :
+    (σ.rotatedChargeFunction τ hε hclose hB).rk (σ.subobjectOfTriangle hB hU hQ hT) =
+        τ.imPhase (φ - 1 / 2) U ∧
+      (σ.rotatedChargeFunction τ hε hclose hB).deg (σ.subobjectOfTriangle hB hU hQ hT) =
+        τ.imPhase φ U :=
+  ⟨τ.imPhase_iso _ (σ.subobjectOfTriangleIso hB hU hQ hT),
+    τ.imPhase_iso _ (σ.subobjectOfTriangleIso hB hU hQ hT)⟩
+
+/-- **The greedy rule as the maximal destabilizer of the rotated charge.** Let `σ` and `τ` have
+`ε`-close slicings with `ε ≤ 1/4`, and let `U → B → Q` be the first step of the `τ`-HN filtration of
+`B ∈ P_σ(φ)` (`U` nonzero semistable of phase `ψ₁`, `Q` of phases below `ψ₁`), with
+`U, Q ∈ P_σ(φ)`. Then the subobject `U` of `B` in the heart `P_σ((φ - 1, φ])` is the maximal
+destabilizer of the rotated charge function: no subobject of `B` has a larger phase, and every
+subobject of the same phase lies in `U`. This is `greedy_rule` read in the lattice of subobjects,
+where every subobject of `B` is a triangle `A → B → B/A` in `P_σ(φ)`. -/
+theorem isMaxDestabilizer_subobjectOfTriangle (hε : ε ≤ 1 / 4)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε) {ψ₁ : ℝ} {B U Q : C} (hB : σ.slicing.P φ B)
+    {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧} (hT : Triangle.mk i p δ ∈ distTriang C)
+    (hUτ : τ.slicing.P ψ₁ U) (hU0 : ¬IsZero U) (hQτ : τ.slicing.ltProp C ψ₁ Q)
+    (hUσ : σ.slicing.P φ U) (hQσ : σ.slicing.P φ Q) :
+    (σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB).IsMaxDestabilizer ⊥
+      (σ.subobjectOfTriangle hB hUσ hQσ hT) := by
+  set c := σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB with hc
+  set S := σ.subobjectOfTriangle hB hUσ hQσ hT with hS
+  have := σ.mono_homMk_of_distTriang hB hUσ hQσ hT
+  obtain ⟨hrk0, hdeg0⟩ := σ.rotatedChargeFunction_bot τ (hε.trans (by norm_num)) hclose hB
+  obtain ⟨hrkS, hdegS⟩ :=
+    σ.rotatedChargeFunction_subobjectOfTriangle τ (hε.trans (by norm_num)) hclose hB hUσ hQσ hT
+  have hpos : 0 < τ.imPhase (φ - 1 / 2) U :=
+    σ.imPhase_sub_half_pos τ (hε.trans (by norm_num)) hclose hUσ hU0
+  have hbS : ⊥ < S := bot_lt_iff_ne_bot.mpr fun h => by
+    have : c.rk S = c.rk ⊥ := by rw [h]
+    linarith
+  -- every subobject `A` of `B` is a triangle `A → B → B/A` in `P_σ(φ)`
+  have := σ.isSerreClass_heartTop (φ - 1)
+  have hB' : σ.slicing.heartTop C (φ - 1) (σ.heartObj hB) := (σ.heartTop_iff).mpr hB
+  have hgreedy : ∀ A : Subobject (σ.heartObj hB),
+      c.deg A * c.rk S ≤ c.deg S * c.rk A ∧ (c.deg A * c.rk S = c.deg S * c.rk A → A ≤ S) := by
+    intro A
+    have hSE : (ShortComplex.mk A.arrow (cokernel.π A.arrow) (cokernel.condition _)).ShortExact :=
+      ShortComplex.ShortExact.mk' (ShortComplex.exact_of_g_is_cokernel _
+        (cokernelIsCokernel A.arrow)) inferInstance inferInstance
+    obtain ⟨δ', hT'⟩ := Slicing.HeartCat.exists_distTriang_of_shortExact hSE
+    have hAσ : σ.slicing.P φ (A : σ.slicing.HeartCat C (φ - 1)).obj :=
+      (σ.heartTop_iff).mp ((σ.slicing.heartTop C (φ - 1)).prop_of_mono A.arrow hB')
+    have hA'σ : σ.slicing.P φ (cokernel A.arrow).obj :=
+      (σ.heartTop_iff).mp ((σ.slicing.heartTop C (φ - 1)).prop_of_epi (cokernel.π A.arrow) hB')
+    obtain ⟨hle, heq⟩ := σ.greedy_rule τ hε hclose hT hUτ hU0 hQτ hUσ hT' hAσ hA'σ
+    rw [hrkS, hdegS]
+    refine ⟨hle, fun h => ?_⟩
+    obtain ⟨f, hf⟩ := heq h
+    exact Subobject.le_mk_of_comm (ObjectProperty.homMk f) (ObjectProperty.hom_ext _ hf)
+  refine ⟨hbS, fun A hA => ?_, fun A hA h => ?_⟩
+  · rw [c.phase_le_phase_iff hA hbS, hrk0, hdeg0]
+    simpa using (hgreedy A).1
+  · refine (hgreedy A).2 (le_antisymm (hgreedy A).1 ?_)
+    have h' := (c.phase_le_phase_iff hbS hA).mp h.ge
+    rw [hrk0, hdeg0] at h'
+    simpa using h'
+
+/-- **The first step of the HN filtration of the rotated charge is the first `τ`-HN subobject.**
+In the setting of `isMaxDestabilizer_subobjectOfTriangle`, the HN filtration of the subobjects of
+`B` for the rotated charge function (unique, and existing under the ascending chain condition and
+an attained maximal phase, `nonempty_hnFiltration_rotatedChargeFunction`) has a factor, and its
+first step is `U`: the frame identifies first steps with maximal destabilizers
+(`Order.ChargeFunction.HNChain.chain_one_eq_of_isMaxDestabilizer`, through Topkis's theorem). -/
+theorem exists_chain_one_eq_subobjectOfTriangle (hε : ε ≤ 1 / 4)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε) {ψ₁ : ℝ} {B U Q : C} (hB : σ.slicing.P φ B)
+    {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧} (hT : Triangle.mk i p δ ∈ distTriang C)
+    (hUτ : τ.slicing.P ψ₁ U) (hU0 : ¬IsZero U) (hQτ : τ.slicing.ltProp C ψ₁ Q)
+    (hUσ : σ.slicing.P φ U) (hQσ : σ.slicing.P φ Q)
+    (G : (σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB).HNFiltration) :
+    ∃ h0 : 0 < G.n, G.chain ⟨1, by omega⟩ = σ.subobjectOfTriangle hB hUσ hQσ hT := by
+  have h := σ.isMaxDestabilizer_subobjectOfTriangle τ hε hclose hB hT hUτ hU0 hQτ hUσ hQσ
+  have h0 := G.pos_n_of_isMaxDestabilizer h
+  exact ⟨h0, G.chain_one_eq_of_isMaxDestabilizer h0 h⟩
+
+/-- **The greedy rule in Topkis's form.** In the setting of `isMaxDestabilizer_subobjectOfTriangle`,
+let `θ = Im w(U) / Re w(U)` for the rotated charge `w = e^{-iπφ} Z_τ`. Then `U` is the greatest
+maximizer of the weight `Im w - θ Re w` on the subobjects of `B`, and so it lies above every
+maximizer of the weight of any slope `θ' ≥ θ`
+(`Order.ChargeFunction.IsMaxDestabilizer.le_of_weight_le`, from
+`Order.greatest_maximizer_antitone`). -/
+theorem isGreatest_weight_subobjectOfTriangle (hε : ε ≤ 1 / 4)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε) {ψ₁ : ℝ} {B U Q : C} (hB : σ.slicing.P φ B)
+    {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧} (hT : Triangle.mk i p δ ∈ distTriang C)
+    (hUτ : τ.slicing.P ψ₁ U) (hU0 : ¬IsZero U) (hQτ : τ.slicing.ltProp C ψ₁ Q)
+    (hUσ : σ.slicing.P φ U) (hQσ : σ.slicing.P φ Q) :
+    IsGreatest {A | ∀ A', (σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB).weight
+        (τ.imPhase φ U / τ.imPhase (φ - 1 / 2) U) A' ≤
+      (σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB).weight
+        (τ.imPhase φ U / τ.imPhase (φ - 1 / 2) U) A}
+      (σ.subobjectOfTriangle hB hUσ hQσ hT) := by
+  set c := σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB with hc
+  have h := σ.isMaxDestabilizer_subobjectOfTriangle τ hε hclose hB hT hUτ hU0 hQτ hUσ hQσ
+  obtain ⟨hrk0, hdeg0⟩ := σ.rotatedChargeFunction_bot τ (hε.trans (by norm_num)) hclose hB
+  obtain ⟨hrkS, hdegS⟩ :=
+    σ.rotatedChargeFunction_subobjectOfTriangle τ (hε.trans (by norm_num)) hclose hB hUσ hQσ hT
+  have hpos : 0 < τ.imPhase (φ - 1 / 2) U :=
+    σ.imPhase_sub_half_pos τ (hε.trans (by norm_num)) hclose hUσ hU0
+  refine h.isGreatest_weight ?_
+  unfold Order.ChargeFunction.phase
+  rw [hrk0, hdeg0, hrkS, hdegS, sub_zero, sub_zero, ite_eq_right hpos.ne']
+
 end Subobjects
+
+/-! ### The greedy rule under a phase gap, from the HN filtration of the rotated charge -/
+
+section GreedyGap
+
+variable [IsTriangulated C] (σ τ : WithClassMap C v) {ε φ : ℝ}
+
+/-- **The greedy rule under a phase gap, from the HN filtration of the rotated charge.** In one
+short step from `σ` (`ε ≤ 1/8`) with a phase gap of `σ` at `φ` below `2M`, let `U → B → Q` be the
+first step of the `τ`-HN filtration of `B ∈ P_σ(φ)`, `|Z_σ(B)| ≤ M`. Then `U, Q ∈ P_σ(φ)`, and the
+first step of the HN filtration of the subobjects of `B` for the rotated charge is `U`. -/
+theorem exists_chain_one_eq_of_isPhaseGap {M : ℝ} (hε : ε ≤ 1 / 8)
+    (hclose : σ.slicing.PhaseClose τ.slicing ε)
+    (hστ : ∀ E, σ.mass E ≤ Real.exp ε * τ.mass E) (hτσ : ∀ E, τ.mass E ≤ Real.exp ε * σ.mass E)
+    (hgap : σ.IsPhaseGap φ (2 * M) ε) {B : C} (hB : σ.slicing.P φ B) (hBM : ‖σ.charge B‖ ≤ M)
+    {ψ₁ : ℝ} {U Q : C} {i : U ⟶ B} {p : B ⟶ Q} {δ : Q ⟶ U⟦(1 : ℤ)⟧}
+    (hT : Triangle.mk i p δ ∈ distTriang C) (hUτ : τ.slicing.P ψ₁ U) (hU0 : ¬IsZero U)
+    (hQτ : τ.slicing.ltProp C ψ₁ Q) :
+    ∃ (hUσ : σ.slicing.P φ U) (hQσ : σ.slicing.P φ Q),
+      ∀ G : (σ.rotatedChargeFunction τ (hε.trans (by norm_num)) hclose hB).HNFiltration,
+        ∃ h0 : 0 < G.n, G.chain ⟨1, by omega⟩ = σ.subobjectOfTriangle hB hUσ hQσ hT := by
+  obtain ⟨hUσ, hQσ, -⟩ :=
+    σ.greedy_rule_of_isPhaseGap τ hε hclose hστ hτσ hgap hB hBM hT hUτ hU0 hQτ
+  exact ⟨hUσ, hQσ, fun G => σ.exists_chain_one_eq_subobjectOfTriangle τ (hε.trans (by norm_num))
+    hclose hB hT hUτ hU0 hQτ hUσ hQσ G⟩
+
+end GreedyGap
 
 end PreStabilityCondition.WithClassMap
 
@@ -558,6 +846,58 @@ theorem exists_hnFiltration_semistable_of_isPhaseGap {σ τ : Stab} {ε φ M : �
       rw [dist_comm] at hle
       exact mul_le_mul_of_nonneg_right hle ((I.cond σ).mass_nonneg E)))
     hgap hB hBM
+
+/-- Masses at points at distance less than `ε` are within `e^ε`. -/
+theorem mass_le_exp_mul_of_dist_lt {σ τ : Stab} {ε : ℝ} (hd : dist σ τ < ε) (E : C) :
+    (I.cond σ).mass E ≤ Real.exp ε * (I.cond τ).mass E :=
+  (I.mass_le_exp_dist σ τ E).trans
+    (mul_le_mul_of_nonneg_right (Real.exp_le_exp.mpr hd.le) ((I.cond τ).mass_nonneg E))
+
+/-- **The τ-HN filtration of `E` by homotopy pullback, in a space of stability conditions.** For
+`d(σ, τ) < ε` with `ε ≤ 1/8`, a `σ`-HN filtration `F` of `E` whose factors have `|Z_σ| ≤ M`, phase
+gaps of `σ` at its phases below `2M` and phases at least `2ε` apart, the `τ`-HN filtration of `E`
+is assembled from `τ`-HN filtrations of the factors with all factors in the `P_σ(φ_k)`
+(`PreStabilityCondition.WithClassMap.exists_hnFiltration_of_isPhaseGap`). -/
+theorem exists_hnFiltration_of_isPhaseGap [IsTriangulated C] {σ τ : Stab} {ε M : ℝ}
+    (hε : ε ≤ 1 / 8) (hd : dist σ τ < ε) {E : C} (F : HNFiltration C (I.cond σ).slicing.P E)
+    (hM : ∀ k, ‖(I.cond σ).charge (F.factor k)‖ ≤ M)
+    (hgap : ∀ k, (I.cond σ).IsPhaseGap (F.φ k) (2 * M) ε)
+    (hsep : ∀ k l : Fin F.n, k < l → 2 * ε ≤ F.φ k - F.φ l) :
+    ∃ (G : ∀ k : Fin F.n, HNFiltration C (I.cond τ).slicing.P (F.factor k))
+      (H : HNFiltration C (I.cond τ).slicing.P E),
+      (∀ k j, (I.cond σ).slicing.P (F.φ k) ((G k).factor j) ∧ |(G k).φ j - F.φ k| < ε) ∧
+      (∀ i, ∃ k j, H.φ i = (G k).φ j ∧ Nonempty (H.factor i ≅ (G k).factor j)) ∧
+      (∀ i, ∃ k, (I.cond σ).slicing.P (F.φ k) (H.factor i) ∧ |H.φ i - F.φ k| < ε) ∧
+      ∀ (R : ObjectProperty C) [R.IsClosedUnderIsomorphisms],
+        H.count R = ∑ k, (G k).count R :=
+  (I.cond σ).exists_hnFiltration_of_isPhaseGap (I.cond τ) hε (I.phaseClose_of_dist_lt hd)
+    (I.mass_le_exp_mul_of_dist_lt hd) (I.mass_le_exp_mul_of_dist_lt (by rw [dist_comm]; exact hd))
+    F hM hgap hsep
+
+/-- **The lemma on intersecting ordinary walls, on a ball.** If the class norm has finitely many
+classes in every ball, then for every point `σ` and every object `E` with a `σ`-HN filtration `F`
+there is `ε ∈ (0, 1/8)` such that at every `τ` with `d(σ, τ) < ε` the `τ`-HN filtration of `E` is
+assembled by homotopy pullback from `τ`-HN filtrations of the `σ`-HN factors `B_k`, all of whose
+factors lie in `P_σ(φ_k)` with phases within `ε` of `φ_k`. The radius comes from the support
+property of `σ` (`finite_charges_of_hasSupport`) through the phase gap (`exists_isPhaseGap`). -/
+theorem exists_forall_dist_lt_hnFiltration [IsTriangulated C]
+    (hN : ∀ r : ℝ, {x | I.classNorm x ≤ r}.Finite) (σ : Stab) {E : C}
+    (F : HNFiltration C (I.cond σ).slicing.P E) :
+    ∃ ε : ℝ, 0 < ε ∧ ε < 1 / 8 ∧ ∀ τ : Stab, dist σ τ < ε →
+      ∃ (G : ∀ k : Fin F.n, HNFiltration C (I.cond τ).slicing.P (F.factor k))
+        (H : HNFiltration C (I.cond τ).slicing.P E),
+        (∀ k j, (I.cond σ).slicing.P (F.φ k) ((G k).factor j) ∧ |(G k).φ j - F.φ k| < ε) ∧
+        (∀ i, ∃ k j, H.φ i = (G k).φ j ∧ Nonempty (H.factor i ≅ (G k).factor j)) ∧
+        (∀ i, ∃ k, (I.cond σ).slicing.P (F.φ k) (H.factor i) ∧ |H.φ i - F.φ k| < ε) ∧
+        ∀ (R : ObjectProperty C) [R.IsClosedUnderIsomorphisms],
+          H.count R = ∑ k, (G k).count R := by
+  obtain ⟨K, -, hK⟩ := I.support σ
+  obtain ⟨S, hS, hcls⟩ :=
+    (I.cond σ).finite_charges_of_hasSupport hK hN (2 * (I.cond σ).mass E)
+  obtain ⟨ε, hε, hε8, hall⟩ := (I.cond σ).exists_forall_hnFiltration_of_finite F
+    (fun k => (I.cond σ).norm_charge_factor_le_mass F k) hS hcls
+  exact ⟨ε, hε, hε8, fun τ hd => hall (I.cond τ) (I.phaseClose_of_dist_lt hd)
+    (I.mass_le_exp_mul_of_dist_lt hd) (I.mass_le_exp_mul_of_dist_lt (by rw [dist_comm]; exact hd))⟩
 
 end StabilitySpaceHypotheses
 

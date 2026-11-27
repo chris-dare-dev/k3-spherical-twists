@@ -33,7 +33,8 @@ filtrations of `E` (`HNFiltration.sum_factor_eq`).
 * `abs_sub_mass_cone_le`: **the `2m(D)` lemma.** For any function `m` on objects that is invariant
   under shifts and subadditive on distinguished triangles, if `f, f' : A → B`
   differ by a map that factors through `D`, the cones satisfy `|m(cone f) - m(cone f')| ≤ 2 m(D)`
-  (`mass_cone_sub_le` for the mass, under `MassSubadditive`).
+  (`PreStabilityCondition.WithClassMap.abs_sub_mass_cone_le` for the mass, under
+  `MassSubadditive`).
 
 ## References
 
