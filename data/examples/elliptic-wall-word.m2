@@ -15,47 +15,80 @@ runWallWord = () -> (
     assert(sub(t^12-t,atPoint) != 0 and sub(weierstrass,atPoint) == 0
         and sub(diff(b,weierstrass),atPoint) == 1);
 
-    -- Global coevaluation divided by its fixed section C. The binary syzygies
-    -- identify the quotient on the whole base, including the fibre at infinity.
+    -- The marked charge in Chern characters is -ch2 + beta.c + Re(z)*r
+    -- + i*(H.c + Im(z)*r). The Mukai coordinate s is r + ch2.
+    NS := markedDivisorLattice(QQ,{"C","F"},matrix{{-2,1},{1,0}});
+    divisor := coords -> divisorClass(NS,coords);
+    asMukai := w -> mukaiClass(w#0,divisor {w#1,w#2},w#3);
+    coords := w -> {w#"rank"} | (w#"divisor")#"coordinates" | {w#"eulerComponent"};
+    H := divisor {1,2};
+    section := divisor {1,0};
+    fourBeta := divisor {-1,0};
+    z := {2,-1};
+    wall := curveWallMark(H,section,{fourBeta,4},z);
+    curveCutoff := wall#"curveCutoff";
+    charge := w -> (
+        c := (asMukai w)#"divisor";
+        {(1+z#0)*w#0-w#3+divisorPairing(fourBeta,c)/4,divisorPairing(H,c)+z#1*w#0}
+        );
+    add := (w,v) -> apply(w,v,(a,b)->a+b);
+    times := (k,w) -> apply(w,a->k*a);
+    O := {1,0,0,1};
+    P := {0,0,0,1};
+    line := (a,b) -> coords tensorByDivisor(asMukai O,divisor {a,b});
+    L := line(-2,0);
+    K := line(-1,2);
+
+    -- On the elliptic surface K-L has fibre degree one. Its sections have
+    -- fixed part C, and division by the section pulls back the full binary system.
+    difference := apply((asMukai K)#"divisor"#"coordinates",(asMukai L)#"divisor"#"coordinates",(a,b)->a-b);
+    assert(difference#0 == 1 and difference#1 >= 0);
     baseRing := QQ[local u,local v];
-    quadratics := matrix{{v^2,u*v,u^2}};
-    relationsOnBase := matrix{{u,-v,0},{0,u,-v}};
+    quadratics := basis(difference#1,baseRing);
+    relationsOnBase := transpose syz quadratics;
     assert(relationsOnBase * transpose quadratics == 0);
-    assert(minors(2,relationsOnBase) == (ideal(u,v))^2);
+    assert(minors(numRows relationsOnBase,relationsOnBase) == (ideal(u,v))^(difference#1));
+    relationDegrees := unique apply(select(flatten entries relationsOnBase,e -> e != 0),e -> first degree e);
+    assert(#relationDegrees == 1);
+    V := coords tensorByDivisor(asMukai K,divisor {0,first relationDegrees});
     numSections := numColumns quadratics;
     numQuotients := numRows relationsOnBase;
+    -- Negative fibre degree kills H^2, so Riemann--Roch also gives H^1 = 0.
+    assert(divisorPairing(divisor difference,divisor {0,1}) == 1);
+    assert(2 + divisorPairing(divisor difference,divisor difference)//2 == numSections);
 
     -- Native complexes on the regular parameter chart, with line bundles
     -- trivialized. Their base changes to the completed local ring give the stalk
     -- tests. K, L and the exterior quotient have different global line classes.
     S := QQ[local s,local n,Degrees=>{0,0}];
-    h := matrix{{s,n}};
-    d := transpose matrix{{-n,s}};
     kPoint := S^1 / ideal(s,n);
     j := map(S^numSections,S^1,entries sub(transpose quadratics,{u=>s+pointFibre,v=>1_S}));
     qBase := map(S^numQuotients,S^numSections,entries sub(relationsOnBase,{u=>s+pointFibre,v=>1_S}));
-    assert(h*d == 0 and qBase*j == 0 and coker qBase == 0);
+    assert(qBase*j == 0 and coker qBase == 0);
 
     quasi := f -> certifiesCutSquare(f,id_(target f),f,id_(target f));
-    -- First twist. The free model of I[1] maps to the retained evaluation cone.
     evaluation := map(complex kPoint,complex S^1,hashTable {0=>map(kPoint,S^1,{{1}})});
-    firstCone := cone evaluation;
+    cut := curveWallIdealCut(wall,(asMukai L)#"divisor",n,evaluation);
+    firstCut := cut#"inclusion";
+    firstCone := target firstCut;
+    tailProjection := cut#"projection";
+    tailLine := coords tensorByDivisor(asMukai O,cut#"tailDivisor");
+    -- Compare the computed boundary over the retained evaluation cone. Resolve
+    -- its source using the kernel of the actual evaluation, in the same frame.
+    h := gens ker evaluation_0;
+    d := syz h;
     idealShift := complex(d,Base=>1);
     toFirst := map(firstCone,idealShift,hashTable {1=>h});
     assert(quasi toFirst);
-
-    -- In the global inclusion I_x L -> O, the fixed section has divisor 2C.
-    -- Its saturation along C gives O and the quotient R. Take the actual
-    -- boundary R -> I[1] and compare over the retained first twist.
-    thickRow := n^2*h;
-    assert(saturate(ideal thickRow,ideal n) == ideal(1_S));
+    inKernel := h // firstCut_1;
+    thickRow := (source firstCut).dd_1 * inKernel;
     thick := complex {thickRow,d};
+    toCut := map(source firstCut,thick,hashTable {0=>id_(S^1),1=>inKernel});
     boundary := map(idealShift,thick,hashTable {1=>id_(S^2),2=>id_(S^1)});
-    firstCut := map(firstCone,thick,hashTable {1=>h});
-    assert(certifiesCutSquare(boundary,firstCut,id_thick,toFirst));
-    lineShift := complex(S^1,Base=>1);
-    firstQuotient := map(lineShift,cone firstCut,hashTable {1=>matrix{{1,n^2}}});
-    assert(quasi firstQuotient and ann HH_0 thick == ideal(n^2*s,n^3));
+    assert(certifiesCutSquare(boundary,firstCut,toCut,toFirst));
+    lineShift := target tailProjection;
+    firstQuotient := map(lineShift,cone firstCut,hashTable {1=>(id_(S^1) | tailProjection_1)});
+    assert(quasi firstQuotient and ann HH_0 source firstCut == ideal(n^2*s,n^3));
 
     -- Every ordinary homological cut has zero H_0 on the first output. Below
     -- and above its two chain degrees these cuts are already constant.
@@ -64,51 +97,58 @@ runWallWord = () -> (
 
     -- Second twist. Ordinary Hom has three sections and Ext^1 has one
     -- generator. The source identification is the same toFirst used above.
-    ordinary := j*n*h;
-    saturatedLine := saturate(image ordinary,ideal n);
-    assert(saturatedLine == image j and ann(saturatedLine / image ordinary) == ideal(n*s,n^2));
+    ordinary := j*n^(difference#0)*h;
+    -- The global Ext^1(I,K) maps isomorphically to Ext^2(P,K). Its local
+    -- generator is a lift of a generator in the dual of the point resolution.
+    extAtPoint := coker transpose d;
+    assert(numgens extAtPoint == 1 and ann extAtPoint == ideal(s,n));
+    eta := map(S^1,source d,entries transpose gens extAtPoint);
     coTarget := complex(S^numSections,Base=>1) ++ complex(S^1,Base=>2);
-    coevaluation := map(coTarget,idealShift,hashTable {1=>ordinary,2=>id_(S^1)});
+    coevaluation := map(coTarget,idealShift,hashTable {1=>ordinary,2=>eta});
     fibre := (cone coevaluation)[1];
-    -- Cancel the unit of the higher component, retaining the comparison to
+    -- Discover J on the raw fibre, before supplying an exterior quotient or
+    -- choosing coordinates for its middle sheaf. Factor the top cut through J.
+    intoFibre := curveTorsionPreimage(fibre,n);
+    J := source intoFibre;
+    (lo,hi) := concentration fibre;
+    homologyDegrees := select(toList(lo..hi),i -> HH_i fibre != 0);
+    assert(homologyDegrees == {0,1});
+    upper := signedCutInclusion(fibre,coevaluation,-1,last homologyDegrees);
+    intoJ := map(J,source upper,i -> upper_i // intoFibre_i);
+    assert(isComplexMorphism intoJ and intoFibre*intoJ == upper);
+    middle := cone intoJ;
+    middleIdeal := ann HH_0 middle;
+    assert(all(select(toList(0..(last concentration middle)),i -> i != 0),i -> HH_i middle == 0));
+    assert(middleIdeal == ideal(n*s,n^2) and n % middleIdeal != 0);
+
+    -- In the unit basis chosen by the dual resolution, cancel its free pair.
+    -- Retain the comparison to
     -- the original fibre. The sign in degree zero is the Complexes fibre sign.
     reduced := complex ordinary;
     contract := map(reduced,fibre,hashTable {1=>(id_(S^2) | d),0=>-id_(S^numSections)});
     liftBack := map(fibre,reduced,hashTable {1=>(id_(S^2) || map(S^1,S^2,0)),0=>-id_(S^numSections)});
     assert(quasi contract and contract*liftBack == id_reduced);
 
-    -- The saturation is the line spanned by j. Dividing by the ordinary image
-    -- recovers the middle sheaf. Its defining ideal retains the embedded point.
-    satLine := saturate(image ordinary,ideal n);
-    assert(satLine == image j);
-    middleSheaf := satLine / image ordinary;
+    -- Identify the discovered arrows with free models and the global quotient.
+    assert(saturate(image ordinary,ideal n) == image j);
     middleRow := ordinary // j;
-    assert(j*middleRow == ordinary and middleRow == n*h);
-    middleIdeal := ideal middleRow;
-    assert(ann middleSheaf == middleIdeal and middleIdeal == ideal(n*s,n^2) and n % middleIdeal != 0);
-
-    -- J is the inverse image of this saturated line. Compare its inclusion
-    -- with the kernel of the degreewise surjection from the uncontracted fibre.
-    J := complex middleRow;
-    intoReduced := map(reduced,J,hashTable {0=>j,1=>id_(S^2)});
-    intoFibre := liftBack*intoReduced;
+    assert(j*middleRow == ordinary and ideal middleRow == middleIdeal);
+    freeJ := complex middleRow;
+    intoReduced := map(reduced,freeJ,hashTable {0=>j,1=>id_(S^2)});
+    freeInclusion := liftBack*intoReduced;
+    toJ := map(J,freeJ,i->freeInclusion_i // intoFibre_i);
+    assert(certifiesCutSquare(freeInclusion,intoFibre,toJ,id_fibre));
     toOutside := map(complex(S^numQuotients),reduced,hashTable {0=>qBase})*contract;
-    pullback := kernel toOutside;
-    pullbackInclusion := map(fibre,pullback,i->inducedMap(fibre_i,pullback_i));
-    toPullback := map(pullback,J,i->intoFibre_i // pullbackInclusion_i);
-    assert(certifiesCutSquare(intoFibre,pullbackInclusion,toPullback,id_fibre));
+    assert(toOutside*intoFibre == 0);
     lastQuotient := map(target toOutside,cone intoFibre,hashTable {0=>toOutside_0});
     assert(quasi lastQuotient);
-
-    -- Top inclusion K[1] -> J. Its cone maps onto M via the residue map.
-    intoJ := map(J,lineShift,hashTable {1=>d});
-    midModule := S^1/middleIdeal;
-    toMiddle := map(complex midModule,cone intoJ,hashTable {0=>map(midModule,S^1,{{1}})});
-    assert(quasi toMiddle);
-    top := intoFibre*intoJ;
-    upper := signedCutInclusion(fibre,coevaluation,-1,1);
+    freeTop := map(freeJ,lineShift,hashTable {1=>d});
+    top := freeInclusion*freeTop;
     topComparison := map(source upper,lineShift,hashTable {1=>top_1 // upper_1});
-    assert(certifiesCutSquare(top,upper,topComparison,id_fibre));
+    assert(certifiesCutSquare(freeTop,intoJ,topComparison,toJ));
+    midModule := S^1/middleIdeal;
+    quotientMap := map(complex midModule,cone freeTop,hashTable {0=>map(midModule,S^1,1)});
+    assert(quasi quotientMap);
     -- The next cut includes nonzero torsion in degree zero. Ordinary truncation
     -- there either keeps the entire positive-rank H_0 or has zero H_0.
     assert(HH_0 J != 0 and ann HH_0 J == middleIdeal);
@@ -122,8 +162,10 @@ runWallWord = () -> (
     -- homotopy). The higher component restricts to 1 modulo the Koszul boundaries.
     resPoint := complex {h,d};
     resMiddle := complex {middleRow,d};
-    includePoint := map(resMiddle,resPoint,hashTable {0=>n*id_(S^1),1=>id_(S^2),2=>id_(S^1)});
-    includeMiddle := map(thick,resMiddle,hashTable {0=>n*id_(S^1),1=>id_(S^2),2=>id_(S^1)});
+    pointScalar := transpose(transpose middleRow // transpose h);
+    middleScalar := transpose(transpose thickRow // transpose middleRow);
+    includePoint := map(resMiddle,resPoint,hashTable {0=>pointScalar,1=>id_(S^2),2=>id_(S^1)});
+    includeMiddle := map(thick,resMiddle,hashTable {0=>middleScalar,1=>id_(S^2),2=>id_(S^1)});
     onMiddle := coevaluation*boundary*includeMiddle;
     onPoint := onMiddle*includePoint;
     assert(isComplexMorphism includePoint and isComplexMorphism includeMiddle);
@@ -133,53 +175,51 @@ runWallWord = () -> (
     assert(not isSubset(image transpose ordinary,image transpose thickRow));
     coboundaries := ideal transpose d;
     assert(coboundaries == ideal(s,n) and onPoint_2_(0,0) % coboundaries == 1);
-    splitControl := map(coTarget,idealShift,hashTable {1=>ordinary});
-    assert((splitControl*boundary*includeMiddle*includePoint)_2 == 0);
-
-    -- The marked charge in Chern characters is -ch2 + beta.c + Re(z)*r
-    -- + i*(H.c + Im(z)*r). The Mukai coordinate s is r + ch2.
-    NS := markedDivisorLattice(QQ,{"C","F"},matrix{{-2,1},{1,0}});
-    divisor := coords -> divisorClass(NS,coords);
-    asMukai := w -> mukaiClass(w#0,divisor {w#1,w#2},w#3);
-    coords := w -> {w#"rank"} | (w#"divisor")#"coordinates" | {w#"eulerComponent"};
-    H := divisor {1,2};
-    section := divisor {1,0};
-    fourBeta := divisor {-1,0};
-    z := {2,-1};
-    curveCutoff := -1;
-    hSquare := divisorPairing(H,H);
-    halfSelfIntersection := -divisorPairing(section,section)/2;
-    betaC := divisorPairing(fourBeta,section)/4;
-    assert(hSquare > 0 and divisorPairing(H,section) == 0 and divisorPairing(H,fourBeta) == 0);
-    assert(curveCutoff+halfSelfIntersection < betaC and betaC < curveCutoff+halfSelfIntersection+1);
-    assert(z#0+(z#1)^2/hSquare > -divisorPairing(fourBeta,fourBeta)/32);
-    charge := w -> (
-        c := (asMukai w)#"divisor";
-        {(1+z#0)*w#0-w#3+divisorPairing(fourBeta,c)/4,divisorPairing(H,c)+z#1*w#0}
+    -- Read the Yoneda two-extension straight from J. Lift the socle and its
+    -- two relations, then express the remaining cycle modulo boundaries on
+    -- the K axis. Reduction in the residue field removes the lift choices.
+    attachingResidue := inclusion -> (
+        U := source inclusion;
+        lift0 := (-j*pointScalar) // inclusion_0;
+        lift1 := (lift0*h) // U.dd_1;
+        assert(inclusion_0*lift0 == -j*pointScalar and U.dd_1*lift1 == lift0*h);
+        cycle := lift1*d;
+        axis := (map(source h,S^1,0) || id_(S^1)) // inclusion_1;
+        cycles := axis | U.dd_2;
+        coefficients := cycle // cycles;
+        assert(cycles*coefficients == cycle);
+        coefficients_(0,0) % coboundaries
         );
-    add := (w,v) -> apply(w,v,(a,b)->a+b);
-    times := (k,w) -> apply(w,a->k*a);
-    O := {1,0,0,1};
-    P := {0,0,0,1};
-    line := (a,b) -> coords tensorByDivisor(asMukai O,divisor {a,b});
-    D := line(-1,0);
-    L := line(-2,0);
-    K := line(-1,2);
-    V := line(-1,3);
+    attachment := attachingResidue intoFibre;
+    assert(attachment == onPoint_2_(0,0) % coboundaries);
+    controls := apply({0_S,-1_S},e -> (
+        f := map(coTarget,idealShift,hashTable {1=>ordinary,2=>e*eta});
+        U := curveTorsionPreimage((cone f)[1],n);
+        assert(ann HH_0 source U == middleIdeal);
+        attachingResidue U
+        ));
+    assert(controls == {0_S,-1_S});
+
     E := coords mukaiReflection(asMukai P,asMukai L);
     Y := coords mukaiReflection(asMukai E,asMukai K);
-    A := add(O,times(-1,D));
+    -- Dividing the ordinary Hom sections by their fixed part identifies the
+    -- saturated line. The primitive relation degrees identify the outside line.
+    D := coords tensorByDivisor(asMukai L,divisor {difference#0,0});
+    -- D/I is an extension of D|_C by the finite-length L/I. Both are
+    -- unshifted of imaginary charge zero by the marked curve cutoff.
+    assert(divisorPairing((asMukai D)#"divisor",section) > curveCutoff);
+    A := add(O,times(-1,line(-1,0)));
     B := add(P,times(-1,A));
     M := add(D,E);
-    R := add(O,E);
+    R := add(tailLine,E);
     assert(M == add(P,add(times(numSections,A),times(numQuotients,B))) and R == add(M,A));
     assert(Y == add(times(-1,K),add(M,times(numQuotients,V))));
 
     -- A phase is (sheet, charge of the representative in the marked heart).
     -- On these lines the first tilt compares the H-slope with -Im(z).
     -- For an unshifted line the second tilt tests Hom to O_C(l), l <= k.
-    -- Stability uses the geometric no-phase-one-subobject results in the
-    -- guide. The charge by itself supplies no such test.
+    -- A line above the slope cutoff with curve degree > k is in the heart:
+    -- a torsion sheaf or a shifted sheaf has no map into this unshifted line.
     heartRay := w -> (
         c := charge w;
         assert(c#1 > 0 or (c#1 == 0 and c#0 < 0));
@@ -200,7 +240,8 @@ runWallWord = () -> (
         fold((a,b)->if above(a,b) then a else b,phases)
         };
     assert((heartRay A)#1 == {-1/2,0} and (heartRay B)#1 == {-1/2,0});
-    pO := linePhase(O,1);
+    assert(divisorPairing(section,cut#"tailDivisor") <= curveCutoff+2);
+    pO := linePhase(tailLine,1);
     pK := linePhase(K,0);
     pK1 := linePhase(K,1);
     pV := linePhase(V,0);
@@ -211,10 +252,12 @@ runWallWord = () -> (
         w := asMukai {r,a,r+1,e};
         assert((mukaiPairing(w,w)+2)%4 != 0 or (mukaiPairing(asMukai V,w)+1)%2 != 0)
         ))));
-    -- Obtain the input windows by taking extrema over the twist triangles.
-    -- The first source shift has leaves O[1], A and B. At the second step
-    -- RHom contributes K and K[1]. Each extremum carries its sheet.
-    firstWindow := bounds {heartRay P,heartRay A,heartRay B,pO};
+    -- For the first input triangle, apply the same hull rule to L[1]
+    -- (empty point quotient). The other end P has phase one in the marked heart.
+    emptyEvaluation := map(complex(S^0),source evaluation,0);
+    inputLineCut := curveWallIdealCut(wall,(asMukai L)#"divisor",n,emptyEvaluation);
+    inputTail := coords tensorByDivisor(asMukai O,inputLineCut#"tailDivisor");
+    firstWindow := bounds {linePhase(inputTail,1),heartRay P};
     secondWindow := bounds (firstWindow | {pK,pK1});
     assert(above(heartRay R,pO) and above(pK1,heartRay M) and above(heartRay M,pV));
     -- Exact mass as (square-free radicand, rational coefficient).
@@ -230,8 +273,9 @@ runWallWord = () -> (
             ));
         apply(sort keys sums,rad->{rad,sums#rad})
         );
-    firstFactors := {R,times(-1,O)};
+    firstFactors := {R,times(-1,tailLine)};
     secondFactors := {times(-1,K),M,times(numQuotients,V)};
+    << "Marked curve cutoff, additions and residual line  " << toString {curveCutoff,cut#"curveSteps",cut#"tailDivisor"#"coordinates"} << endl;
     << "Input windows (sheet, charge in heart)  " << toString {firstWindow,secondWindow} << endl;
     << "Strict cuts for R, K[1] and J respectively  " << toString {pO,heartRay M,pV} << endl;
     << "First factor charges  " << toString apply(firstFactors,charge)
@@ -240,6 +284,7 @@ runWallWord = () -> (
         << "   Mass terms  " << toString mass secondFactors << endl;
     << "First cone gives R -> I[1] -> O[1]. Every ordinary cut has zero H_0." << endl;
     << "Inverse fibre gives K[1] -> J -> Y with quotients K[1], M_(2,x), V^2." << endl;
-    << "At x the attaching class is 1. Removing the higher component gives 0." << endl;
+    << "Point restriction from the tower and from coevaluation  " << toString {attachment,onPoint_2_(0,0) % coboundaries} << endl;
+    << "Split and sign-reversed attachments from the raw fibres  " << toString controls << endl;
     );
 runWallWord();

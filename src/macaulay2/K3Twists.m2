@@ -106,6 +106,10 @@ export {
     "homologicalCutInclusion",
     "signedCutInclusion",
     "certifiesCutSquare",
+    "CurveWallMark",
+    "curveWallMark",
+    "curveWallIdealCut",
+    "curveTorsionPreimage",
     -- tasks
     "expandBatch",
     "runTask",
@@ -162,6 +166,7 @@ load "./K3Twists/derived/spherical.m2"
 load "./K3Twists/derived/words.m2"
 
 load "./K3Twists/derived/cut-arrows.m2"
+load "./K3Twists/derived/curve-wall.m2"
 load "./K3Twists/derived/quartic-derived.m2"
 load "./K3Twists/derived/quartic-cones.m2"
 load "./K3Twists/derived/quintic.m2"
