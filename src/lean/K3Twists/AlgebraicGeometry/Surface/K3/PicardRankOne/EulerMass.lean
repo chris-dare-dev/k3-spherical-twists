@@ -32,7 +32,7 @@ stability condition. The fields `hom`, `mass` and `twist` have no geometric inst
 true Ext counts, masses and twist functors need the 2-Calabi–Yau category `D^b(X)`, its spherical
 twists and a space of Bridgeland stability conditions, none of which Mathlib has. The model shows
 that the comparison layer and Theorem C hold together with a positive exponent
-(`eulerClassTwistSystem_tendsto_log_lenMax`), on the real classes of a K3 surface.
+(`eulerClass_exists_tendsto_log_lenMax`), on the real classes of a K3 surface.
 
 ## Main definitions
 

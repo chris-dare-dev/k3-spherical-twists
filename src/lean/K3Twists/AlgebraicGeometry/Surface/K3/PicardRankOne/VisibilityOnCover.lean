@@ -23,7 +23,7 @@ proves the lemma from the inputs listed in `VisibilityHypotheses`. Each field ci
 mostly Bayer–Bridgeland, *Derived automorphism groups of K3 surfaces of Picard rank 1*
 (arXiv:1310.8266, cited as [BB]), and Bridgeland, *Stability conditions on K3 surfaces*
 (arXiv:math/0307164). The lattice and geometric arguments come from
-`AlgebraicGeometry.K3.PicardRankOne.Visibility` and are proved from Mathlib alone.
+`AlgebraicGeometry/Surface/K3/PicardRankOne/Visibility.lean` and are proved from Mathlib alone.
 
 The objects are isomorphism classes with the shift as an action of `ℤ`; a stability condition
 `σ` has a point `base σ` of the projective model (the kernel line of its central charge), and

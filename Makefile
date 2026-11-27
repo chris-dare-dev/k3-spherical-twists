@@ -11,7 +11,7 @@
 #   make check       fail if those tables are not what the registry and the records give
 #   make lean-deps   once: fetch Mathlib's build cache for the Lean proofs in src/lean
 #   make lean        build the Lean proofs (a warning fails it), their tests, linters, umbrella,
-#                    axiom audit and style check
+#                    axiom audit, cited-name check and style check
 # ARGS is passed to the batch command, for example ARGS="--workers 8 --memory-budget 16000".
 M2     ?= M2
 PYTHON ?= python3
@@ -98,4 +98,5 @@ lean:
 	cd src/lean && $(LAKE) lint
 	cd src/lean && $(LAKE) exe mk_all --lib K3Twists --check
 	cd src/lean && $(LAKE) env lean scripts/AxiomAudit.lean
+	cd src/lean && $(LAKE) env lean scripts/CheckDocNames.lean
 	cd src/lean && $(PYTHON) scripts/check_mathlib_style.py --check-baseline

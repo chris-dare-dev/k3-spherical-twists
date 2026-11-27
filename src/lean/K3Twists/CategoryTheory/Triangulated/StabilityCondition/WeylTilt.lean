@@ -68,8 +68,8 @@ neither (twist functors need a dg or Fourier–Mukai enhancement). The fields wi
 instance are therefore `conf` (the twists), the simple-tilt field `image_heart_eq_lowerTilt` and
 tilt composition `lowerTilt_lowerTilt_eq`. The class-level half of every statement here, which
 is what the induction feeds on, is instantiated from real classes in
-`AlgebraicGeometry.K3.EllipticWithSection.WeylGallery`, the `A₂` configuration `𝒪_X[1]`, `𝒪_C`
-on the Mukai lattice of an elliptic K3 surface with a section.
+`AlgebraicGeometry/Surface/K3/EllipticWithSection/WeylGallery.lean`, the `A₂` configuration
+`𝒪_X[1]`, `𝒪_C` on the Mukai lattice of an elliptic K3 surface with a section.
 
 ## Corollaries
 

@@ -108,7 +108,7 @@ instance : Module R (MukaiVector R) :=
 
 /-- **The rank-one lattice is a Mukai lattice.** The coordinates identify `MukaiVector R` with
 `MukaiLattice R R`, `R`-linearly; under this identification the pairing is the Mukai form of
-`b x y = 2dxy` (`Mukai.mukaiForm_rankOne_toMukaiLatticeEquiv` in `Lattice/Mukai/Slice.lean`). -/
+`b x y = 2dxy` (`MukaiVector.pairing_eq_mukaiForm_rankOneForm` in `Lattice/Mukai/Slice.lean`). -/
 def toMukaiLatticeEquiv : MukaiVector R ≃ₗ[R] MukaiLattice R R where
   toFun := toMukaiLattice
   invFun v := ⟨v.1, v.2.1, v.2.2⟩

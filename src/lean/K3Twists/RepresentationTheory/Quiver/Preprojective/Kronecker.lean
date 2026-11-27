@@ -16,8 +16,8 @@ files are the two cases used by the notes:
 
 * **Two spheres** (`L` empty): a representation of the doubled `ι`-Kronecker quiver
   (`Quiver.Kronecker.DoubledRep`) is a representation of the double of `wallArrow ι PEmpty`
-  (`Quiver.Preprojective.ofKronecker`). The preprojective relations, the morphisms, the
-  subrepresentations with their dimension vectors and `e = dim Ext¹(M, M)` agree
+  (`Quiver.Preprojective.DoubledRep.ofKronecker`). The preprojective relations, the morphisms,
+  the subrepresentations with their dimension vectors and `e = dim Ext¹(M, M)` agree
   (`isPreprojective_ofKronecker_iff`, `finrank_Hom_ofKronecker`, `ofKroneckerSubrepsIso`,
   `selfExtDim_ofKronecker`). In particular the rigid representation of dimension `(g², g)` is
   rigid in the general model (`selfExtDim_ofKronecker_rigidRep`).

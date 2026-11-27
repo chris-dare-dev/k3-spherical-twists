@@ -26,7 +26,7 @@ its rationalisation.
 Nothing in the argument is about the Mukai carrier `ℤ × N × ℤ`: every step is
 bilinearity, symmetry, or the one hypothesis `B s s = -2`. It is therefore
 stated here on `(R, M, B)`, and `Lattice/Mukai/Reflection.lean` specialises it
-at `B := Mukai.pairingBilin b`. There is one reflection, not two.
+at `B := Mukai.mukaiForm b`. There is one reflection, not two.
 
 **This is not the spherical twist.** On a K3 surface the Seidel--Thomas twist
 `T_E` acts on the Mukai lattice as `ρ_{v(E)}`, and that statement is the
