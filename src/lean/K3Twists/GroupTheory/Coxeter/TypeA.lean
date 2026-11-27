@@ -43,9 +43,9 @@ reduced word for the longest element `w₀` of `W(A_n)`, whose diagram automorph
 
 ## References
 
-* N. Bourbaki, *Groupes et algèbres de Lie*, Ch. VI, §4, no. 7 (the root system of type `A_l`:
-  the roots `ε_i - ε_j`, the basis `ε_i - ε_{i+1}` and its positive roots, the Weyl group acting
-  by permutations of the `ε_i`).
+* N. Bourbaki, *Groupes et algèbres de Lie*, Ch. IV–VI, Planche I (the root system of type
+  `A_l`: the roots `ε_i - ε_j`, the basis `ε_i - ε_{i+1}` and its positive roots, the Weyl group
+  acting by permutations of the `ε_i`).
 * J. E. Humphreys, *Reflection groups and Coxeter groups*, §1.8 (the longest element `w₀`, which
   sends the positive roots to negative roots and has length the number of positive roots), §5.6
   (the length of `w` is the number of positive roots sent to negative roots; only the lower bound
