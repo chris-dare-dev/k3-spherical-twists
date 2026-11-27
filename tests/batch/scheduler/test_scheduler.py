@@ -113,17 +113,28 @@ class Outcomes(SchedulerCase):
 
 
 class Resumption(SchedulerCase):
+    """The sleeper's time limit counts from the launch of its watchdog, and on a slow machine it can end
+    before the runner has written its start line.  So the sleeper's attempts are counted in the records;
+    the journal counts only the tasks that end by themselves."""
+
+    def started_besides_the_sleeper(self) -> list[str]:
+        return [task_id for task_id in self.journal.started() if task_id != "fake/sleeper"]
+
     def test_a_rerun_computes_nothing(self) -> None:
         config = fake_config(
             [{"name": "a"}, {"name": "b", "exit": 1}, {"name": "c", "value": 1, "predicted": 2}],
             {"items": [SLEEPER], "limits": {"time_seconds": 0.3}},
         )
         self.run_batch(config)
-        self.assertEqual(len(self.journal.started()), 4)
+        self.assertEqual(self.statuses(), {"a": "ok", "b": "error", "c": "mismatch", "sleeper": "timeout"})
+        self.assertCountEqual(self.started_besides_the_sleeper(), ["fake/a", "fake/b", "fake/c"])
+        records = ResultStore(self.run_dir / "results.jsonl").records()
+        started = self.journal.started()
 
         outcome = self.run_batch(config)
         self.assertEqual(outcome.total(), 0)
-        self.assertEqual(len(self.journal.started()), 4)
+        self.assertEqual(ResultStore(self.run_dir / "results.jsonl").records(), records)
+        self.assertEqual(self.journal.started(), started)
 
     def test_a_rerun_computes_only_what_has_no_record(self) -> None:
         first = [{"name": "a"}, {"name": "b"}]
@@ -139,11 +150,13 @@ class Resumption(SchedulerCase):
         self.run_batch(config)
         outcome = self.run_batch(config, retry={"timeout"})
         self.assertEqual(dict(outcome), {"timeout": 1})
-        self.assertEqual(self.journal.started().count("fake/sleeper"), 2)
-        self.assertEqual(len(self.journal.started()), 4)
-        # both attempts are on record; the latest one counts
-        store_lines = (self.run_dir / "results.jsonl").read_text().splitlines()
-        self.assertEqual(len(store_lines), 4)
+        # both attempts of the sleeper are on record, and nothing else ran again
+        records = ResultStore(self.run_dir / "results.jsonl").records()
+        attempts = [record for record in records if record["task_id"] == "fake/sleeper"]
+        self.assertEqual([record["status"] for record in attempts], ["timeout", "timeout"])
+        self.assertEqual(len({record["attempt_id"] for record in attempts}), 2)
+        self.assertEqual(len(records), 4)
+        self.assertCountEqual(self.started_besides_the_sleeper(), ["fake/a", "fake/b"])
 
     def test_interrupted_and_successful_retries_preserve_the_first_attempts_log(self) -> None:
         failed = fake_config([{"name": "retry", "exit": 1}])
