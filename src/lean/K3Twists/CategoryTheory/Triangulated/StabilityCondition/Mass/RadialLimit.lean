@@ -14,8 +14,11 @@ Let `Z_*` be a positive period of a K3 surface, possibly on root hyperplanes, `R
 kills, and `σ_a` (`0 < a ≤ a₀`) a lift to the space of stability conditions of the straight ray
 `Z_a = Z_* + aV`. For a fixed object `E`, at every point of the ray the mass is a sum
 `Σ_γ n_γ |Z_a(γ)|` over the classes of the stable factors of the HN factors of `E` (the stable
-factors of a semistable object have charges on its ray), and on the compact lifted ray only
-finitely many such sums occur (Bridgeland, arXiv:math/0212237, §§8–9). The charge of a stable
+factors of a semistable object have charges on its ray), and on each compact segment `[b, a₀]`,
+`0 < b`, of the lifted ray only finitely many such sums occur: the objects whose mass at some point
+of a compact set is at most that of `E` have finitely many classes (Bridgeland, arXiv:math/0307164,
+Lemma 9.2 and the proof of Proposition 9.3). The ray `(0, a₀]` itself need not lie in a compact
+set, and the proofs use only the segments. The charge of a stable
 class `γ` either vanishes at `Z_*` (`γ ∈ R_*`, and then `|Z_a(γ)| = a |V(γ)|` increases with `a`)
 or satisfies
 `|V(γ)| ≤ L |Z_a(γ)|`, with `L = K ‖V‖` for the constant `K` of the punctured support bound
@@ -48,7 +51,7 @@ ray at one prestability condition.
 ## Main definitions
 
 * `RadialRayHypotheses C v`: a lifted ray `σ_a`, `0 < a ≤ a₀`, with charges `Z_* + aV`, continuous
-  masses and finitely many candidate sums.
+  masses and finitely many candidate sums on each compact segment `[b, a₀]`.
 * `RadialRayHypotheses.radialMass`, `RadialRayHypotheses.radialProfile`: the radial limit `m_*`.
 
 ## Main results
@@ -195,10 +198,14 @@ theorem monotoneOn_exp_mul_norm_of_hasDerivAt {f f' : ℝ → ℂ} {Λ lam : ℝ
 /-- **The variation estimate along a path.** Let the positive continuous function `m` on an interval
 `s` be at every point one of finitely many sums `Σ_γ n_j(γ) ‖f_γ(t)‖`, where every `f_γ` that occurs
 has `‖f_γ'‖ ≤ λ ‖f_γ‖` and `Λ' = λ` on `s`. Then `|log m(t) - log m(u)| ≤ Λ(t) - Λ(u)` for `u ≤ t`
-in `s`. For the mass of an object along a lifted `C¹` path of stability conditions, `f_γ = Z_t(γ)`
-over the classes of its stable factors and `λ = max(K ‖Ż‖, max_δ |d/dt log |Z_t(δ)||)` over the
-kernel roots `δ` (the punctured support bound gives `‖Ż(γ)‖ ≤ K ‖Ż‖ |Z(γ)|` for the other classes);
-with no kernel roots, `λ = K ‖Ż‖` and this is the root-free variation estimate. -/
+in `s`. For the mass of an object along a lifted `C¹` path of stability conditions, take
+`f_γ(t) = |Z_t(γ)|`, real-valued with the norm of `Z_t(γ)`, over the classes of its stable factors,
+and `λ = max(K ‖Ż‖, max_δ |d/dt log |Z_t(δ)||)` over the kernel roots `δ`. At a kernel root
+`|f_δ'| = |d/dt log |Z_t(δ)|| · |Z_t(δ)|`; for the other classes
+`|d/dt |Z_t(γ)|| ≤ |Ż_t(γ)| ≤ ‖Ż‖ ‖γ‖ ≤ K ‖Ż‖ |Z_t(γ)|` by the punctured support bound. The choice
+`f_γ = Z_t(γ)` would need `|Ż_t(δ)| / |Z_t(δ)|` in place of `|d/dt log |Z_t(δ)||`, which is larger
+wherever the argument of `Z_t(δ)` moves. With no kernel roots, `λ = K ‖Ż‖` and this is the
+root-free variation estimate. -/
 theorem abs_log_sub_le_of_selection {ι Λc : Type*} [Finite ι] {s : Set ℝ} (hs : s.OrdConnected)
     {m : ℝ → ℝ} (hm : ContinuousOn m s) (hpos : ∀ t ∈ s, 0 < m t) (n : ι → Λc →₀ ℕ)
     {f f' : Λc → ℝ → ℂ} {Λ lam : ℝ → ℝ} (hΛ : ∀ t ∈ s, HasDerivAt Λ (lam t) t)
@@ -290,8 +297,9 @@ variable {C : Type u} [Category.{v} C] [HasZeroObject C] [HasShift C ℤ]
 
 variable (C) in
 /-- **A lifted ray to a finite period.** Prestability conditions `σ_a`, `0 < a ≤ a₀`, with charges
-`Z_* + aV` on the class lattice, continuous masses and finitely many candidate sums for the mass of
-each object. See the module docstring for the sources of the fields. -/
+`Z_* + aV` on the class lattice, continuous masses and, on each compact segment `[b, a₀]` with
+`0 < b`, finitely many candidate sums for the mass of each object. See the module docstring for the
+sources of the fields. -/
 structure RadialRayHypotheses {Λ : Type u'} [AddCommGroup Λ] (v : K₀ C →+ Λ) where
   /-- The prestability condition at the point `a` of the ray. -/
   cond : ℝ → PreStabilityCondition.WithClassMap C v
@@ -310,33 +318,41 @@ structure RadialRayHypotheses {Λ : Type u'} [AddCommGroup Λ] (v : K₀ C →+ 
   /-- The mass of every object is continuous along the ray (Bridgeland, arXiv:math/0212237,
   §8). -/
   continuousOn_mass : ∀ E, ContinuousOn (fun a ↦ (cond a).mass E) (Ioc 0 a₀)
-  /-- **Finitely many candidate sums.** For each object `E` there are finitely many multiplicity
-  functions `n_j` such that at every point of the ray the mass of `E` is `Σ_γ n_j(γ) |Z_a(γ)|` for
-  one of them (the classes of the stable factors of the HN factors, finitely many with bounded
-  multiplicities on the compact lifted ray: Bridgeland, arXiv:math/0212237, §§8–9), and every
-  class that occurs is killed by `Z_*` or satisfies `|V(γ)| ≤ L |Z_a(γ)|` (the punctured support
-  bound, for classes with `v² ≥ -2` outside the kernel roots). -/
-  finite_selection : ∀ E : C, ∃ (N : ℕ) (n : Fin N → Λ →₀ ℕ),
-    (∀ j γ, n j γ ≠ 0 → Z₀ γ = 0 ∨ ∀ a ∈ Ioc 0 a₀, ‖V γ‖ ≤ L * ‖Z₀ γ + a * V γ‖) ∧
-      ∀ a ∈ Ioc 0 a₀, ∃ j, (cond a).mass E = (n j).sum fun γ k ↦ k * ‖Z₀ γ + a * V γ‖
+  /-- **Finitely many candidate sums on each compact segment.** For each object `E` and each
+  segment `[b, a₀]` with `0 < b` there are finitely many multiplicity functions `n_j` such that at
+  every point of the segment the mass of `E` is `Σ_γ n_j(γ) |Z_a(γ)|` for one of them (the classes
+  of the stable factors of the HN factors, finitely many with bounded multiplicities on a compact
+  set of stability conditions: Bridgeland, arXiv:math/0307164, Lemma 9.2 and the proof of
+  Proposition 9.3), and every class that occurs is killed by `Z_*` or satisfies
+  `|V(γ)| ≤ L |Z_a(γ)|` on the segment (the punctured support bound, for classes with `v² ≥ -2`
+  outside the kernel roots). Nothing is assumed on the whole ray `(0, a₀]` at once, which need not
+  lie in a compact set. -/
+  finite_selection : ∀ E : C, ∀ b ∈ Ioc 0 a₀, ∃ (N : ℕ) (n : Fin N → Λ →₀ ℕ),
+    (∀ j γ, n j γ ≠ 0 → Z₀ γ = 0 ∨ ∀ a ∈ Icc b a₀, ‖V γ‖ ≤ L * ‖Z₀ γ + a * V γ‖) ∧
+      ∀ a ∈ Icc b a₀, ∃ j, (cond a).mass E = (n j).sum fun γ k ↦ k * ‖Z₀ γ + a * V γ‖
 
 namespace RadialRayHypotheses
 
 variable {Λ : Type u'} [AddCommGroup Λ] {v : K₀ C →+ Λ} (I : RadialRayHypotheses C v)
 
-/-- **The one-sided bound along the ray**: `a ↦ e^{La} m_a(E)` is nondecreasing on `(0, a₀]`. -/
+/-- **The one-sided bound along the ray**: `a ↦ e^{La} m_a(E)` is nondecreasing on `(0, a₀]`. For
+`u ≤ t` on the ray, the selection lemma is applied on the compact segment `[u, a₀]`, which has
+finitely many candidate sums. -/
 theorem monotoneOn_exp_mul_mass (E : C) :
     MonotoneOn (fun a ↦ exp (I.L * a) * (I.cond a).mass E) (Ioc 0 I.a₀) := by
-  obtain ⟨N, n, hrad, hsel⟩ := I.finite_selection E
-  have hs : (Ioc (0 : ℝ) I.a₀).OrdConnected := ordConnected_Ioc
-  refine monotoneOn_of_continuousOn_of_selection hs
-    ((continuous_exp.comp (continuous_const.mul continuous_id)).continuousOn.mul
-      (I.continuousOn_mass E))
-    (g := fun j a ↦ exp (I.L * a) * (n j).sum fun γ k ↦ k * ‖I.Z₀ γ + a * I.V γ‖)
-    (fun j ↦ monotoneOn_exp_mul_finsuppSum I.Z₀ I.V (n j) I.L_nonneg hs
-      (fun _ ha ↦ le_of_lt ha.1) fun γ hγ ↦ hrad j γ hγ) fun a ha ↦ ?_
-  obtain ⟨j, hj⟩ := hsel a ha
-  exact ⟨j, by simp only [hj]⟩
+  intro u hu t ht hut
+  obtain ⟨N, n, hrad, hsel⟩ := I.finite_selection E u hu
+  have hs : (Icc u I.a₀).OrdConnected := ordConnected_Icc
+  have hmono : MonotoneOn (fun a ↦ exp (I.L * a) * (I.cond a).mass E) (Icc u I.a₀) := by
+    refine monotoneOn_of_continuousOn_of_selection hs
+      ((continuous_exp.comp (continuous_const.mul continuous_id)).continuousOn.mul
+        ((I.continuousOn_mass E).mono (Icc_subset_Ioc hu.1 le_rfl)))
+      (g := fun j a ↦ exp (I.L * a) * (n j).sum fun γ k ↦ k * ‖I.Z₀ γ + a * I.V γ‖)
+      (fun j ↦ monotoneOn_exp_mul_finsuppSum I.Z₀ I.V (n j) I.L_nonneg hs
+        (fun _ ha ↦ hu.1.le.trans ha.1) fun γ hγ ↦ hrad j γ hγ) fun a ha ↦ ?_
+    obtain ⟨j, hj⟩ := hsel a ha
+    exact ⟨j, by simp only [hj]⟩
+  exact hmono ⟨le_rfl, hu.2⟩ ⟨hut, ht.2⟩ hut
 
 /-- The **radial limit** `m_*(E) = lim_{a → 0+} m_a(E)`, as the infimum of `e^{La} m_a(E)` over
 `(0, a₀)`. -/
