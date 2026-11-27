@@ -146,6 +146,7 @@ import K3Twists.GroupTheory.Coxeter.ArtinGroup
 import K3Twists.GroupTheory.Coxeter.Deletion
 import K3Twists.GroupTheory.Coxeter.GeometricRepresentation
 import K3Twists.GroupTheory.Coxeter.RealRoots
+import K3Twists.GroupTheory.Coxeter.TypeA
 import K3Twists.GroupTheory.GroupAction.CountCocycle
 import K3Twists.GroupTheory.GroupAction.FillingProfile
 import K3Twists.GroupTheory.GroupAction.MassComparison

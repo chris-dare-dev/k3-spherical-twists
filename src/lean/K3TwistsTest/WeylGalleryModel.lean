@@ -4,6 +4,7 @@ Released under the MIT license.
 -/
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WeylTilt
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.WeylGallery
+import K3Twists.GroupTheory.Coxeter.TypeA
 import K3TwistsTest.ArtinModel
 
 /-!
@@ -19,6 +20,8 @@ import K3TwistsTest.ArtinModel
   classes instead, the `A₂` configuration `𝒪_X[1]`, `𝒪_C` of an elliptic K3 surface
   (`AlgebraicGeometry.K3.EllipticWithSection.a2_longest_inputs`), checked below.
 * Root-positivity is not vacuous: `[0, 0]` is not root-positive, and neither is `[0, 1, 0, 1]`.
+* The longest word of `A_9`, beyond the cases `n ≤ 6` checked by computation, from the theorems
+  for every `n` of `GroupTheory/Coxeter/TypeA.lean`.
 -/
 
 open CategoryTheory CategoryTheory.Limits CategoryTheory.Pretriangulated
@@ -117,6 +120,23 @@ example : stdWord (extA 4) (longestWordA 4) (stdRoot 0) = -stdRoot 3 :=
 /-- The longest word of `A₆` is reduced. -/
 example : (CoxeterMatrix.A 6).toCoxeterSystem.IsReduced (longestWordA 6) :=
   isReduced_longestWordA le_rfl
+
+/-- `w₀` of `A₉` sends `α₂` to `-α₆`. -/
+example : stdWord (extA 9) (longestWordA 9) (stdRoot 2) = -stdRoot 6 :=
+  stdWord_longestWordA' 2
+
+/-- The longest word of `A₉`, of length `45`, is root-positive. -/
+example : IsRootPositive (rootForm (extA 9)) stdRoot (longestWordA 9) :=
+  isRootPositive_longestWordA' 9
+
+/-- `w₀` of `A₉` moves all `45` positive roots out of the positive roots. -/
+example : ((positiveRootsA 9).filter fun x => stdWord (extA 9) (longestWordA 9) x ∉
+    positiveRootsA 9).card = 45 :=
+  inversionCount_longestWordA' 9
+
+/-- The longest word of `A₉` is reduced. -/
+example : (CoxeterMatrix.A 9).toCoxeterSystem.IsReduced (longestWordA 9) :=
+  isReduced_longestWordA' 9
 
 end CoxeterMatrix
 

@@ -56,7 +56,8 @@ gives the lower bound on lengths that proves explicit words reduced
 `CoxeterMatrix.longestWordA n = [0] ++ [1, 0] ++ ⋯ ++ [n-1, …, 0]` has length `n(n+1)/2`. For
 `n ≤ 6` this file checks by computation that it is reduced and root-positive and that it sends
 `α_i` to `-α_{n-1-i}`, so it is a reduced word of the longest element `w₀`, whose diagram
-automorphism is `i ↦ n-1-i`. The proofs for all `n` are open here.
+automorphism is `i ↦ n-1-i`. `GroupTheory/Coxeter/TypeA.lean` proves the same for every `n`, in
+the coordinates `ε_k` in which `W(A_n)` acts by permutations.
 
 ## Main definitions
 
@@ -537,33 +538,38 @@ def positiveRootsA (n : ℕ) : Finset (Fin n → ℤ) :=
   ((Finset.univ : Finset (Fin n × Fin n)).filter fun p => p.1 ≤ p.2).image
     fun p k => if p.1 ≤ k ∧ k ≤ p.2 then 1 else 0
 
-/-- `s_i` maps the positive roots other than `α_i` to positive roots (checked for `n ≤ 6`). -/
+/-- `s_i` maps the positive roots other than `α_i` to positive roots: the computed cases
+`n ≤ 6`. For every `n` this is `stdReflect_mem_positiveRootsA'`. -/
 theorem stdReflect_mem_positiveRootsA {n : ℕ} (hn : n ≤ 6) (i : Fin n) (y : Fin n → ℤ)
     (hy : y ∈ positiveRootsA n) (hne : y ≠ stdRoot i) :
     stdReflect (extA n) i y ∈ positiveRootsA n := by
   revert i y
   interval_cases n <;> decide
 
-/-- `w₀ = longestWordA n` sends `α_i` to `-α_{n-1-i}` (checked for `n ≤ 6`). -/
+/-- `w₀ = longestWordA n` sends `α_i` to `-α_{n-1-i}`: the computed cases `n ≤ 6`. For every `n`
+this is `stdWord_longestWordA'`. -/
 theorem stdWord_longestWordA {n : ℕ} (hn : n ≤ 6) (i : Fin n) :
     stdWord (extA n) (longestWordA n) (stdRoot i) = -stdRoot i.rev := by
   revert i
   interval_cases n <;> decide
 
-/-- `longestWordA n` is root-positive (checked for `n ≤ 6`). -/
+/-- `longestWordA n` is root-positive: the computed cases `n ≤ 6`. For every `n` this is
+`isRootPositive_longestWordA'`. -/
 theorem isRootPositive_longestWordA {n : ℕ} (hn : n ≤ 6) :
     IsRootPositive (rootForm (extA n)) stdRoot (longestWordA n) := by
   refine isRootPositive_rootForm_of _ ?_
   interval_cases n <;> decide
 
+/-- `longestWordA n` moves all `n(n+1)/2` positive roots out of the positive roots: the computed
+cases `n ≤ 6`. For every `n` this is `inversionCount_longestWordA'`. -/
 theorem inversionCount_longestWordA {n : ℕ} (hn : n ≤ 6) :
     ((positiveRootsA n).filter fun x => stdWord (extA n) (longestWordA n) x ∉
       positiveRootsA n).card = n * (n + 1) / 2 := by
   interval_cases n <;> decide
 
-/-- **`longestWordA n` is a reduced word** of `W(A_n)` (checked for `n ≤ 6`), by the inversion
-count of the reflection representation: it moves all `n(n+1)/2` positive roots out of the
-positive roots. -/
+/-- **`longestWordA n` is a reduced word** of `W(A_n)` (the computed cases `n ≤ 6`; for every `n`
+this is `isReduced_longestWordA'`), by the inversion count of the reflection representation: it
+moves all `n(n+1)/2` positive roots out of the positive roots. -/
 theorem isReduced_longestWordA {n : ℕ} (hn : n ≤ 6) :
     (CoxeterMatrix.A n).toCoxeterSystem.IsReduced (longestWordA n) := by
   rw [A_eq_ofExt]
