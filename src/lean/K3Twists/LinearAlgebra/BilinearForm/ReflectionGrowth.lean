@@ -29,10 +29,23 @@ shows that it does and computes the rate:
   `T` on the plane has Gelfand radius `λ` (`gelfandRadius_reflectionProductMatrix`, the `SL₂` rate
   lemma); and on a finite-dimensional real space `‖Tⁿ a‖^{1/n} → λ`
   (`tendsto_norm_reflectHom_mul_reflectHom_pow`).
+* On the whole space, `T` fixes every vector orthogonal to `a` and `b`
+  (`reflectHom_mul_reflectHom_apply_of_apply_eq_zero`), and for `g² ≠ 4` every vector is a
+  combination of `a` and `b` plus such a vector, since the Gram matrix of `a` and `b` has
+  determinant `4 - g²`. So `‖Tⁿ x‖ ≤ K (‖(s₁ s₀)ⁿ‖ + 1) ‖x‖`
+  (`exists_norm_pow_reflectHom_mul_reflectHom_apply_le`), and for `|g| > 2` the map `T` itself has
+  Gelfand radius `λ`: as a continuous linear map on a real normed space with a bounded form
+  (`gelfandRadius_reflectHom_mul_reflectHom_of_bound`), on every finite-dimensional real space
+  (`gelfandRadius_toContinuousLinearMap_reflectHom_mul_reflectHom`), and as the matrix of `T` in a
+  basis of a free module, read in `ℝ` through a ring homomorphism
+  (`gelfandRadius_map_toMatrix_reflectHom_mul_reflectHom`), whose complexification has spectral
+  radius `λ` (`spectralRadius_map_toMatrix_reflectHom_mul_reflectHom`).
 
 The pairing statements hold over any commutative ring with a ring homomorphism to `ℝ`; for the
 Mukai lattice of a K3 surface, with the cast `ℤ → ℝ` and spherical objects `S_a`, `S_b` with
-`|χ(S_a, S_b)| ≥ 3`, they say `|χ(S_a, (T_{S_b} T_{S_a})ⁿ S_a)| = λⁿ + λ⁻ⁿ`. The two examples of
+`|χ(S_a, S_b)| ≥ 3`, they say `|χ(S_a, (T_{S_b} T_{S_a})ⁿ S_a)| = λⁿ + λ⁻ⁿ`, and the matrix
+statement says that `T_{S_b} T_{S_a}` has spectral radius `λ` on the Mukai lattice tensored
+with `ℝ`. The two examples of
 the library, the rate of `Ψ = T_{𝒪_X} T_L` on a K3 surface of Picard rank one
 (`AlgebraicGeometry.K3.PicardRankOne.psi_eigenvalue`) and the Barbacovi–Kim number `7 + 4√3`
 (`AlgebraicGeometry.K3.EllipticWithSection.barbacoviKim_four_root`), are the Gelfand radii of
@@ -379,5 +392,310 @@ theorem tendsto_norm_reflectHom_mul_reflectHom_pow [FiniteDimensional ℝ E]
   simpa [B', Real.norm_eq_abs] using this
 
 end Normed
+
+/-! ### The rate on the whole space -/
+
+section Orthogonal
+
+variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] {B : M →ₗ[R] M →ₗ[R] R}
+  {a b : M}
+
+/-- `ρ_b ρ_a` fixes every vector orthogonal to `a` and `b`. -/
+theorem reflectHom_mul_reflectHom_apply_of_apply_eq_zero {q : M} (hqa : B q a = 0)
+    (hqb : B q b = 0) : (reflectHom B b * reflectHom B a) q = q := by
+  simp only [mul_apply_eq_comp, reflectHom_apply, reflect_apply, hqa, zero_smul, add_zero, hqb]
+
+/-- The powers of `ρ_b ρ_a` fix every vector orthogonal to `a` and `b`. -/
+theorem reflectHom_mul_reflectHom_pow_apply_of_apply_eq_zero {q : M} (hqa : B q a = 0)
+    (hqb : B q b = 0) (n : ℕ) : ((reflectHom B b * reflectHom B a) ^ n) q = q := by
+  rw [pow_apply_eq_iterate]
+  exact Function.iterate_fixed (reflectHom_mul_reflectHom_apply_of_apply_eq_zero hqa hqb) n
+
+end Orthogonal
+
+section WholeSpace
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {B : E →ₗ[ℝ] E →ₗ[ℝ] ℝ} (hB : ∀ x y, B x y = B y x) {a b : E} (ha : B a a = -2)
+  (hb : B b b = -2)
+include hB ha hb
+
+/-- **The powers of `ρ_b ρ_a` on the whole space** are those of `s₁ s₀` up to a bounded error.
+For a bounded symmetric form and `g = B(a, b)` with `g² ≠ 4`, every `x` is `α a + β b + q` with
+`q` orthogonal to `a` and `b`, since the Gram matrix `[[-2, g], [g, -2]]` of `a` and `b` has
+determinant `4 - g² ≠ 0`. The powers of `T = ρ_b ρ_a` act on `α a + β b` by those of `s₁ s₀` and
+fix `q`, so `‖Tⁿ x‖ ≤ K (‖(s₁ s₀)ⁿ‖ + 1) ‖x‖`. -/
+theorem exists_norm_pow_reflectHom_mul_reflectHom_apply_le {C : ℝ}
+    (hC : ∀ x y, |B x y| ≤ C * ‖x‖ * ‖y‖) (hg : B a b ^ 2 ≠ 4) :
+    ∃ K, ∀ (n : ℕ) (x : E), ‖((reflectHom B b * reflectHom B a) ^ n) x‖ ≤
+      K * (‖reflectionProductMatrix (B a b) ^ n‖ + 1) * ‖x‖ := by
+  set g := B a b with hg_def
+  set P := reflectionProductMatrix g with hP
+  have hba : B b a = g := hB b a
+  have hD : (4 - g ^ 2) ≠ 0 := fun h => hg (by linarith)
+  have hD' : 0 < |4 - g ^ 2| := abs_pos.2 hD
+  -- `C ≥ 0`, from `2 = |B(a, a)| ≤ C ‖a‖²`
+  have hC0 : 0 ≤ C := by
+    have h2 := hC a a
+    rw [ha, abs_neg, abs_two] at h2
+    by_contra hneg
+    have : C * ‖a‖ * ‖a‖ ≤ 0 :=
+      mul_nonpos_of_nonpos_of_nonneg (mul_nonpos_of_nonpos_of_nonneg (not_le.1 hneg).le
+        (norm_nonneg a)) (norm_nonneg a)
+    linarith
+  -- the coordinates of `x` along `a` and `b`
+  let α : E → ℝ := fun x => (-2 * B x a - g * B x b) / (4 - g ^ 2)
+  let β : E → ℝ := fun x => (-g * B x a - 2 * B x b) / (4 - g ^ 2)
+  have hqa : ∀ x, B (x - α x • a - β x • b) a = 0 := by
+    intro x
+    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul, ha,
+      hba, α, β]
+    field_simp
+    ring
+  have hqb : ∀ x, B (x - α x • a - β x • b) b = 0 := by
+    intro x
+    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul, hb,
+      ← hg_def, α, β]
+    field_simp
+    ring
+  -- `Tⁿ x = Tⁿ (α a + β b) + q`
+  have hdec : ∀ (n : ℕ) (x : E), ((reflectHom B b * reflectHom B a) ^ n) x =
+      ((P ^ n) *ᵥ ![α x, β x]) 0 • a + ((P ^ n) *ᵥ ![α x, β x]) 1 • b +
+        (x - α x • a - β x • b) := by
+    intro n x
+    have hx : x = (α x • a + β x • b) + (x - α x • a - β x • b) := by abel
+    conv_lhs => rw [hx]
+    rw [map_add, reflectHom_mul_reflectHom_pow_smul_add_smul hB ha hb,
+      reflectHom_mul_reflectHom_pow_apply_of_apply_eq_zero (hqa x) (hqb x)]
+  -- bounds on the coordinates
+  set Kc := (2 * C * ‖a‖ + |g| * C * ‖b‖ + (|g| * C * ‖a‖ + 2 * C * ‖b‖)) / |4 - g ^ 2|
+    with hKc
+  have hKc0 : 0 ≤ Kc := by positivity
+  have hcoord : ∀ x, |α x| ≤ Kc * ‖x‖ ∧ |β x| ≤ Kc * ‖x‖ := by
+    intro x
+    have h1 : |B x a| ≤ C * ‖x‖ * ‖a‖ := hC x a
+    have h2 : |B x b| ≤ C * ‖x‖ * ‖b‖ := hC x b
+    have e1 : |-2 * B x a - g * B x b| ≤ (2 * C * ‖a‖ + |g| * C * ‖b‖) * ‖x‖ := by
+      calc |-2 * B x a - g * B x b| ≤ |-2 * B x a| + |g * B x b| := abs_sub _ _
+        _ = 2 * |B x a| + |g| * |B x b| := by rw [abs_mul, abs_mul, abs_neg, abs_two]
+        _ ≤ 2 * (C * ‖x‖ * ‖a‖) + |g| * (C * ‖x‖ * ‖b‖) := by gcongr
+        _ = (2 * C * ‖a‖ + |g| * C * ‖b‖) * ‖x‖ := by ring
+    have e2 : |-g * B x a - 2 * B x b| ≤ (|g| * C * ‖a‖ + 2 * C * ‖b‖) * ‖x‖ := by
+      calc |-g * B x a - 2 * B x b| ≤ |-g * B x a| + |2 * B x b| := abs_sub _ _
+        _ = |g| * |B x a| + 2 * |B x b| := by rw [abs_mul, abs_mul, abs_neg, abs_two]
+        _ ≤ |g| * (C * ‖x‖ * ‖a‖) + 2 * (C * ‖x‖ * ‖b‖) := by gcongr
+        _ = (|g| * C * ‖a‖ + 2 * C * ‖b‖) * ‖x‖ := by ring
+    have hx0 := norm_nonneg x
+    have hA2 : 0 ≤ (|g| * C * ‖a‖ + 2 * C * ‖b‖) * ‖x‖ := by positivity
+    have hA1 : 0 ≤ (2 * C * ‖a‖ + |g| * C * ‖b‖) * ‖x‖ := by positivity
+    have hKx : Kc * ‖x‖ = ((2 * C * ‖a‖ + |g| * C * ‖b‖) * ‖x‖ +
+        (|g| * C * ‖a‖ + 2 * C * ‖b‖) * ‖x‖) / |4 - g ^ 2| := by
+      rw [hKc]
+      ring
+    constructor
+    · simp only [α]
+      rw [abs_div, hKx]
+      gcongr
+      linarith
+    · simp only [β]
+      rw [abs_div, hKx]
+      gcongr
+      linarith
+  refine ⟨Kc * (‖a‖ + ‖b‖) + 1, fun n x => ?_⟩
+  obtain ⟨hα, hβ⟩ := hcoord x
+  have hv : ‖(![α x, β x] : Fin 2 → ℝ)‖ ≤ Kc * ‖x‖ := by
+    refine (pi_norm_le_iff_of_nonneg (by positivity)).2 fun i => ?_
+    fin_cases i
+    · simpa [Real.norm_eq_abs] using hα
+    · simpa [Real.norm_eq_abs] using hβ
+  have hPv : ‖(P ^ n) *ᵥ ![α x, β x]‖ ≤ ‖P ^ n‖ * (Kc * ‖x‖) :=
+    (linfty_opNorm_mulVec _ _).trans (mul_le_mul_of_nonneg_left hv (norm_nonneg _))
+  have h0 : |((P ^ n) *ᵥ ![α x, β x]) 0| ≤ ‖P ^ n‖ * (Kc * ‖x‖) :=
+    (by simpa [Real.norm_eq_abs] using norm_le_pi_norm ((P ^ n) *ᵥ ![α x, β x]) 0 :
+      |((P ^ n) *ᵥ ![α x, β x]) 0| ≤ ‖(P ^ n) *ᵥ ![α x, β x]‖).trans hPv
+  have h1 : |((P ^ n) *ᵥ ![α x, β x]) 1| ≤ ‖P ^ n‖ * (Kc * ‖x‖) :=
+    (by simpa [Real.norm_eq_abs] using norm_le_pi_norm ((P ^ n) *ᵥ ![α x, β x]) 1 :
+      |((P ^ n) *ᵥ ![α x, β x]) 1| ≤ ‖(P ^ n) *ᵥ ![α x, β x]‖).trans hPv
+  have hq : ‖x - α x • a - β x • b‖ ≤ (1 + Kc * (‖a‖ + ‖b‖)) * ‖x‖ := by
+    calc ‖x - α x • a - β x • b‖ ≤ ‖x‖ + |α x| * ‖a‖ + |β x| * ‖b‖ := by
+          refine (norm_sub_le _ _).trans ?_
+          rw [norm_smul, Real.norm_eq_abs]
+          gcongr
+          refine (norm_sub_le _ _).trans ?_
+          rw [norm_smul, Real.norm_eq_abs]
+      _ ≤ ‖x‖ + Kc * ‖x‖ * ‖a‖ + Kc * ‖x‖ * ‖b‖ := by gcongr
+      _ = (1 + Kc * (‖a‖ + ‖b‖)) * ‖x‖ := by ring
+  rw [hdec]
+  have hPn := norm_nonneg (P ^ n)
+  calc ‖((P ^ n) *ᵥ ![α x, β x]) 0 • a + ((P ^ n) *ᵥ ![α x, β x]) 1 • b +
+          (x - α x • a - β x • b)‖
+      ≤ |((P ^ n) *ᵥ ![α x, β x]) 0| * ‖a‖ + |((P ^ n) *ᵥ ![α x, β x]) 1| * ‖b‖ +
+          ‖x - α x • a - β x • b‖ := by
+        refine (norm_add_le _ _).trans ?_
+        gcongr
+        refine (norm_add_le _ _).trans ?_
+        rw [norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs]
+    _ ≤ ‖P ^ n‖ * (Kc * ‖x‖) * ‖a‖ + ‖P ^ n‖ * (Kc * ‖x‖) * ‖b‖ +
+          (1 + Kc * (‖a‖ + ‖b‖)) * ‖x‖ := by gcongr
+    _ ≤ (Kc * (‖a‖ + ‖b‖) + 1) * (‖P ^ n‖ + 1) * ‖x‖ := by
+        have : 0 ≤ Kc * ‖x‖ * (‖a‖ + ‖b‖) := by positivity
+        nlinarith [norm_nonneg x, norm_nonneg a, norm_nonneg b]
+
+/-- **The Gelfand radius of `ρ_b ρ_a` on the whole space.** For a bounded symmetric form on a real
+normed space and spherical `a`, `b` with `|B(a, b)| > 2`, a continuous linear map acting as
+`T = ρ_b ρ_a` has Gelfand radius `λ = sl2Rate (B(a, b)² - 2)`, the rate of `s₁ s₀`. The upper
+bound is `exists_norm_pow_reflectHom_mul_reflectHom_apply_le`, the lower bound the orbit of `a`
+(`tendsto_norm_reflectHom_mul_reflectHom_pow_of_bound`). -/
+theorem gelfandRadius_reflectHom_mul_reflectHom_of_bound {C : ℝ}
+    (hC : ∀ x y, |B x y| ≤ C * ‖x‖ * ‖y‖) (hg : 2 < |B a b|) {T : E →L[ℝ] E}
+    (hT : (T : E →ₗ[ℝ] E) = reflectHom B b * reflectHom B a) :
+    gelfandRadius T = Matrix.sl2Rate (B a b ^ 2 - 2) := by
+  set P := reflectionProductMatrix (B a b) with hP
+  have h4 : 4 < B a b ^ 2 := Real.four_lt_sq_of_two_lt_abs hg
+  have hpow : ∀ (n : ℕ) (x : E), (T ^ n) x = ((reflectHom B b * reflectHom B a) ^ n) x := by
+    intro n x
+    rw [← ContinuousLinearMap.coe_coe, ContinuousLinearMap.toLinearMap_pow, hT]
+  have hgr : gelfandRadius P = Matrix.sl2Rate (B a b ^ 2 - 2) :=
+    gelfandRadius_reflectionProductMatrix hg
+  -- `‖Pⁿ‖ ≥ 1`, since `P` has Gelfand radius at least one
+  have hP1 : ∀ n : ℕ, 1 ≤ ‖P ^ n‖ := by
+    intro n
+    rcases eq_or_ne n 0 with rfl | hn
+    · simp
+    · have h1 : 1 ≤ gelfandRadius P := (one_lt_gelfandRadius_reflectionProductMatrix hg).le
+      exact (one_le_pow₀ h1).trans (gelfandRadius_pow_le_norm_pow P hn)
+  obtain ⟨K, hK⟩ := exists_norm_pow_reflectHom_mul_reflectHom_apply_le hB ha hb hC h4.ne'
+  refine le_antisymm ?_ ?_
+  · -- the upper bound
+    rw [← hgr]
+    refine gelfandRadius_le_of_norm_pow_le (2 * max K 0) fun n => ?_
+    refine (T ^ n).opNorm_le_bound (by positivity [hP1 n]) fun x => ?_
+    rw [hpow]
+    have hPn := hP1 n
+    calc ‖((reflectHom B b * reflectHom B a) ^ n) x‖ ≤ K * (‖P ^ n‖ + 1) * ‖x‖ := hK n x
+      _ ≤ max K 0 * (‖P ^ n‖ + 1) * ‖x‖ := by gcongr; exact le_max_left K 0
+      _ ≤ 2 * max K 0 * ‖P ^ n‖ * ‖x‖ := by
+        have : 0 ≤ max K 0 * ‖x‖ := by positivity
+        nlinarith
+  · -- the lower bound, from the orbit of `a`
+    have ha0 : 0 < ‖a‖ := norm_pos_iff.2 fun h => by rw [h] at ha; simp at ha
+    have hlim := tendsto_norm_reflectHom_mul_reflectHom_pow_of_bound hB ha hb hC hg
+    have hup : Tendsto (fun n : ℕ => (‖T ^ n‖ * ‖a‖) ^ (n : ℝ)⁻¹) atTop
+        (𝓝 (gelfandRadius T)) := by
+      have h := (tendsto_gelfandRadius T).mul (Real.tendsto_const_rpow_inv ha0)
+      rw [mul_one] at h
+      refine h.congr fun n => ?_
+      rw [Real.mul_rpow (norm_nonneg _) ha0.le]
+    refine le_of_tendsto_of_tendsto' hlim hup fun n => ?_
+    refine Real.rpow_le_rpow (norm_nonneg _) ?_ (by positivity)
+    rw [← hpow]
+    exact (T ^ n).le_opNorm a
+
+/-- **The Gelfand radius of `ρ_b ρ_a` on a finite-dimensional real space**, for every norm: for
+spherical `a`, `b` with `|B(a, b)| > 2` it is `λ = sl2Rate (B(a, b)² - 2)`. -/
+theorem gelfandRadius_toContinuousLinearMap_reflectHom_mul_reflectHom [FiniteDimensional ℝ E]
+    (hg : 2 < |B a b|) :
+    gelfandRadius (LinearMap.toContinuousLinearMap (reflectHom B b * reflectHom B a)) =
+      Matrix.sl2Rate (B a b ^ 2 - 2) := by
+  let B' : E →L[ℝ] E →L[ℝ] ℝ := LinearMap.toContinuousLinearMap
+    ((LinearMap.toContinuousLinearMap : (E →ₗ[ℝ] ℝ) ≃ₗ[ℝ] E →L[ℝ] ℝ).toLinearMap ∘ₗ B)
+  refine gelfandRadius_reflectHom_mul_reflectHom_of_bound hB ha hb (C := ‖B'‖)
+    (fun x y => ?_) hg (LinearMap.coe_toContinuousLinearMap _)
+  have := B'.le_opNorm₂ x y
+  simpa [B', Real.norm_eq_abs] using this
+
+end WholeSpace
+
+section Basis
+
+variable {R M ι : Type*} [CommRing R] [AddCommGroup M] [Module R M] [Fintype ι] [DecidableEq ι]
+variable {B : M →ₗ[R] M →ₗ[R] R} (hB : ∀ x y, B x y = B y x) {a b : M} (ha : B a a = -2)
+  (hb : B b b = -2)
+include hB ha hb
+
+/-- **The Gelfand radius of `ρ_b ρ_a` in a basis.** Let `M` be a free module with a finite basis
+over a commutative ring with a homomorphism `φ` to `ℝ`, and `a`, `b` spherical with
+`|φ(B(a, b))| > 2`. The matrix of `T = ρ_b ρ_a` in the basis, read in `ℝ` through `φ`, has
+Gelfand radius `λ = sl2Rate (φ(B(a, b))² - 2)`. For the Mukai lattice `Λ` of a K3 surface and the
+cast `ℤ → ℝ` this is the Gelfand radius of `T` on `Λ ⊗ ℝ`. The proof reads `B` in the coordinates
+of the basis, where `T` becomes the product of the two reflections of the real form with Gram
+matrix `φ(B(e_i, e_j))`, and applies
+`gelfandRadius_toContinuousLinearMap_reflectHom_mul_reflectHom`. -/
+theorem gelfandRadius_map_toMatrix_reflectHom_mul_reflectHom (φ : R →+* ℝ)
+    (e : Module.Basis ι R M) (hg : 2 < |φ (B a b)|) :
+    gelfandRadius ((LinearMap.toMatrix e e (reflectHom B b * reflectHom B a)).map φ) =
+      Matrix.sl2Rate (φ (B a b) ^ 2 - 2) := by
+  -- the real coordinates of a vector, and the real form with Gram matrix `φ(B(e_i, e_j))`
+  let r : M → ι → ℝ := fun x i => φ (e.repr x i)
+  let B' : (ι → ℝ) →ₗ[ℝ] (ι → ℝ) →ₗ[ℝ] ℝ :=
+    Matrix.toLinearMap₂' ℝ (Matrix.of fun i j => φ (B (e i) (e j)))
+  have hB'apply : ∀ x y, B' x y = ∑ i, ∑ j, x i * (y j * φ (B (e i) (e j))) := by
+    intro x y
+    simp only [B', Matrix.toLinearMap₂'_apply, Matrix.of_apply, smul_eq_mul]
+  have hB'r : ∀ x y, B' (r x) (r y) = φ (B x y) := by
+    intro x y
+    have hxy : B x y = ∑ i, ∑ j, e.repr x i • e.repr y j • B (e i) (e j) := by
+      conv_lhs => rw [← Matrix.toLinearMap₂_toMatrix₂ e e B]
+      rw [Matrix.toLinearMap₂_apply]
+      simp only [LinearMap.toMatrix₂_apply]
+    rw [hxy, hB'apply]
+    simp only [map_sum, smul_eq_mul, map_mul, r]
+  have hB'symm : ∀ x y, B' x y = B' y x := by
+    intro x y
+    rw [hB'apply, hB'apply, Finset.sum_comm]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    rw [hB (e j) (e i)]
+    ring
+  have hr_add : ∀ x y, r (x + y) = r x + r y := fun x y => by
+    funext i
+    simp [r]
+  have hr_smul : ∀ (c : R) x, r (c • x) = φ c • r x := fun c x => by
+    funext i
+    simp [r]
+  have hrefl : ∀ s x, r (reflectHom B s x) = reflectHom B' (r s) (r x) := by
+    intro s x
+    rw [reflectHom_apply, reflectHom_apply, reflect_apply, reflect_apply, hr_add, hr_smul, hB'r]
+  set T' := reflectHom B' (r b) * reflectHom B' (r a) with hT'
+  have hT : ∀ x, r ((reflectHom B b * reflectHom B a) x) = T' (r x) := by
+    intro x
+    simp only [T', mul_apply_eq_comp, hrefl]
+  have hej : ∀ j, r (e j) = Pi.single j 1 := by
+    intro j
+    funext k
+    rcases eq_or_ne k j with rfl | hkj
+    · simp [r]
+    · simp [r, hkj]
+  have hmat : (LinearMap.toMatrix e e (reflectHom B b * reflectHom B a)).map φ =
+      LinearMap.toMatrix' T' := by
+    ext i j
+    rw [Matrix.map_apply, LinearMap.toMatrix_apply, LinearMap.toMatrix'_apply, ← hej, ← hT]
+  have ha' : B' (r a) (r a) = -2 := by rw [hB'r, ha, map_neg, map_ofNat]
+  have hb' : B' (r b) (r b) = -2 := by rw [hB'r, hb, map_neg, map_ofNat]
+  have hab' : B' (r a) (r b) = φ (B a b) := hB'r a b
+  have key := gelfandRadius_toContinuousLinearMap_reflectHom_mul_reflectHom hB'symm ha' hb'
+    (by rwa [hab'])
+  rw [hab'] at key
+  rw [hmat, ← key]
+  refine gelfandRadius_eq_of_norm_pow_eq fun n => ?_
+  have h1 : LinearMap.toMatrix' T' ^ n = LinearMap.toMatrixAlgEquiv' (T' ^ n) := by
+    rw [map_pow]
+    rfl
+  have h2 : T' ^ n = ((LinearMap.toContinuousLinearMap T' ^ n : (ι → ℝ) →L[ℝ] ι → ℝ) :
+      (ι → ℝ) →ₗ[ℝ] ι → ℝ) := by
+    rw [ContinuousLinearMap.toLinearMap_pow, LinearMap.coe_toContinuousLinearMap]
+  rw [h1, h2]
+  exact Matrix.linfty_opNorm_toMatrix _
+
+/-- **The spectral radius of `ρ_b ρ_a`**: under the hypotheses of
+`gelfandRadius_map_toMatrix_reflectHom_mul_reflectHom`, the complexified matrix of `T` has
+spectral radius `λ = sl2Rate (φ(B(a, b))² - 2)`. -/
+theorem spectralRadius_map_toMatrix_reflectHom_mul_reflectHom (φ : R →+* ℝ)
+    (e : Module.Basis ι R M) (hg : 2 < |φ (B a b)|) :
+    spectralRadius ℂ (((LinearMap.toMatrix e e (reflectHom B b * reflectHom B a)).map φ).map
+      Complex.ofReal) = ENNReal.ofReal (Matrix.sl2Rate (φ (B a b) ^ 2 - 2)) := by
+  rw [Matrix.spectralRadius_map_ofReal,
+    gelfandRadius_map_toMatrix_reflectHom_mul_reflectHom hB ha hb φ e hg]
+
+end Basis
 
 end BilinearForm

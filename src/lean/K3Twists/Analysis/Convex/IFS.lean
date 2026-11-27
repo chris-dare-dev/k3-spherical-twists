@@ -197,12 +197,14 @@ theorem tendstoUniformly_comp (hf : ∀ b, LipschitzWith K (f b)) (hK : K < 1) (
   exact (hb n ω).trans_lt hn
 
 /-- **Periodic words give fixed points**: if `ω` has period `p`, then `π(ω)` is a fixed point of
-`F_{ω|p}`, and it is the only one. -/
+`F_{ω|p}`. For `p ≥ 1` it is the only one (`IFS.eq_codingMap_of_periodic`). -/
 theorem comp_codingMap_of_periodic (hf : ∀ b, LipschitzWith K (f b)) (hK : K < 1) {p : ℕ}
     {ω : ℕ → β} (hω : ∀ i, ω (i + p) = ω i) : comp f p ω (codingMap f ω) = codingMap f ω := by
   conv_rhs => rw [codingMap_eq_comp hf hK p ω]
   simp only [hω]
 
+/-- **The fixed point of a periodic word is unique**: if `ω` has period `p ≥ 1`, every fixed point
+of `F_{ω|p}` is `π(ω)`, since `F_{ω|p}` is a contraction with constant `K^p < 1`. -/
 theorem eq_codingMap_of_periodic (hf : ∀ b, LipschitzWith K (f b)) (hK : K < 1) {p : ℕ}
     (hp : 0 < p) {ω : ℕ → β} (hω : ∀ i, ω (i + p) = ω i) {y : X} (hy : comp f p ω y = y) :
     y = codingMap f ω := by
@@ -449,7 +451,9 @@ theorem isClosedEmbedding_centreRatio (hg : 1 / 2 ≤ g) :
   exact (continuous_exp.comp hπ.continuous).isClosedEmbedding
     (Real.exp_injective.comp hπ.injective)
 
-/-- A periodic word of period `p ≥ 1` has the unique positive fixed ratio of its period. -/
+/-- The centre ratio of a word of period `p` is a fixed point of the composite of the `p` letters
+of its period, in logarithmic coordinates. For `p ≥ 1` it is the only one, by
+`IFS.eq_codingMap_of_periodic`. -/
 theorem centreRatio_periodic (hg : 0 < g) {p : ℕ} {ω : ℕ → Bool} (hω : ∀ i, ω (i + p) = ω i) :
     comp (twoBlockLetter g) p ω (log (centreRatio g ω)) = log (centreRatio g ω) := by
   rw [centreRatio, Real.log_exp]

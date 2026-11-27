@@ -74,6 +74,7 @@ import K3Twists.CategoryTheory.MassProfile.Basic
 import K3Twists.CategoryTheory.MassProfile.ClassInfimum
 import K3Twists.CategoryTheory.MassProfile.FibreFunctor
 import K3Twists.CategoryTheory.MassProfile.LargeVolume
+import K3Twists.CategoryTheory.MassProfile.ProjectiveJoin
 import K3Twists.CategoryTheory.ObjectProperty.Coreflection
 import K3Twists.CategoryTheory.Subobject.FullyFaithful
 import K3Twists.CategoryTheory.Triangulated.CentralAction

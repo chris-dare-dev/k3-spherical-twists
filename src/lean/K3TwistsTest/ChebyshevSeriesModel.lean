@@ -12,6 +12,8 @@ import K3Twists.Combinatorics.Quiver.ChebyshevSeries
 * Two spheres with `g = 3` arrows each way: the off-diagonal entry in degree `3` is the Kronecker
   number `u_4 = 21`.
 * The bar Euler characteristic in degree two is `C² - 1`.
+* Two spheres with `g = 3` arrows each way, with the field of exact dimensions: `Tor` between them
+  vanishes in degree `0` and has dimension `3` in degree `1`, the length of the shortest path.
 -/
 
 open Matrix
@@ -45,3 +47,15 @@ example (C : Matrix (Fin 2) (Fin 2) ℤ) : C.barEuler 2 = C * C - 1 := by
   have := C.chebyshevS_add_two 0
   norm_num at this
   exact this
+
+/-- Two spheres with three arrows each way: under the field of exact dimensions, `Tor` between
+them vanishes in degree `0` and has dimension three in degree one. -/
+example (tor : ℕ → Matrix (Fin 2) (Fin 2) ℕ)
+    (hdim : ∀ m, (tor m).map (Nat.cast : ℕ → ℤ) =
+      ((!![0, 3; 3, 0] : Matrix (Fin 2) (Fin 2) ℕ).map (Nat.cast : ℕ → ℤ)).chebyshevS m) :
+    tor 0 0 1 = 0 ∧ tor 1 0 1 = 3 := by
+  obtain ⟨h₁, h₂⟩ := Matrix.routedTor_of_pow_apply_eq_zero _ tor hdim (u := 0) (v := 1) (d := 1)
+    fun j hj => by
+      obtain rfl : j = 0 := by omega
+      simp
+  exact ⟨h₁ 0 one_pos, by simpa using h₂⟩
