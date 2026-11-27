@@ -28,10 +28,10 @@ multiplier of `K3Twists/Combinatorics/DT/FramedMultiplier.lean` is handled.
   to the series whose coefficient at `d` is that of the finite product.
 
 Mathlib's convergence criteria for products of power series
-(`MvPowerSeries.multipliable_one_add_of_tendsto_weightedOrder_atTop_nhds_top`) index the factors
-by a linear order with finite lower intervals and ask the orders of the factors to tend to
-infinity; the criterion here needs no order on the index type and also covers infinitely many
-variables, where the orders of the factors need not tend to infinity.
+(`MvPowerSeries.WithPiTopology.multipliable_one_add_of_tendsto_weightedOrder_atTop_nhds_top`)
+index the factors by a linear order with finite lower intervals and ask the orders of the factors
+to tend to infinity; the criterion here needs no order on the index type and also covers
+infinitely many variables, where the orders of the factors need not tend to infinity.
 -/
 
 open Finset Filter Topology

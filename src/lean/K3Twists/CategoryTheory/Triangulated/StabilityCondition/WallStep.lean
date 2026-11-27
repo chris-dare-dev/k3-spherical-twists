@@ -65,7 +65,7 @@ These fields have no instance built from real objects: the library has no 2-Cala
 triangulated category of a K3 surface, hence no stability condition on one, its stable objects or
 their Jordan–Hölder constituents. The Gram matrices of named walls are computed from the classes of
 the library's lattices: in Picard rank one, the wall of `𝒪_X` and `𝒪_X(-H)[1]`
-(`AlgebraicGeometry/Surface/K3/PicardRankOne/SplitTower.lean`), and the pairing-two wall of
+(`AlgebraicGeometry/Surface/K3/PicardRankOne/AnisotropicWall.lean`), and the pairing-two wall of
 `𝒪_C` and `𝒪_C(-1)[1]` on an elliptic K3 surface with a section, where the carrier of a point is
 lost (`K3TwistsTest/WallStepModel.lean`).
 

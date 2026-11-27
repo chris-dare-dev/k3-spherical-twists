@@ -23,7 +23,8 @@ linear maps (Birkhoff, `Analysis/Convex/Birkhoff2.lean`), not about this class.
 
 ## Main results
 
-* `MonotoneHomogeneous.pos_iff_of_pos_iff`: `f` preserves the relation "same support".
+* `MonotoneHomogeneous.pos_iff_of_le_smul`: `f` preserves the relation "same support": if
+  `x ≤ c • y` and `y ≤ c' • x`, then `f x` and `f y` have the same support.
 * `MonotoneHomogeneous.thompsonEDist_map_le`, `MonotoneHomogeneous.hilbertEDist_map_le`:
   nonexpansiveness on each part.
 * `MonotoneHomogeneous.thompsonEDist_map_le_of_pos`,
