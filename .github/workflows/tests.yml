@@ -76,7 +76,8 @@ jobs:
       - run: make test-slow
 
   # The Lean proofs under src/lean: a warning (a `sorry`, say) fails the build; then the test
-  # library, Batteries' linters, the generated umbrella, the axiom audit and the style check.
+  # library, Batteries' linters, the generated umbrella, the axiom audit, the cited-name check and
+  # the style check.
   lean:
     # Not the trust boundary: a pull request can edit this line. The boundary is that no runner is
     # registered to this public repository, so a job asking for `self-hosted` here stays queued.
