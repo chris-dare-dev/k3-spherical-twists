@@ -689,7 +689,11 @@ structure WeylGalleryHypotheses {B : Type*} (M : CoxeterMatrix B) (Λ : Type*)
   neg_not_mem_cone : ∀ v ∈ cone, -v ∉ cone
   /-- The `S_i` are simple in `A`. -/
   isSimpleIn_obj : ∀ i, IsSimpleIn t.heart (conf.obj i)
-  /-- **The simple tilt**: `T_i A` is the lower tilt of `A` at `Filt(S_i)`. -/
+  /-- **The simple tilt**: `T_i A` is the lower tilt of `A` at `Filt(S_i)`. For the
+  finite-length hearts of Kleinian singularities this is in the proof of Bridgeland, *Stability
+  conditions and Kleinian singularities*, Int. Math. Res. Not. IMRN 2009, Lemma 3.5, and for the
+  `2`-Calabi–Yau categories of preprojective algebras in the proof of Ikeda, arXiv:1402.1392,
+  Lemma 4.11. -/
   image_heart_eq_lowerTilt : ∀ i,
     image (conf.T i) t.heart = lowerTilt t.heart (filtration (isoClass (conf.obj i)))
   /-- **Tilt composition**: tilting the lower tilt of `A` at `T` at a simple object `X` of

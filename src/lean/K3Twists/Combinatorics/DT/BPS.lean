@@ -205,8 +205,9 @@ structure KacData.IsAffine {e : σ → σ → ℕ} (K : KacData e) (δ : σ → 
 
 /-- At `q = 1` the Kac polynomial of an imaginary root `nδ` of a connected affine quiver is the
 number `l + 1` of vertices. -/
-theorem KacData.IsAffine.eval_one_kac_smul {e : σ → σ → ℕ} {K : KacData e} {δ : σ → ℤ} (h : K.IsAffine δ) {n : ℕ}
-    (hn : 0 < n) : (K.kac ((n : ℤ) • δ)).eval 1 = Fintype.card σ := by
+theorem KacData.IsAffine.eval_one_kac_smul {e : σ → σ → ℕ} {K : KacData e} {δ : σ → ℤ}
+    (h : K.IsAffine δ) {n : ℕ} (hn : 0 < n) :
+    (K.kac ((n : ℤ) • δ)).eval 1 = Fintype.card σ := by
   rw [h.kac_smul n hn]
   simp
 
