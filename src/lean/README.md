@@ -919,10 +919,20 @@ fields:
   nilpotent BPS invariants `Ω^Q` of the tripled quiver (Mozgovoy, arXiv:1104.4335,
   Corollary 4.17);
 - the CY3 local model `localModel`: the local BPS invariants `Ω` of the wall block on `X × 𝔸¹`
-  are those of the tripled quiver with its potential. This statement has no published proof and
-  no human review, and a theorem over it is only as good as the field. Its `2`-Calabi–Yau form,
-  the objects filtered by the simples as nilpotent representations of the preprojective algebra of
-  a half of `Q`, is Davison–Hennecart–Schlegel Mejia, arXiv:2212.07668, Corollary 7.2.
+  are those of the tripled quiver with its potential, through the identification of an étale
+  neighbourhood of the fibre over the polystable point in the moduli stack of `X × 𝔸¹` with one
+  of the fibre over the origin in the critical locus of the potential. This statement has no
+  published proof and no human review, and a theorem over it is only as good as the field.
+  Parts of it are published: the `2`-Calabi–Yau half on `X`, where the stack of semistable
+  objects is étale-locally the stack of modules over the preprojective algebra of a half of `Q`
+  (Davison, arXiv:2106.07692, Theorem 5.11, with Propositions 4.1, 6.5 and 7.7 and Corollary 4.9
+  there, and Alper–Halpern-Leistner–Heinloth, arXiv:1812.01128, Example 7.29, for the good
+  moduli space); the nilpotent locus, the objects filtered by the simples as nilpotent
+  representations of that preprojective algebra (Davison–Hennecart–Schlegel Mejia,
+  arXiv:2212.07668, Corollary 7.2); the quiver side, Jacobi modules of the tripled quiver as
+  preprojective modules with an endomorphism (Davison, arXiv:1602.02110, Proposition 2.1); and
+  the passage to `X × 𝔸¹` for coherent sheaves (Kinjo, arXiv:2102.01568, Theorem 5.1). The
+  passage for complexes, such as the curve-wall simple `𝒪_C(-1)[1]`, is not published.
 
 | Statement | Lean |
 |---|---|

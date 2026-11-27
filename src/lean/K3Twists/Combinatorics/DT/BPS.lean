@@ -63,13 +63,33 @@ The fields, with their sources:
 * `localModel`, **the CY3 local model**. The local numerical BPS invariants `Ω_α` of the
   wall block, the Behrend-weighted invariants of the objects of class `α` on the threefold
   `X × 𝔸¹` supported over the block, equal the nilpotent BPS invariants of the tripled quiver of
-  `Q` with its potential. The field identifies a formal neighbourhood of the polystable point in
-  the moduli stack of the threefold with the critical locus of that potential. **This statement
-  has no published proof and no human review.** A theorem over it is only as good as the field.
-  A `2`-Calabi–Yau form is published: for a collection of simples of this kind, the stack of
-  objects filtered by them is the stack of nilpotent representations of the preprojective algebra
-  of a half of the `Ext`-quiver (Davison, Hennecart and Schlegel Mejia, arXiv:2212.07668,
-  Corollary 7.2).
+  `Q` with its potential. The field identifies an étale neighbourhood of the fibre over the
+  polystable point in the moduli stack of the threefold with one of the fibre over the origin in
+  the critical locus of that potential. **This statement has no published proof and no human
+  review.** A theorem over it is only as good as the field. Parts of it are published:
+  * **the `2`-Calabi–Yau half**, on the surface `X`: the stack of semistable objects and the
+    stack of modules over the preprojective algebra of a half of the `Ext`-quiver have a common
+    étale neighbourhood of the fibre over the polystable point and of the fibre over the origin,
+    Cartesian over étale maps of their good moduli spaces (Davison, arXiv:2106.07692,
+    Theorem 5.11). At a wall of a K3 surface, Propositions 4.1, 6.5 and 7.7 there give the
+    `2`-Calabi–Yau structures and the Σ-collection that the theorem assumes, Corollary 4.9 the
+    formality of the `Ext`-algebra, and Alper, Halpern-Leistner and Heinloth the good moduli
+    space (arXiv:1812.01128, Example 7.29);
+  * **the nilpotent locus**: the closed substack of objects filtered by the wall simples is the
+    stack of nilpotent modules over that preprojective algebra, compatibly with the `RHom`
+    complexes (Davison, Hennecart and Schlegel Mejia, arXiv:2212.07668, Corollary 7.2);
+  * **the quiver side**: a module over the Jacobi algebra of the tripled quiver with its
+    potential is a module over the preprojective algebra with an endomorphism of it (Davison,
+    arXiv:1602.02110, Proposition 2.1);
+  * **the passage to `X × 𝔸¹` for coherent sheaves**: for a smooth quasi-projective surface `S`,
+    the derived moduli stack of coherent sheaves with proper support on the total space of `ω_S`
+    is the `(-1)`-shifted cotangent stack of that on `S` (Kinjo, arXiv:2102.01568, Theorem 5.1).
+    For a K3 surface that total space is `X × 𝔸¹`.
+
+  The passage to `X × 𝔸¹` for complexes is not published, and the wall simples are complexes in
+  general, such as `𝒪_C(-1)[1]` at the curve wall. Theorem 5.11 is a statement about classical
+  stacks, and joining it to Kinjo's theorem would need a derived form of it, which Davison leaves
+  open (§5.3.2 there).
 
 Only one framing is used, a framing with every entry positive. No identity in other chambers is
 assumed (`framedS_injective`).
@@ -228,9 +248,16 @@ structure BPSHypotheses extends KacData e where
   /-- The local numerical BPS invariants of the wall block. -/
   Ω : (σ →₀ ℕ) → ℤ
   /-- **The CY3 local model**: the local BPS invariants of the wall block are those of the
-  tripled quiver with its potential, through the identification of a formal neighbourhood of the
-  polystable point of the moduli stack of `X × 𝔸¹` with the critical locus of the potential.
-  **This statement has no published proof and no human review.** -/
+  tripled quiver with its potential, through the identification of an étale neighbourhood of the
+  fibre over the polystable point in the moduli stack of `X × 𝔸¹` with one of the fibre over the
+  origin in the critical locus of the potential.
+  **This statement has no published proof and no human review.** Parts of it are published: the
+  `2`-Calabi–Yau half on `X` (Davison, arXiv:2106.07692, Theorem 5.11, with Propositions 4.1,
+  6.5 and 7.7 and Corollary 4.9 there, and Alper, Halpern-Leistner and Heinloth,
+  arXiv:1812.01128, Example 7.29), the nilpotent locus (Davison, Hennecart and Schlegel Mejia,
+  arXiv:2212.07668, Corollary 7.2), the quiver side (Davison, arXiv:1602.02110,
+  Proposition 2.1) and the passage to `X × 𝔸¹` for coherent sheaves (Kinjo, arXiv:2102.01568,
+  Theorem 5.1). The passage for complexes is not published. -/
   localModel : ∀ α, α ≠ 0 → Ω α = bpsQ α
 
 namespace BPSHypotheses
