@@ -1,5 +1,5 @@
 # Targets run from the repository root.
-#   make test                              fast tests: Macaulay2 package and scheduler
+#   make test                              fast tests: Macaulay2 package, its installation, scheduler
 #   make test-slow                         the Macaulay2 tests that take longer
 #   make examples                          the scripts of data/examples/, each a short computation to copy
 #   make run BATCH=data/batches/invariants.toml compute the tasks of a batch that have no record yet
@@ -35,12 +35,15 @@ STORE    = $(if $(shell grep -l '^\[graph\]' $(BATCH)),--store $(RUN_DIR)/result
 EXPECT  ?= 0
 BATCHES ?=
 
-.PHONY: test test-m2 test-python test-slow test-all examples lint format plan run report record adopt smoke tables check lean lean-deps
+.PHONY: test test-m2 test-install test-python test-slow test-all examples lint format plan run report record adopt smoke tables check lean lean-deps
 
-test: test-m2 test-python
+test: test-m2 test-install test-python
 
 test-m2:
 	$(M2) --script tests/macaulay2/run-tests.m2 fast
+
+test-install:
+	$(M2) --script tests/macaulay2/install-package.m2
 
 test-python:
 	$(PYTHON) -m unittest discover -s tests -t .
