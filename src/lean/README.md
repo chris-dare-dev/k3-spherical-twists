@@ -368,9 +368,10 @@ arXiv:1310.8266, Lemma 2.6), and the Gram matrix is `q(v(Sᵢ), v(Sⱼ))`: both 
 inputs are fields, each with its source: stable objects of each phase (Bridgeland,
 arXiv:math/0212237, Lemma 5.2); Jordan–Hölder constituents whose classes add up (ibid., Lemma 4.5);
 semicontinuity of constituents, which gives the isotropic stable constituent of a carrier as a
-semistable object of the wall (ibid., §9; Bayer–Bridgeland, Lemma 2.7, Remark 2.8); and the draft's
-two-extension lemma (a non-rigid constituent keeps the carrier on the outgoing side). None has an
-instance from real objects: the library has no 2-Calabi–Yau triangulated category of a K3 surface.
+semistable object of the wall (ibid., §8, after Proposition 8.1; Bayer–Bridgeland, Lemma 2.7,
+Remark 2.8); and the draft's two-extension lemma (a non-rigid constituent keeps the carrier on the
+outgoing side). None has an instance from real objects: the library has no 2-Calabi–Yau
+triangulated category of a K3 surface.
 
 | Assertion | Lean |
 |---|---|

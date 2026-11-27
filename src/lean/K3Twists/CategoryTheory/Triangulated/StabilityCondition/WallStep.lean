@@ -47,8 +47,8 @@ The categorical inputs are fields of `WallStep`, each with its source:
   exact sequences are distinguished triangles);
 * **semicontinuity of constituents**: a carrier at `t₁` of an object with `e = 2` has an isotropic
   stable constituent `X`, nonzero, of square-zero class, which is semistable at the wall (the set
-  where an object is semistable is closed: Bridgeland, arXiv:math/0212237, §9; Bayer–Bridgeland,
-  arXiv:1310.8266, Lemma 2.7 and Remark 2.8);
+  where an object is semistable is closed: Bridgeland, arXiv:math/0212237, §8, after
+  Proposition 8.1; Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.7 and Remark 2.8);
 * **the two-extension lemma**: if `X` has a non-rigid stable constituent at the wall, the carrier
   survives on the outgoing side (the draft *Harder–Narasimhan towers of spherical twist words on a
   Picard-rank-one K3 surface*, its two-extension lemma, with openness of stability,
@@ -172,7 +172,7 @@ structure WallStep (b : MukaiBudget C) (q : LinearMap.BilinForm ℤ Λ) (v : K�
   CarrierConstituent : C → ℝ → C → Prop
   /-- **Semicontinuity of constituents**: a carrier at `t₁` of an object with `e = 2` has an
   isotropic stable constituent, and it is semistable at the wall (Bridgeland, arXiv:math/0212237,
-  §9; Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.7 and Remark 2.8). -/
+  §8, after Proposition 8.1; Bayer–Bridgeland, arXiv:1310.8266, Lemma 2.7 and Remark 2.8). -/
   exists_carrierConstituent : ∀ E, b.e E = 2 → t₁.HasCarrier (carrier t₁) E →
     ∃ ψ X, CarrierConstituent E ψ X
   semistable_of_carrierConstituent : ∀ E ψ X, CarrierConstituent E ψ X → wall.slicing.P ψ X
