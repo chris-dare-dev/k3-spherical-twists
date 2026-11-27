@@ -40,8 +40,14 @@ assumed: they are computed from the classes of the wall and the Tits form.
 * `Ω_{(n, n)} = -2 = -χ(ℙ¹)` for `n ≥ 1`, the class of `n` points of `C`
   (`curveWall_omega_null`);
 * `Ω = 0` at `(a, b)` with `|a - b| ≥ 2` (`curveWall_omega_eq_zero`). Since
-  `a v(A) + b v(B) = (0, (a - b)C, a)`, these are the classes `(0, kC, n)` with `|k| ≥ 2`, and the
-  local invariants vanish there.
+  `a v(A) + b v(B) = (0, (a - b)C, a)` with `a, b ≥ 0`, these are the classes `(0, kC, n)` with
+  `|k| ≥ 2` and `n ≥ max(0, k)`, and the local invariants vanish there.
+
+**The curve wall is affine of type `Ã₁`** (`curveWallKac_isAffine`): the quiver is connected with
+negative semidefinite root form, `δ = (1, 1)` spans the radical, and the Kronecker Kac polynomial
+`q + 1` at `nδ` is the published value `q + l` at `l = 1`. So the general value at an affine wall,
+`Quiver.BPSHypotheses.omega_eq_neg_card_of_isAffine`, gives `Ω_{(n, n)} = -2` again
+(`curveWall_omega_null_of_isAffine`).
 -/
 
 open MvPowerSeries MvPowerSeries.FramedMultiplier CoxeterMatrix Quiver
@@ -208,8 +214,8 @@ theorem curveWall_omega_null (α : Pos (Fin 2)) (h : α.1 0 = α.1 1) : curveWal
   norm_num
 
 /-- **`Ω = 0` at the classes `(a, b)` with `|a - b| ≥ 2`**: in Mukai coordinates
-`a v(A) + b v(B) = (0, (a - b)C, a)`, the classes `(0, kC, n)` with `|k| ≥ 2`. Uses the CY3 local
-model `Quiver.BPSHypotheses.localModel`. -/
+`a v(A) + b v(B) = (0, (a - b)C, a)` with `a, b ≥ 0`, the classes `(0, kC, n)` with `|k| ≥ 2` and
+`n ≥ max(0, k)`. Uses the CY3 local model `Quiver.BPSHypotheses.localModel`. -/
 theorem curveWall_omega_eq_zero (α : Pos (Fin 2)) (h : 2 ≤ |(α.1 0 : ℤ) - α.1 1|) :
     curveWallBPS.Ω α.1 = 0 := by
   refine curveWallBPS.omega_eq_zero α ?_
@@ -222,5 +228,46 @@ theorem curveWall_omega_eq_zero (α : Pos (Fin 2)) (h : 2 ≤ |(α.1 0 : ℤ) - 
 theorem wallClass_eq_curve (a b : ℤ) : wallClass a b = (0, (a - b) • curve, a) := by
   rw [wallClass_eq]
   ext <;> simp [curve]
+
+/-! ### The curve wall is affine -/
+
+/-- **The curve wall is affine of type `Ã₁`**: its `Ext`-quiver is connected with negative
+semidefinite root form, `δ = (1, 1)` lies in the radical, and the Kronecker Kac polynomial at
+`nδ`, `n ≥ 1`, is `q + 1`, the value `q + l` at an affine quiver with `l + 1 = 2` vertices. -/
+theorem curveWallKac_isAffine : curveWallKac.IsAffine ![1, 1] where
+  isIndecomposable := by
+    refine (Matrix.isIndecomposable_iff_reflTransGen _).2 fun i j => ?_
+    by_cases h : i = j
+    · rw [h]
+    · refine Relation.ReflTransGen.single ?_
+      simp [rootMatrix, h, curveWallExt_eq]
+  rootForm_self_nonpos v := by
+    rw [rootForm_curveWallExt]
+    nlinarith [sq_nonneg (v 0 - v 1)]
+  isPositiveVector := ⟨fun i => by fin_cases i <;> simp, fun h => by simpa using congrFun h 0⟩
+  rootForm_eq_zero v := by
+    simp [rootForm, Matrix.toBilin'_apply, rootMatrix, curveWallExt_eq, Fin.sum_univ_two]
+    ring
+  kac_smul n hn := by
+    change kroneckerKac _ = _
+    have hpos : IsPositiveVector ((n : ℤ) • ![(1 : ℤ), 1]) :=
+      ⟨fun i => by fin_cases i <;> simp, fun h => by
+        have := congrFun h 0
+        simp only [Pi.smul_apply, Matrix.cons_val_zero, smul_eq_mul, mul_one, Pi.zero_apply,
+          Nat.cast_eq_zero] at this
+        omega⟩
+    have hform : rootForm curveWallExt ((n : ℤ) • ![(1 : ℤ), 1]) ((n : ℤ) • ![(1 : ℤ), 1]) = 0 := by
+      rw [rootForm_curveWallExt]
+      simp
+    simp only [kroneckerKac, hpos, true_and, hform]
+    norm_num
+
+/-- **`Ω_{(n, n)} = -2`** from the general value `-(l + 1)` at the imaginary roots of an affine
+wall (`Quiver.BPSHypotheses.omega_eq_neg_card_of_isAffine`), at `l = 1`. Uses the CY3 local model
+`Quiver.BPSHypotheses.localModel`. -/
+theorem curveWall_omega_null_of_isAffine (α : Pos (Fin 2)) {n : ℕ} (hn : 0 < n)
+    (h : dimVec α.1 = (n : ℤ) • ![1, 1]) : curveWallBPS.Ω α.1 = -2 := by
+  rw [curveWallBPS.omega_eq_neg_card_of_isAffine curveWallKac_isAffine α hn h]
+  simp
 
 end AlgebraicGeometry.K3.EllipticWithSection

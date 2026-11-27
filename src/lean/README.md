@@ -893,7 +893,12 @@ distinct vertices, no loops), `Quiver.KacData` holds the Kac polynomials `A_α(q
 their published properties, stated on the root form of `Q`: `A = 1` on the positive real roots,
 `A = 0` where `q(α) ≥ 2`, and `A_{sᵢα} = A_α` for `α ≠ eᵢ` (Kac, *Infinite root systems,
 representations of graphs and invariant theory*, Invent. Math. 56, 1980, with the reflection
-functors of Bernstein, Gelfand and Ponomarev). `Quiver.BPSHypotheses` adds three numerical fields:
+functors of Bernstein, Gelfand and Ponomarev). At an affine wall, `Quiver.KacData.IsAffine` adds the
+value at the imaginary roots: for a connected quiver with negative semidefinite root form and `δ`
+positive in its radical, `A_{nδ}(q) = q + l` for `n ≥ 1`, with `l + 1` vertices
+(Bozec–Schiffmann–Vasserot, arXiv:1701.01797, §1.6.2, from the classification of the
+indecomposable representations of Euclidean quivers). `Quiver.BPSHypotheses` adds three numerical
+fields:
 - Mozgovoy's formula localized to the nilpotent locus: the nilpotent framed series of the tripled
   quiver, framed by `w ≥ 0`, is `Z_w` with exponents `-(w·α) A_α(1)` (Mozgovoy, arXiv:1107.6044,
   Theorem 5.1, Corollary 2.8; the localization by the `ℂ*`-action adapts the
@@ -914,13 +919,15 @@ functors of Bernstein, Gelfand and Ponomarev). `Quiver.BPSHypotheses` adds three
 |---|---|
 | `Ω^Q = -A(1)` from the two framed fields at the one framing `(1, …, 1)`, and `Ω = -A(1)` with the CY3 local model; the interface says no more: for given Kac data and `Ω` the fields can be met iff `Ω = -A(1)` on the positive classes | `Quiver.BPSHypotheses.bpsQ_eq`, `Quiver.BPSHypotheses.omega_eq`, `Quiver.BPSHypotheses.exists_iff` |
 | Weyl descent: for a sign-coherent root form, `A = 1` on the real roots follows from `A_{eᵢ} = 1` and the reflection invariance; with the CY3 local model, `Ω = -1` on the simple objects and on every positive real root, in particular on the prefix roots of a root-positive word, the classes of the new simple objects along a Weyl gallery; `Ω_{sᵢα} = Ω_α`; `Ω = 0` where `q ≥ 2` | `Quiver.KacData.ofSignCoherent`, `omega_single`, `omega_eq_neg_one_of_isRealRoot`, `omega_eq_neg_one_of_isRootPositive`, `omega_reflect`, `omega_eq_zero` |
-| The curve wall of the elliptic K3, an instance from a quiver: the `Ext`-quiver computed from `⟨v(A), v(B)⟩ = 2` is the affine Kronecker quiver, with root form `-2(a - b)²`, sign coherent; the Kronecker Kac polynomials `1`, `q + 1`, `0` give its Kac data, with `A = 1` on the real roots by descent; the affine Kronecker indices are `-A(1)` and give the interface, with the curve-wall multiplier as framed series; `Ω = -1` on the real roots, `Ω = -2` at `(n, n)`, and `Ω = 0` at `(a, b)` with `\|a - b\| ≥ 2`, the classes `(0, kC, n)` with `\|k\| ≥ 2` | `curveWallExt_eq`, `rootForm_curveWallExt`, `isSignCoherent_curveWallExt`, `curveWallKac`, `kroneckerBPS_eq_neg_kac`, `curveWallBPS`, `curveWallMultiplier_eq`, `curveWall_omega_real`, `curveWall_omega_null`, `curveWall_omega_eq_zero` |
+| At the imaginary roots `nδ` of a connected affine quiver with `l + 1` vertices, `A_{nδ}(1) = l + 1`, so `Ω^Q_{nδ} = -(l + 1)`, and with the CY3 local model `Ω_{nδ} = -(l + 1)`: at an affine ADE wall, minus the Euler characteristic of the exceptional fibre | `Quiver.KacData.IsAffine`, `Quiver.KacData.IsAffine.eval_one_kac_smul`, `bpsQ_eq_neg_card_of_isAffine`, `omega_eq_neg_card_of_isAffine` |
+| The curve wall of the elliptic K3, an instance from a quiver: the `Ext`-quiver computed from `⟨v(A), v(B)⟩ = 2` is the affine Kronecker quiver, with root form `-2(a - b)²`, sign coherent; the Kronecker Kac polynomials `1`, `q + 1`, `0` give its Kac data, with `A = 1` on the real roots by descent; the affine Kronecker indices are `-A(1)` and give the interface, with the curve-wall multiplier as framed series; `Ω = -1` on the real roots, `Ω = -2` at `(n, n)`, and `Ω = 0` at `(a, b)` with `\|a - b\| ≥ 2`, the classes `(0, kC, n)` with `\|k\| ≥ 2` and `n ≥ max(0, k)`; the wall is affine with `l = 1`, `δ = (1, 1)`, and the affine value gives `Ω = -2` at `(n, n)` again | `curveWallExt_eq`, `rootForm_curveWallExt`, `isSignCoherent_curveWallExt`, `curveWallKac`, `kroneckerBPS_eq_neg_kac`, `curveWallBPS`, `curveWallMultiplier_eq`, `curveWall_omega_real`, `curveWall_omega_null`, `curveWall_omega_eq_zero`, `curveWallKac_isAffine`, `curveWall_omega_null_of_isAffine` |
 
-Unqualified names of the second row are in `Quiver.BPSHypotheses`, those of the last row in
-`AlgebraicGeometry.K3.EllipticWithSection`. Every theorem about `Ω` uses the CY3 local model and
-says so in its docstring. [K3TwistsTest/BPSModel.lean](K3TwistsTest/BPSModel.lean) gives the
-consistency model of one spherical object and checks the curve wall at `(2, 1)`, `(2, 2)`,
-`(3, 1)` and along an alternating word. The three numerical fields have no geometric instance:
+Unqualified names of the second and third rows are in `Quiver.BPSHypotheses`, those of the last
+row in `AlgebraicGeometry.K3.EllipticWithSection`. Every theorem about `Ω` uses the CY3 local
+model and says so in its docstring. [K3TwistsTest/BPSModel.lean](K3TwistsTest/BPSModel.lean)
+gives the consistency model of one spherical object, checks the curve wall at `(2, 1)`, `(2, 2)`,
+`(3, 1)` and along an alternating word, and gives a model of an affine wall with three vertices
+(the quiver `Ã₂`, Kac polynomials `1`, `q + 2`, `0`, `Ω_{2δ} = -3`). The three numerical fields have no geometric instance:
 the framed moduli of the tripled quiver, the Behrend function and the moduli of objects on
 `X × 𝔸¹` are not in the library, and at the curve wall the fields are met by taking the framed
 series to be the multiplier and `Ω` to be the quiver's.
@@ -992,7 +999,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Combinatorics/DT/Inversion.lean` | injectivity in characteristic zero, the big Witt bijection over `ℤ`, recovering `Ω` from one framing, the framed DT statement | same |
 | `Combinatorics/DT/TwoVertex.lean` | coefficients of the multiplier of a two-vertex quiver by a computable table recursion | same |
 | `Combinatorics/DT/Quivers.lean` | the multiplier of the Jordan, type-`A_n` and affine Kronecker quivers | same |
-| `Combinatorics/DT/BPS.lean` | the Kac data of a loopless quiver and the BPS interface of a wall block: `Ω = -A(1)` from its fields, Weyl descent | `Quiver` |
+| `Combinatorics/DT/BPS.lean` | the Kac data of a loopless quiver, its value `q + l` at the imaginary roots of a connected affine quiver, and the BPS interface of a wall block: `Ω = -A(1)` from its fields, Weyl descent, `Ω_{nδ} = -(l + 1)` | `Quiver` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
 | `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two, its two HN filtrations and that of the point | `AlgebraicGeometry.K3` |
@@ -1090,7 +1097,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/FramedMultiplier.lean` | the framed multiplier of the curve wall and of a point, from the classes of the lattice | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/AffineWeyl.lean` | the fundamental cycle of the curve wall, its alcove, affine Weyl group, translation lattices and length-zero element | same |
 | `AlgebraicGeometry/Surface/K3/EllipticWithSection/LengthZeroGroup.lean` | the length-zero group `ℤ/2` and the Coxeter group `Ã₁` of the curve wall | same |
-| `AlgebraicGeometry/Surface/K3/EllipticWithSection/BPS.lean` | the BPS interface of the curve wall from its `Ext`-quiver and the Kac polynomials of that quiver | same |
+| `AlgebraicGeometry/Surface/K3/EllipticWithSection/BPS.lean` | the BPS interface of the curve wall from its `Ext`-quiver and the Kac polynomials of that quiver; the wall is affine with `l = 1` | same |
 | `RingTheory/IntegralClosure/Away.lean` | integrality over `ℤ[1/N]`, integrally closed; the arithmetic core of the S-unit theorem | root |
 | `RingTheory/IntegralClosure/Specialization.lean` | one `N` for a finitely generated subring of a field of characteristic zero, by Zariski's lemma and lying over | root |
 | `LinearAlgebra/Matrix/UnitSpectrum.lean` | eigenvalues integral over the entries, inverse moduli, the unit test | `Matrix` |
