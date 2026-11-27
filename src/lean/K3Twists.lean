@@ -5,6 +5,7 @@ import K3Twists.AlgebraicGeometry.Surface.K3.CuspPoint
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.AffineWeyl
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.BPS
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.Braid
+import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.CartanDescent
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.CurveWall
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.FramedMultiplier
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.KernelRootSystem
@@ -65,6 +66,7 @@ import K3Twists.Analysis.Topical.PiecewiseLinear
 import K3Twists.CategoryTheory.Abelian.SerreClass.Additive
 import K3Twists.CategoryTheory.Abelian.SerreClass.ExtensionClosure
 import K3Twists.CategoryTheory.Abelian.Subobject.Valuation
+import K3Twists.CategoryTheory.Abelian.TorsionTheory.CartanDescent
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Radical
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Saturation
 import K3Twists.CategoryTheory.Abelian.TorsionTheory.Transport
@@ -166,6 +168,7 @@ import K3Twists.LinearAlgebra.Lattice.Arithmetic.TorsionFree
 import K3Twists.LinearAlgebra.Lattice.Arrangement
 import K3Twists.LinearAlgebra.Lattice.Arrangement.Lorentzian
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Certificate
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Coxeter
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Group
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Index
