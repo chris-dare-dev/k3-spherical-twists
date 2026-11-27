@@ -25,16 +25,19 @@ simple roots (`FundamentalCycle.lengthZeroGroup`).
   `Q^∨`, then `L = D + L₀` with `D ∈ ⊕ ℤCᵢ` and `L₀ ⊥ Cᵢ`, the element acts on the affine roots as
   `⊗𝒪(D) w ∈ W_aff`, and the trivial stabilizer of `W_aff` makes it act trivially.
 * **Its range is the image of `Λ = deg(N)`** in `P^∨/Q^∨` for an even lattice `N`
-  (`lengthZeroClass_mem`, `exists_lengthZeroClass_eq`): every coset `⊗𝒪(L) W_aff` contains a
-  length-zero element (`exists_mul_mem_affineRootStabilizer`).
+  (`degreeClassGroup`, `range_lengthZeroClass`, from `exists_lengthZeroClass_eq`): every coset
+  `⊗𝒪(L) W_aff` contains a length-zero element (`exists_mul_mem_affineRootStabilizer`). The image
+  has order `[Λ : Q^∨]` (`card_degreeClassGroup`).
 
 The kernel of the action of the extended group on the affine roots is `E(N ∩ {Cᵢ}^⊥)`
-(`fixes_affineRoot_iff`), so it acts through `W(R) ⋉ Λ`.
+(`fixes_affineRoot_iff`), so it acts through `W(R) ⋉ Λ`: the semidirect product, the homomorphism
+to it and its action on the affine root lattice are in `AffineWeyl/Semidirect.lean`
+(`DegreeSemidirect`, `toDegreeSemidirect`, `degreeSemidirectRep`).
 
 So **the permutations of the nodes induced by length-zero elements form a group isomorphic to
 `Λ/Q^∨`** (`lengthZeroPermEquiv`), and to `P^∨/Q^∨` when every degree is realized, `Λ = ℤ^l`
 (`lengthZeroPermEquivOfDegreeLattice`); its order is then `|det A|`
-(`Nat.card_lengthZeroPerm_range`). The isometries themselves do not form a group of that order:
+(`card_lengthZeroPerm_range`). The isometries themselves do not form a group of that order:
 `E(N ∩ {Cᵢ}^⊥)` acts trivially on the affine roots (`tensorLine_fixes_affineRoot_iff`). This is the
 class-level statement of Bourbaki, *Groupes et algèbres de Lie*, Ch. VI, §2.3, Proposition 6, and
 Iwahori–Matsumoto, Publ. Math. IHÉS 25 (1965), §1.7–1.8: on a K3 surface only `Λ/Q^∨` is realized.
@@ -430,6 +433,60 @@ theorem card_lengthZeroPerm_range (hb : ∀ x y, b x y = b y x) (heven : ∀ L :
   rw [Nat.card_congr (F.lengthZeroPermEquivOfDegreeLattice hb heven hΛ).toEquiv,
     Nat.card_congr Multiplicative.toAdd, ← F.index_corootLattice]
   rfl
+
+/-! ### The range of the class -/
+
+/-- **The image of `Λ` in `P^∨/Q^∨`**: the classes of the degrees `(L·Cᵢ)ᵢ` modulo the coroot
+lattice `Q^∨ = Aℤ^l`, a subgroup of the multiplicative group of `P^∨/Q^∨ = ℤ^l/Aℤ^l`. -/
+def degreeClassGroup : Subgroup (Multiplicative ((ι → ℤ) ⧸ F.corootLattice)) :=
+  AddSubgroup.toSubgroup (F.degreeLattice.map F.corootLattice.mkQ).toAddSubgroup
+
+theorem mem_degreeClassGroup {x : Multiplicative ((ι → ℤ) ⧸ F.corootLattice)} :
+    x ∈ F.degreeClassGroup ↔
+      ∃ L : N, Multiplicative.ofAdd (Submodule.Quotient.mk (F.degree L)) = x := by
+  rw [degreeClassGroup, Multiplicative.mem_toSubgroup, Submodule.mem_toAddSubgroup,
+    Submodule.mem_map]
+  constructor
+  · rintro ⟨_, ⟨L, rfl⟩, h⟩
+    exact ⟨L, by rw [← Submodule.mkQ_apply, h]; rfl⟩
+  · rintro ⟨L, rfl⟩
+    exact ⟨F.degree L, ⟨L, rfl⟩, rfl⟩
+
+/-- When every degree is realized, `Λ = ℤ^l`, the image of `Λ` is all of `P^∨/Q^∨`. -/
+theorem degreeClassGroup_eq_top (hΛ : F.degreeLattice = ⊤) : F.degreeClassGroup = ⊤ := by
+  refine eq_top_iff.mpr fun x _ => F.mem_degreeClassGroup.mpr ?_
+  obtain ⟨y, hy⟩ := Submodule.Quotient.mk_surjective _ (Multiplicative.toAdd x)
+  obtain ⟨L, rfl⟩ : y ∈ LinearMap.range F.degree := by
+    rw [← degreeLattice, hΛ]
+    trivial
+  exact ⟨L, by rw [hy]; rfl⟩
+
+/-- The image of `Λ` in `P^∨/Q^∨` has order `[Λ : Q^∨]`. -/
+theorem card_degreeClassGroup :
+    Nat.card F.degreeClassGroup =
+      F.corootLattice.toAddSubgroup.relIndex F.degreeLattice.toAddSubgroup := by
+  have h := AddSubgroup.relIndex_ker F.degreeLattice.toAddSubgroup
+    F.corootLattice.mkQ.toAddMonoidHom
+  rw [← LinearMap.ker_toAddSubgroup, Submodule.ker_mkQ] at h
+  rw [h]
+  rfl
+
+/-- The class of a length-zero element lies in the image of `Λ`. -/
+theorem lengthZeroClass_mem_degreeClassGroup (hb : ∀ x y, b x y = b y x)
+    (g : F.lengthZeroGroup) : F.lengthZeroClass hb g ∈ F.degreeClassGroup :=
+  F.mem_degreeClassGroup.mpr ⟨translationPart (g : Aut(Λ)), rfl⟩
+
+/-- **The range of the class of length-zero elements is the image of `Λ` in `P^∨/Q^∨`**, for an
+even lattice: every class of `Λ/Q^∨` is the class of a length-zero element
+(`exists_lengthZeroClass_eq`). -/
+theorem range_lengthZeroClass (hb : ∀ x y, b x y = b y x) (heven : ∀ L : N, Even (b L L)) :
+    (F.lengthZeroClass hb).range = F.degreeClassGroup := by
+  ext x
+  refine ⟨?_, fun hx => ?_⟩
+  · rintro ⟨g, rfl⟩
+    exact F.lengthZeroClass_mem_degreeClassGroup hb g
+  · obtain ⟨L, rfl⟩ := F.mem_degreeClassGroup.mp hx
+    exact F.exists_lengthZeroClass_eq hb heven L
 
 end FundamentalCycle
 

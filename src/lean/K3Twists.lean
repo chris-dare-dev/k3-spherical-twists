@@ -14,6 +14,7 @@ import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.LengthZeroGroup
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.LorentzianComplement
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.MukaiCharge
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.PhaseGap
+import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.Semidirect
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.StratumRootSystem
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.SupportProperty
 import K3Twists.AlgebraicGeometry.Surface.K3.EllipticWithSection.WallMatrix
@@ -176,7 +177,9 @@ import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Index
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.LengthZero
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.LengthZeroGroup
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Minuscule
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Semidirect
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.SeveralFibres
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.SeveralFibres.Index
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.SimpleReflection
 import K3Twists.LinearAlgebra.Lattice.Mukai.Basic
 import K3Twists.LinearAlgebra.Lattice.Mukai.CentralCharge

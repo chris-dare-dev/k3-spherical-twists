@@ -4,6 +4,7 @@ Released under the MIT license.
 -/
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Coxeter
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.LengthZeroGroup
+import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.Semidirect
 import K3Twists.CategoryTheory.Triangulated.StabilityCondition.WeylTilt.Slicing
 import K3TwistsTest.AffineWeylModel
 
@@ -16,7 +17,9 @@ import K3TwistsTest.AffineWeylModel
   `M₀ = e₂`, `M₁ = e₀ + 2e₂` have degrees `(1, 0)` and `(0, 1)`, so `Λ = ℤ²`. The length-zero
   permutations then form a group of order `3 = det A₂` (the theorem of
   `AffineWeyl/LengthZeroGroup.lean` at `P^∨/Q^∨ = ℤ/3`), and both nodes are minuscule, with
-  length-zero elements `⊗𝒪(Mⱼ) ∘ w` sending `α₀` to `αⱼ`.
+  length-zero elements `⊗𝒪(Mⱼ) ∘ w` sending `α₀` to `αⱼ`. The extended affine Weyl group maps
+  onto `W ⋉ Λ`, which acts faithfully on the affine root lattice, and
+  `(W ⋉ Λ)/(W ⋉ Q^∨) = ℤ/3` has order `3` (`AffineWeyl/Semidirect.lean`).
 * **The `A₂` fibre of `AffineWeylModel`** is a chain, `finiteExt = extA 2`, so its longest word
   `[0, 1, 0]` is root-positive on the classes `αᵢ = (0, -Cᵢ, 0)` and sends `αᵢ` to `-α_{1-i}`.
 * **The charge cone** of a central charge contains a class of positive imaginary part and not
@@ -139,6 +142,28 @@ example : ∃ w ∈ a2Wide.finiteWeyl,
 /-- The simple reflections generate the affine Weyl group of the fibre. -/
 example : a2Wide.affineWeyl = Subgroup.closure (a2Wide.simpleReflection '' Set.univ) :=
   a2Wide.affineWeyl_eq_closure wideForm_comm
+
+/-- **The range of the class of length-zero elements is all of `P^∨/Q^∨`** for the `A₂` fibre. -/
+example : (a2Wide.lengthZeroClass wideForm_comm).range = ⊤ := by
+  rw [a2Wide.range_lengthZeroClass wideForm_comm wideForm_even,
+    a2Wide.degreeClassGroup_eq_top degreeLattice_a2Wide]
+
+/-- **The extended affine Weyl group of the `A₂` fibre maps onto `W ⋉ Λ`**: the lattice is even. -/
+example : Function.Surjective (a2Wide.toDegreeSemidirect wideForm_comm) :=
+  a2Wide.toDegreeSemidirect_surjective wideForm_comm wideForm_even
+
+/-- `W ⋉ Λ` acts faithfully on the affine root lattice of the `A₂` fibre. -/
+example : Function.Injective (a2Wide.degreeSemidirectRep wideForm_comm) :=
+  a2Wide.degreeSemidirectRep_injective wideForm_comm
+
+/-- **`(W ⋉ Λ)/(W ⋉ Q^∨)` has order `3` for the `A₂` fibre**: `Λ = ℤ²`, so the quotient is
+`P^∨/Q^∨ = ℤ/3`. -/
+example :
+    Nat.card (a2Wide.DegreeSemidirect wideForm_comm ⧸ a2Wide.corootSemidirect wideForm_comm) =
+      3 := by
+  rw [a2Wide.card_quotient_corootSemidirect_of_degreeLattice wideForm_comm degreeLattice_a2Wide,
+    det_cartan_a2Wide]
+  rfl
 
 /-! ### The chain `A₂` of `AffineWeylModel` -/
 
