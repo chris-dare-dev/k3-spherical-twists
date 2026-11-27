@@ -51,7 +51,7 @@ def constantRay (σ : PreStabilityCondition.WithClassMap C v) : RadialRayHypothe
   L := 0
   L_nonneg := le_rfl
   continuousOn_mass _ := continuousOn_const
-  finite_selection E := by
+  finite_selection E _ _ := by
     classical
     obtain ⟨F⟩ := σ.slicing.hn_exists E
     refine ⟨1, fun _ ↦ ∑ i, Finsupp.single (classOf C v (F.factor i)) 1,

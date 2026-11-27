@@ -25,12 +25,14 @@ negative definite over `ℝ` (`Mukai.negDef_ker_realCharge`, for a positive peri
   large volume, is not the projective class of a mass profile, not even on spherical objects, in
   every Picard rank.
 
-The class infimum of `R` over spherical objects is the absolute rank. `R` is the fibre-functor
-profile of the derived fibre at a point, with class `w = (0, 0, 1)` and `⟨w, (r, c, s)⟩ = -r`, so
-`d_R(γ) ≥ |rk γ|` with the parity of `rk γ`, with equality on every class that has a spherical
-representative on which `R` is `|rk γ|`, such as a shifted spherical sheaf
-(`FibreFunctorProfile.classInf_eq_abs_rank`). The square `d_R² = (rk γ)²` is the square of one
-linear form, that of an isotropic vector.
+`R` is the fibre-functor profile of the derived fibre at a point, with class `w = (0, 0, 1)` and
+`⟨w, (r, c, s)⟩ = -r`. So its class infimum `d_R` over a set `𝒮` of objects, such as the spherical
+objects, has `d_R(γ) ≥ |rk γ|`, with the parity of `rk γ`, on every class `γ` with an object of `𝒮`
+(`FibreFunctorProfile.exists_classInf_eq`), and `d_R(γ) = |rk γ|` on every class with a
+representative in `𝒮` on which `R` is `|rk γ|`, such as a shifted spherical sheaf
+(`FibreFunctorProfile.classInf_eq_abs_rank`). On a class with no object of `𝒮` the class infimum
+is `0` (`Profile.classInf_eq_zero_of_eq_empty`), and the bound fails there when `rk γ ≠ 0`. Where
+equality holds, `d_R² = (rk γ)²` is the square of one linear form, that of an isotropic vector.
 -/
 
 open Filter Topology
