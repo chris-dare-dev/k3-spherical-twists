@@ -128,6 +128,15 @@ make lean        # build (any warning fails it), tests, linters, umbrella, axiom
 | The defect identity: a long exact sequence `⋯ → K_j → E_j → Q_j → K_{j+1} → ⋯` of finite-dimensional spaces has `P_E = P_K + P_Q - (1 + t)R` with `R = Σ rk(δ_j)tʲ`, and `R` is unique; at `t = -1` Euler characteristics add, at `t = 1` totals add up to the defect `2R(1)` | `LinearMap.finrank_add_finrank_range_connecting`, `LinearMap.poincare_eq_of_exact`, `LaurentPolynomial.poincare_eq_sub_mul`, `LaurentPolynomial.defect_unique`, `LaurentPolynomial.poincareNegOne_eq_add`, `LaurentPolynomial.poincareOne_add_two_mul` |
 | Parity: `\|P(-1)\| ≤ P(1)` and `P(-1) ≡ P(1) mod 2` for `f : ℤ →₀ ℕ`; a fibre-functor profile (`μ = P(1)`, `χ = P(-1) = -⟨w, v⟩`) has `μ ≥ \|⟨w, v(-)⟩\|` with the same parity | `Finsupp.abs_poincareNegOne_le`, `Finsupp.poincareNegOne_modEq`, `FibreFunctorProfile.abs_le_mass`, `FibreFunctorProfile.modEq_mass` |
 | The Crofton constant `∫₀^{2π} \|cos(θ - α)\| dθ = 4` and the barycentre `Σ\|z_j\| = (1/4)∫₀^{2π} Σ\|Re(e^{-iθ}z_j)\| dθ`; the directional ratio `Σ\|Re(e^{-iθ}z_j)\|/Σ\|z_j\|` lies in `[0, 1]`, is `1`-Lipschitz in angular distance and has average `2/π` | `Complex.integral_abs_cos_sub`, `Complex.sum_norm_eq_integral`, `Complex.directionalRatio_mem_Icc`, `Complex.abs_directionalRatio_sub_le_norm`, `Complex.average_directionalRatio` |
+| Class infima of a profile, `d_μ(γ) = inf {μ(S) : S ∈ 𝒮, v(S) = γ}` in `ℝ≥0` (`0` on a class with no object of `𝒮`): monotone, positively homogeneous and superadditive in `μ`, `d_{g • μ}(γ) = d_μ(g⁻¹ γ)` when `g` permutes `𝒮` compatibly with `v`, and they only see `𝒮`; lower bounds through the class pass to pointwise limits of profiles and bounds, so `\|Z_n ∘ v\| ≤ μ_n` gives `q ≤ d_μ²` for every limit `q` of the period forms `\|Z_n\|²`, whether or not the charges converge; upper semicontinuity `d_{μ_n}(γ) < d_μ(γ) + ε` eventually, along any filter; positive combinations `Σ c_i f_i(γ) ≤ d_{Σ c_i μ_i}(γ)`, and on segments `d_{[μ₀ + r μ₁]}(γ) ≥ (f₀(γ) + r f₁(γ))/(μ₀(G) + r μ₁(G))`; `d_μ(v(S)) = 0` when `μ(g_n S) → 0` along words acting trivially on classes; for `ℕ`-valued profiles the infimum is attained, and for a fibre-functor profile it is at least `\|⟨w_F, γ⟩\|` with the same parity | `Profile.classInf`, `classInf_mono`, `classInf_smul`, `add_classInf_le`, `sum_classInf_le`, `classInf_smul_group`, `classInf_congr`, `le_classInf_of_forall_le`, `le_of_tendsto_of_le`, `le_sq_classInf_of_tendsto`, `eventually_classInf_lt`, `sum_mul_le_classInf`, `div_le_classInf_normalize_add`, `classInf_eq_zero_of_tendsto_smul`, `exists_classInf_eq`, `FibreFunctorProfile.exists_classInf_eq`, `FibreFunctorProfile.abs_le_classInf` |
+| Polarization along a line, `Q(y + cx) = Q(y) + c polar_Q(x, y) + c² Q(x)`: the mixed entry carries the weight `c²`; a quadratic map is determined by its values at a spanning family `δ_i` and at `δ_j + c_{ij} δ_i`, `i < j`, for any nonzero `c_{ij}` (`n(n + 1)/2` values, no reflection closure), hence by its values on roots when the roots contain a spanning family with pairwise nonzero pairings | `QuadraticMap.map_add_smul`, `QuadraticMap.polar_eq_inv_smul`, `QuadraticMap.eq_of_eq_add_smul`, `QuadraticMap.eq_of_eq_on_roots` |
+| Line-bundle classes `v(𝒪(D)) = (1, D, q(D) + 1)` in the Mukai lattice of a quadratic module pair to `-q(D - D') - 2`. The basis printed in Kikuta–Koseki–Ouchi (arXiv:2504.12253), Lemma 3.8, can fail its condition: for `C · D = 0` the pairings with `v(𝒪(-C))` and `v(𝒪(2C))` are `-(D² + C²)/2 - 2` and `-(D² + 4C²)/2 - 2`, zero on ⟨2⟩ ⊕ ⟨−6⟩ and ⟨2⟩ ⊕ ⟨−12⟩ (tests). The repair doubles the classes: `D - D' = 2u` gives `-4q(u) - 2 ≡ 2 mod 4`, and `v(𝒪)`, `v(𝒪(2e_i))`, `v(𝒪(-2e_{i₀}))` are roots with pairwise nonzero pairings that span the real Mukai lattice for any spanning `e_i` with `e_{i₀}² ≠ 0` | `Mukai.lineBundle`, `Mukai.pairing_lineBundle`, `Mukai.pairing_lineBundle_neg_of_polarBilin_eq_zero`, `Mukai.pairing_lineBundle_two_smul_of_polarBilin_eq_zero`, `Mukai.pairing_lineBundle_modEq_two`, `Mukai.doubledLineBundles`, `Mukai.pairing_doubledLineBundles_ne_zero`, `Mukai.span_doubledLineBundles` |
+| A real-linear charge is determined by its modulus up to an orthogonal map of `ℂ` and scale: `\|Z'\| = c\|Z\|` with `Z` surjective gives `Z' = c A Z`, `A` a rotation or a rotation composed with conjugation; **period recovery** (Kikuta–Koseki–Ouchi, Proposition 3.10): the moduli at the roots of a spanning family with pairwise nonzero pairings, or at the integral roots spanned by the doubled line-bundle classes, determine the period form `\|Z\|²` and hence `Z` | `Mukai.exists_linearIsometryEquiv_of_norm_eq`, `Mukai.exists_circle_of_norm_eq`, `Mukai.periodForm`, `Mukai.exists_linearIsometryEquiv_of_norm_eq_roots`, `Mukai.exists_linearIsometryEquiv_of_norm_eq_doubledLineBundles` |
+| **Cluster sets under a continuous parameter map**: if `μ_a - J(w_a) → 0` along a filter, with `J` continuous on a compact space into a Hausdorff group, the cluster points of `μ` (`MapClusterPt`, since product topologies on profiles are not first countable) are the images of those of `w`; for injective `J`, `μ_a → J(x)` iff `w_a → x`. **The projective join** `J(w) = Σ w_i f_i / Σ w_i ℓ(f_i)` of finitely many functions with `ℓ(f_i) > 0` (nonnegativity is not needed) is injective on the simplex iff the `f_i` are linearly independent, and then a closed embedding of the simplex; profiles `λ_a (Σ c_{a,i} f_i + ε_a)` with errors small against `Σ c_{a,i}` approach the join of their normalized weights when `ℓ` is a finite combination of evaluations. The Cantor address map of the two-block alphabet is the nonlinear instance | `IsCompact.mapClusterPt_iff_of_tendsto_sub`, `tendsto_nhds_iff_of_tendsto_sub`, `exists_tendsto_iff_of_tendsto_sub`, `projectiveJoin`, `injOn_projectiveJoin_iff`, `isClosedEmbedding_projectiveJoin_weights`, `tendsto_inv_apply_smul_sub_projectiveJoin`, `tendsto_inv_mul_apply_of_eq_sum`, `mapClusterPt_inv_apply_smul_iff`, `IFS.mapClusterPt_iff_of_tendsto_sub_centreRatio`, `IFS.exists_tendsto_iff_of_tendsto_sub_centreRatio` |
+| Charges along paths: if `‖f'‖ ≤ λ ‖f‖` and `Λ' = λ` on an interval, `e^{Λ} ‖f‖` is monotone and `e^{-Λ} ‖f‖` antitone; a positive continuous selection `m` from finitely many sums `Σ n_γ ‖f_γ‖` of such charges has `\|log m(t) - log m(u)\| ≤ Λ(t) - Λ(u)` (with `λ = max(K‖Ż‖, max_δ \|d/dt log\|Z(δ)\|\|)` this is the variation of the mass along a path near a finite period, and with no kernel roots its root-free form); along a ray `Z_* + aV`, `e^{La} ‖w + az‖` is monotone where `‖z‖ ≤ L ‖w + az‖`, and so are the sums over radial classes | `monotoneOn_exp_mul_norm_of_hasDerivAt`, `abs_log_sub_le_of_selection`, `monotoneOn_exp_mul_norm_add_mul`, `monotoneOn_exp_mul_finsuppSum` |
+| A complex quadratic polynomial bounded on `ℕ` is constant; so an additive charge bounded on the line-bundle classes `(1, jH, j² q + 1)`, `q ≠ 0`, kills the class `(0, 0, 1)` of a point and `(0, H, 0)` | `Complex.eq_zero_of_norm_quadratic_le`, `Mukai.charge_eq_zero_of_bounded` |
+| The cell count: `#{j < k : j < x} = min(k, ⌈x⌉₊)` for every real `x`, so `min(k, ⌈ψ - s⌉₊)` of the phases `ψ - j`, `j < k`, lie above `s` | `Nat.card_filter_range_lt_eq_min_ceil`, `Nat.card_filter_range_lt_sub_eq_min_ceil` |
+| The count core of two-centre words: the block count matrices are the images of the block words under the representation `T₁ ↦ U = [[1, g], [0, 1]]`, `T₂ ↦ L⁻¹`, `L = [[1, 0], [g, 1]]`, of the free group on the two twists, `M_b = U² Lᵇ`; the block identity `x' - 2g y' = x`, so `x ≥ 2g y` after the first block and `(x - y)/(3(x + y)) ≥ (2g - 1)/(3(2g + 1))`; the moving-start lemma `u_{k+1} ≥ d u_k - C`, `d > 1`, `u_0 ≥ 0` ⇒ `Σ_{k<m} u_k ≤ (u_m + C m)/(d - 1)`; for finitely many positive `2 × 2` matrices the forward products of the transposes carry every positive vector to rays converging to one ray `(x(ω), 1)`, so `c ⬝ Q_n t_E / c ⬝ Q_n t_P` converges to a limit independent of `c`, also with bounded errors once the denominators diverge; for a periodic word the limit ray is the Perron eigenvector of the period; for the blocks `b ∈ {2, 4}` the limit ratio is the centre ratio (the counts transforming by `M_b` and masses being linear in counts are not formalized) | `Matrix.twistCountRep`, `Matrix.twistCountRep_twoTwistBlockWord`, `Matrix.twistCountRep_list_prod`, `Matrix.twoTwistBlock_mulVec_zero_sub`, `Matrix.two_mul_le_cocycle_twoTwistBlock_mulVec`, `Matrix.two_mul_sub_one_div_le_iff`, `sum_range_le_of_mul_sub_le`, `Matrix.tendsto_ratio_transpose_cocycle_mulVec`, `Matrix.tendsto_dotProduct_cocycle_mulVec_div`, `Matrix.tendsto_div_of_abs_sub_le_cocycle`, `Matrix.eq_smul_cocycleRay_of_periodic`, `Matrix.tendsto_div_twoBlockAlphabet` |
 | The algebra of Lemma A.1: the slope estimate `V(E) ≤ aR + d^{-1/2}√(Rm)` and the absorption of the square root | `piece_bound`, `slope_bound_of_le`, `fixedTest_of_generic` |
 | The Koszul bound `7^s` and the constant `K = 5(2 + 36ν)(2 + 25ν)⁸7⁴⁶` | `koszul_bound`, `diag_constant` |
 | A standard word has `H_n = 18 + 12ν + 9du²n²` | `standard_H_formula` |
@@ -421,6 +430,110 @@ and the missing input is `D^b(X)` of a K3 surface with `Stab†(X)`.
 [K3TwistsTest/StabilitySpaceModel.lean](K3TwistsTest/StabilitySpaceModel.lean) builds the
 interface on the one-point space at a prestability condition with injective charge and Ikeda
 subadditivity.
+
+### The mass boundary
+
+Limits of normalized masses and the invariants that tell them apart. Everything below holds for
+every prestability condition, with Ikeda subadditivity as the input wherever triangles are used,
+or from the interfaces named in each part.
+
+**Masses for a seminorm.** For a seminorm `p` on `ℂ`, `M_{σ,p}(E) = Σ_i p(Z(A_i))` over the HN
+factors: the mass for `p = \|·\|`, the directional profile `ν_{σ,θ}` for `p = \|Re(e^{-iθ} ·)\|`.
+The one geometric input is a hypothesis, `HasSemistableRepresentatives`: every root class has a
+spherical representative semistable for `σ` (Kikuta–Koseki–Ouchi, arXiv:2504.12253, Lemma 3.4, at
+every stability condition of the distinguished component, in every Picard rank).
+
+| Assertion | Lean |
+|---|---|
+| `M_{σ,p}` does not depend on the HN filtration; it is invariant under isomorphisms, shifts and the action on a space of stability conditions; `p(Z(E)) ≤ M_{σ,p}(E)`, with equality on semistable objects | `massBy_eq_sum`, `massBy_iso`, `massBy_shift`, `StabilitySpaceHypotheses.massBy_smul`, `seminorm_charge_le_massBy`, `massBy_of_semistable` |
+| On a class with a semistable representative in `𝒮`, the class infimum of `M_{σ,p}` is `p(Z(γ))`, attained; for the mass, `d_{m_σ} = \|Z_σ\|` (Kikuta–Koseki–Ouchi, Corollary 3.5); for a directional profile, `\|Re(e^{-iθ} Z(γ))\|` | `classInf_massByProfile`, `exists_classInf_massByProfile_eq`, `classInf_massProfile`, `classInf_directionalProfile` |
+| `ν_{σ,θ} ≤ m_σ`; the barycentre `m_σ(E) = (1/4) ∫₀^{2π} ν_{σ,θ}(E) dθ`; on a sector where `Re(e^{-iθ} Z)` has one sign, `ν_{σ,θ}(E) = Re(e^{-iθ} Z(E))`, additive on triangles; `ν_{gσ,θ}(Φ_g E) = ν_{σ,θ}(E)` | `directional_le_mass`, `mass_eq_integral_directional`, `directional_eq_re_of_cos_nonneg`, `directional_add_of_triangle`, `StabilitySpaceHypotheses.directional_smul` |
+| With classes in a real Mukai lattice and real-linear charges: masses proportional on `𝒮` force `Z_σ = c A Z_τ` for an orthogonal map `A` of `ℂ` (Kikuta–Koseki–Ouchi, Proposition 3.10, from the roots spanned by the doubled line-bundle classes); a profile whose class infima are `\|ℓ\|` for one real linear form, as at the cusp (`\|rk\|`) and at the directional profiles, is not proportional to an interior one on those roots | `norm_charge_eq_mul_of_mass_eq_mul`, `exists_linearIsometryEquiv_of_mass_eq_mul`, `not_classInf_eq_mul_norm_of_real` |
+
+**The cut-loss lemma.** In a distinguished triangle `E → F → G`, `m(F) ≤ m(E) + m(G)`, and
+`m(F) ≥ m(E) + m(G) - 2m(X)` for every `(> s, ≤ s)` truncation `X → G → Y` with `s ≤ φ⁻(E)`; the
+dual bound uses the part of `E` below `φ⁺(G)`. Equal phases are allowed: a triangle `U → E → Q`
+with `U` of phases at least `s` and `Q` at most `s` has `m(E) = m(U) + m(Q)` (the cut composites
+vanish), and the mass is additive on finite biproducts.
+
+| Assertion | Lean |
+|---|---|
+| Additivity at equal phases and on split triangles and finite biproducts | `mass_eq_add_of_geProp_leProp`, `Slicing.cutVanishes_of_geProp_leProp`, `mass_eq_add_of_mor₃_eq_zero`, `mass_biprod`, `mass_biproduct` |
+| **The cut-loss lemma**, its dual, and both with the canonical splits | `mass_le_mass_add_mass`, `mass_add_mass_sub_two_mul_le`, `mass_add_mass_sub_two_mul_le_dual`, `exists_mass_add_mass_sub_two_mul_le`, `exists_mass_add_mass_sub_two_mul_le_dual` |
+
+**Twist ladders.** `TwistLadderHypotheses` is a map `E → F` (for `F = T_A^k E`) whose cone is a
+finite biproduct of ladders, each with an HN filtration of `k` cells of mass `a` at the phases
+`ψ_c - j`, `j < k`: the cone `Hom•(A, E) ⊗ A_{k-1}[1]` of Bapat–Deopurkar–Licata (arXiv:2011.07908,
+Lemma 4.11, for `E` with no shift of `A` as a direct summand and no endomorphisms of negative
+degree, and `A` semistable), with `ψ_c = φ(A) + 1 - p_c`. The sharp hypothesis for one power `k`
+(no summand `Λ_n[j]` with `n < k` in the thick subcategory of `A`) has no published proof and no
+human review; the docstring records that "no shift of `A` as a summand" alone fails from `k = 3`
+on (`E = Λ₂`).
+
+| Assertion | Lean |
+|---|---|
+| The part of any truncation above `s` has the mass of the HN factors above `s`; on a biproduct, the sum over the summands; the cone has mass `N k a`, and its part above `s` has mass `a Σ_c min(k, ⌈ψ_c - s⌉₊)` | `mass_eq_sum_ite_of_gtProp_leProp`, `mass_eq_sum_mass_of_biproduct`, `TwistLadderHypotheses.mass_cone`, `TwistLadderHypotheses.exists_split_cone` |
+| **The twist bound**: for `E` of phases at least `s`, `0 ≤ m(E) + N k a - m(F) ≤ 2a Σ_c min(k, ⌈ψ_c - s⌉₊)`, and `≤ 2a Σ_c ⌈ψ_c - s⌉₊` uniformly in `k`; negative powers through the dual lemma | `TwistLadderHypotheses.twist_bound`, `twist_bound_uniform`, `LadderFamily.inverse_twist_bound` |
+| Zero loss when no cell lies above `s`: `m(F) = m(E) + N k a`; the opening example `m(Tⁿ𝒪_x) = 1 + 10n/9` is this case | `TwistLadderHypotheses.zero_loss`, `TwistLadderHypotheses.mass_eq_opening` |
+
+No instance from real objects: the missing input is the 2-Calabi–Yau category with its spherical
+twists. [K3TwistsTest/TwistLadderModel.lean](K3TwistsTest/TwistLadderModel.lean) checks the empty
+and the one-cell ladders, the sharpness of the constant `2` on the one-cell ladder, and the opening
+example at `n = 2`.
+
+**Radial limits.** `RadialRayHypotheses` is a lifted ray `σ_a`, `0 < a ≤ a₀`, to a finite period
+`Z_*`, with charges `Z_* + aV`, with the facts used as fields: the mass of every object is
+continuous along the ray (Bridgeland, arXiv:math/0212237, §8), and it is at every point one of
+finitely many sums `Σ_γ n_γ \|Z_a(γ)\|` over stable classes, each killed by `Z_*` or with
+`\|V(γ)\| ≤ L \|Z_a(γ)\|` (local finiteness, Bridgeland, §§8–9; the punctured support bound
+`Mukai.exists_punctured_supportBound` with `v² ≥ -2` for stable classes, `L = K‖V‖`).
+
+| Assertion | Lean |
+|---|---|
+| `a ↦ e^{La} m_a(E)` is nondecreasing on `(0, a₀]` | `RadialRayHypotheses.monotoneOn_exp_mul_mass` |
+| The radial limit `m_*(E) = lim_{a→0+} m_a(E)` exists, with `m_*(E) ≤ e^{La} m_a(E)`; the mass profiles converge to it | `RadialRayHypotheses.tendsto_radialMass`, `radialMass_le`, `tendsto_massProfile` |
+| With semistable spherical representatives along the ray, `inf {m_*(S) : S spherical, v(S) = γ} = \|Z_*(γ)\|` | `RadialRayHypotheses.classInf_radialProfile` |
+
+No field has an instance from real objects: the missing input is `D^b(X)` of a K3 surface with
+`Stab†(X)`. [K3TwistsTest/RadialLimitModel.lean](K3TwistsTest/RadialLimitModel.lean) builds the
+interface on the constant ray at a prestability condition.
+
+**The large-volume limit and the cusp point.** `LargeVolumeHypotheses` has equivariant mass
+profiles `m_{gσ} = g • m_σ`, the large-volume ray `σ_t` with its scale `ω²t²/2`, the rank
+functional `R = Σ_j rk 𝓗^j`, additive on a split generator `G = ⊕ S_i`, and one field,
+`tendsto_mass`: `m_{σ_t}(E)/(ω²t²/2) → R(E)` for every object, in every Picard rank, along
+`σ_{β,tω}` with `β` real and `ω` rational ample. It has no published proof and no human review;
+related published results are Bridgeland, arXiv:math/0307164, Proposition 14.2, and Bayer,
+arXiv:0712.1083, Proposition 4.1 with Lemma 4.2, which give the limit along integer `t`.
+
+| Assertion | Lean |
+|---|---|
+| The normalized masses converge to `R`, along moved rays to `g • R`; the point measurement `p(W) = Σ_i R(W⁻¹ S_i)` is the limit of `m_{Wσ_t}(G)/(ω²t²/2)`, not uniformly in `W`; normalized by `G`, the masses converge to the cusp point | `LargeVolumeHypotheses.tendsto_normalized_mass`, `tendsto_normalized_mass_smul`, `tendsto_mass_generator_smul`, `tendsto_normalize` |
+| The masses of objects of the classes of `𝒪(jH)` are unbounded at every prestability condition whose charge kills no nonzero isotropic class, so the cusp point is not a mass profile, in every Picard rank | `AlgebraicGeometry.K3.not_bddAbove_mass_lineBundle`, `AlgebraicGeometry.K3.not_exists_mass_eq_mul_rank` |
+| The class infimum of `R` is `\|rk γ\|` on classes with a representative on which `R` is `\|rk γ\|`, and at least `\|rk γ\|`, with its parity, on every class | `FibreFunctorProfile.classInf_eq_abs_rank`, `FibreFunctorProfile.exists_classInf_eq` |
+
+[AlgebraicGeometry/Surface/K3/PicardRankOne/LargeVolume.lean](K3Twists/AlgebraicGeometry/Surface/K3/PicardRankOne/LargeVolume.lean)
+builds an instance from the classes of a K3 surface of Picard rank one: formal direct sums of Mukai
+vectors with the isometries acting, the masses of direct sums of semistable objects of those classes
+for the geometric charges at `z = it`, and `R` the absolute rank; `Z_t(x)/(dt²) → rk x` proves the
+field there. [K3TwistsTest/LargeVolumeModel.lean](K3TwistsTest/LargeVolumeModel.lean) runs the
+theorems on it.
+
+**Orbit growth of a filling profile.** `FillingHypotheses` has a group acting on objects with
+symmetric invariant counts `h`, a split generator with the diagonal estimate (Orlov,
+arXiv:0804.1163, Theorem 4), a profile `μ` with the summed generation bound `P(gW) ≤ K' H(g) P(W)`
+(`P(W) = Σ_k μ(W⁻¹ S_k)`), (Dom) `ν μ ≤ h(-, G)`, and, for one `Φ`, (Fill)
+`h(-, G) ≤ C (μ + μ ∘ Φ⁻¹)`. (Fill) is a condition on each `Φ`: in Picard rank one it holds for the
+point profile for every nonstandard `Φ` (the article's fixed-object test), and beyond Picard rank
+one it can fail even without `(−2)`-curves.
+
+| Assertion | Lean |
+|---|---|
+| `ν P(W) ≤ H(W) ≤ C (1 + K' H(Φ)) P(W)` for `W` commuting with `Φ`, and `P(Φ^{±n})^{1/n} → exp h_cat(Φ)` | `FillingHypotheses.nu_mul_P_le_H`, `H_le_mul_P`, `tendsto_P_pow`, `tendsto_P_inv_pow`, `tendsto_P_pow_of_commute` |
+| The point-mass inputs give an instance for every nonstandard `Φ`, re-deriving the comparison for a fixed period and the rates; the point profile `h(-, 𝒪_x)` moves under the action to that of `W𝒪_x` and equals `R` on spherical objects, so the point measurement is its value on the translates of the summands; a word fixing a point has entropy zero | `PointMassHypotheses.toFillingHypotheses`, `exists_H_le_mul_p_of_filling`, `tendsto_p_pow`, `tendsto_p_inv_pow`, `pointProfile_smul`, `pointProfile_eq_rank`, `p_eq_sum_pointProfile`, `hcat_eq_zero_of_smul_point_eq` |
+
+[K3TwistsTest/FillingProfileModel.lean](K3TwistsTest/FillingProfileModel.lean) builds a model with
+constant counts and the point-mass instance on a nonstandard variant of the five-object model.
 
 ### Twist systems and the exponent of the centre counts
 
@@ -829,6 +942,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Analysis/Convex/HilbertMetric.lean` | the Thompson and Hilbert pseudometrics on positive functions, as plain `[0, ∞]`-valued functions | root |
 | `Analysis/Convex/Birkhoff2.lean` | the ratio map of a `2 × 2` matrix, Birkhoff's contraction coefficient `tanh(Δ/4)` | `Matrix` |
 | `Analysis/Convex/IFS.lean` | the coding map of an iterated function system and its Cantor embedding; the two-block alphabet and its continued fractions | `IFS`, `Matrix` |
+| `Analysis/Convex/ProjectiveJoin.lean` | cluster sets under a continuous parameter map, the projective join and its injectivity, approximation by the join, the Cantor address map as the nonlinear instance | root, `IFS` |
+| `Analysis/Convex/ProjectiveCocycle.lean` | the count representation of two twists, the block identity and the cusp ratio, the moving-start lemma, projective convergence of positive `2 × 2` cocycles with bounded errors, periodic words | `Matrix`, root |
 | `Analysis/Normed/Algebra/PowerBound.lean` | the polynomial envelope of powers from an annihilating polynomial; complex matrices | root, `Matrix` |
 | `LinearAlgebra/Dimension/ExactSequenceDefect.lean` | Poincaré polynomials of long exact sequences and the defect identity | `LaurentPolynomial`, `LinearMap` |
 | `Algebra/PoincareParity.lean` | `P(1)`, `P(-1)` of a family of dimensions and their parity | `Finsupp` |
@@ -837,6 +952,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `GroupTheory/GroupAction/TwistSystem/Orbit.lean` | the orbit of the centres; invariance of `P_q` and `η` under maps compatible on it | root |
 | `GroupTheory/GroupAction/TwistSystem/Bipartite.lean` | the coupling graph of the centres and the bipartite bound `e^η ≤ ρ_s` | root |
 | `GroupTheory/GroupAction/MassComparison.lean` | `MassDistanceBound`, `MassComparisonHypotheses`: the two comparisons, the mass domination system and the exponent theorem in mass form | root |
+| `GroupTheory/GroupAction/FillingProfile.lean` | `FillingHypotheses`: orbit growth of a filling profile; the point-mass instance, point–profile duality, a fixed point has entropy zero | root, `AlgebraicGeometry.K3.PicardRankOne` |
 | `GroupTheory/GroupAction/MassComparison/FixedWord.lean` | the largest count from a centre, the masses along a word and the fixed-word formula | root |
 | `GroupTheory/GroupAction/MassGrowth.lean` | Theorem C: σ-independence, the component decomposition, the analytic core; the envelope over a monoid; subsystems | root |
 | `GroupTheory/GroupAction/CountCocycle.lean` | count cocycles: the growth sandwich, exact counts and rates on tight seeds | root |
@@ -876,6 +992,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/CentralCharge.lean` | central charges, the half-turn of a twist, the opening example | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/WallArithmetic.lean` | the integers of a wall with two spherical simples | same |
 | `AlgebraicGeometry/Surface/K3/PairingTwoWall.lean` | the length-three object at a wall of pairing two, its two HN filtrations and that of the point | `AlgebraicGeometry.K3` |
+| `AlgebraicGeometry/Surface/K3/CuspPoint.lean` | bounded quadratic charges on line-bundle classes; the masses of line bundles are unbounded, so the cusp point is not a mass profile; the class infimum of the rank functional | `AlgebraicGeometry.K3`, `Mukai`, `FibreFunctorProfile` |
 | `CategoryTheory/Abelian/Subobject/Valuation.lean` | additive functions are valuations on subobjects; modularity; the charge function of a stability function | `CategoryTheory.Subobject` |
 | `CategoryTheory/Abelian/Uniserial.lean` | the subobjects of nonsplit extensions of simple objects | `CategoryTheory` |
 | `CategoryTheory/Abelian/TorsionTheory/Saturation.lean` | the interval class on the subobjects of an object of a class closed under quotients and extensions; its radical and saturation | `CategoryTheory.ObjectProperty` |
@@ -884,6 +1001,8 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `CategoryTheory/Subobject/FullyFaithful.lean` | subobjects along a fully faithful functor: the image of a subobject, order reflection, the order isomorphism | `CategoryTheory.Functor`, `CategoryTheory.Subobject` |
 | `CategoryTheory/MassProfile/Basic.lean` | profiles `Obj → ℝ≥0` with the arrow action, `Hom` profiles, limits of normalized profiles, the Thompson and half-Hilbert pseudometrics of profiles | `Profile` |
 | `CategoryTheory/MassProfile/FibreFunctor.lean` | fibre-functor profiles: `μ_F ≥ \|⟨w_F, v⟩\|` with parity | root (`FibreFunctorProfile`) |
+| `CategoryTheory/MassProfile/ClassInfimum.lean` | class infima of profiles: order properties, equivariance, lower bounds and limits, upper semicontinuity, attainment, fibre-functor parity | `Profile`, `FibreFunctorProfile` |
+| `CategoryTheory/MassProfile/LargeVolume.lean` | `LargeVolumeHypotheses`: the large-volume limit of the masses, the cusp point `[R]` and the point measurement as its value on translates | root (`LargeVolumeHypotheses`) |
 | `CategoryTheory/Abelian/TorsionTheory/Radical.lean` | the radical as a coreflection: monic counit, existence on Noetherian objects or from coproducts, generators, `Ext¹`, a torsion pair from a potential | `CategoryTheory.ObjectProperty` |
 | `CategoryTheory/Triangulated/TStructure/HeartAbelian.lean` | the heart of a t-structure is abelian; its short exact sequences are distinguished triangles | `CategoryTheory.Triangulated.TStructure` |
 | `CategoryTheory/Abelian/SerreClass/Additive.lean` | the kernel of a nonnegative additive function is a Serre class; a torsion pair from torsion sequences; a torsion sequence is a coreflection | `CategoryTheory.ObjectProperty`, `CategoryTheory.Abelian.TorsionTheory` |
@@ -900,6 +1019,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Combinatorics/Quiver/ChebyshevSeries.lean` | the matrix Chebyshev series, reachability at the graph distance, the Euler characteristic of the bar complex, the Koszul shadow | `Matrix`, `SimpleGraph` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMassEstimates.lean` | the inequalities inside Lemma A.1 and the constant `K` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PointMass.lean` | the point-mass corollary from its inputs (`PointMassHypotheses` extends `MassComparisonHypotheses`) | same |
+| `AlgebraicGeometry/Surface/K3/PicardRankOne/LargeVolume.lean` | the instance of `LargeVolumeHypotheses` on the classes of Picard rank one with the geometric charges at `z = it` | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/TwistWords.lean` | standard words and the words `Θ`, `Ψ` of the mass section | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/EulerTwistSystem.lean` | the twist system of `𝒪_X` and `𝒪_X(H)` read through the Euler pairing, with positive exponent | same |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/PeriodicWitness.lean` | the periodic witness `(T_S T_B)ⁿ` and the bound `η ≥ log(d + 1)` for the Euler-pairing system | same |
@@ -937,6 +1057,7 @@ Mathlib or into derived-alg-geo-lean keeps its path below the library root.
 | `Analysis/Complex/PhaseGap.lean` | a ray determines its phase modulo two; the phase gap of finitely many charges at finitely many phases | `Complex` |
 | `Topology/Order/Selection.lean` | the selection lemma in increment form | root |
 | `LinearAlgebra/Lattice/Mukai/Support.lean` | the support property, Finsler's lemma, signature `(2, n)`, constituents in a sector, the completed square and the root test, the real model of an integral Mukai lattice | `Mukai` |
+| `LinearAlgebra/Lattice/Mukai/PeriodRecovery.lean` | polarization with the weight `c²` and recovery of a quadratic map from roots; line-bundle classes, the printed and the doubled basis of roots; the charge from its modulus; period recovery | `QuadraticMap`, `BilinearForm`, `Mukai` |
 | `LinearAlgebra/Lattice/Mukai/PhaseGap.lean` | the lattice-gap lemma: finitely many classes of square at least `-2` and bounded charge, and the phase gap of their charges | `Mukai` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/SupportProperty.lean` | the support property of the central charge in Picard rank one | `AlgebraicGeometry.K3.PicardRankOne` |
 | `AlgebraicGeometry/Surface/K3/PicardRankOne/StratumRootSystem.lean` | every stratum is `A₁`: the kernel root systems over `ℤ` and `ℚ` at a puncture and their bases | `AlgebraicGeometry.K3.PicardRankOne` |
@@ -1034,6 +1155,11 @@ Added here, for the tower algorithm, in the same namespaces:
 | `Triangulated/StabilityCondition/Weak/Foundation/Slicing/ShortStep.lean` | the short-step stability test: closed intervals by Hom vanishing, phase closeness, stable objects, the Im-form test |
 | `Triangulated/StabilityCondition/Mass.lean` | the mass, HN sums up to zero factors, invariances, the split identity, `m ≥ \|Z\|`, Ikeda subadditivity as a predicate, the `2m(D)` lemma |
 | `Triangulated/StabilityCondition/MassAdditivity.lean` | partial charges and their jumps, the mass from the jumps, flag reassembly gives additive mass |
+| `Triangulated/StabilityCondition/Mass/CutLoss.lean` | additivity at equal phases and on biproducts; the cut-loss lemma and its dual; the cell count |
+| `Triangulated/StabilityCondition/Mass/Directional.lean` | masses for a seminorm, directional profiles, their class infima (`d_{m_σ} = \|Z_σ\|`), the barycentre, one-sign sectors, equivariance |
+| `Triangulated/StabilityCondition/Mass/InteriorProfile.lean` | proportional masses have equivalent charges; class infima of rank one are not interior |
+| `Triangulated/StabilityCondition/Mass/RadialLimit.lean` | charges along paths and rays; the variation estimate; `RadialRayHypotheses`, the radial limit and its class infimum |
+| `Triangulated/StabilityCondition/Mass/TwistLadder.lean` | the mass above a cut from any HN filtration; ladder families and `TwistLadderHypotheses`; the twist bound, uniformly in the power; zero loss and the opening example |
 | `Triangulated/StabilityCondition/StabilitySpace.lean` | `StabilitySpaceHypotheses`: covering, metric bound, support, action, subadditivity; equivariant mass, the path layer, σ-independent growth |
 | `Triangulated/StabilityCondition/IntersectingWalls.lean` | intersecting ordinary walls: phase gaps, the `τ`-HN factors near `σ` stay in `P_σ(φ)`, the greedy rule, the rotated charge function on the subobjects in the heart |
 
