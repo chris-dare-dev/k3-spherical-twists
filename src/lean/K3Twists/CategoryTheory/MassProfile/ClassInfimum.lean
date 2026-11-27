@@ -292,7 +292,8 @@ theorem classInf_eq_zero_of_tendsto_smul {Γ : Type*} [Group Γ] [MulAction Γ O
 
 /-! ### Profiles with values in `ℕ` -/
 
-/-- For a profile with values in `ℕ`, the class infimum is attained. -/
+/-- For a profile with values in `ℕ`, the class infimum of a class with an object of `𝒮` is
+attained. -/
 theorem exists_classInf_eq (hμ : ∀ E, ∃ n : ℕ, μ E = n) (hne : (classFibre 𝒮 v γ).Nonempty) :
     ∃ S ∈ classFibre 𝒮 v γ, μ S = classInf 𝒮 v μ γ := by
   classical
@@ -326,9 +327,9 @@ open Profile
 variable {Obj Λ : Type*} [AddCommGroup Λ] {B : LinearMap.BilinForm ℤ Λ}
   (F : FibreFunctorProfile Obj Λ B)
 
-/-- **Fibre-functor parity for class infima.** The class infimum of a fibre-functor profile `μ_F`
-over a set `𝒮` is attained at an object `S` of class `γ`; it is at least `|⟨w_F, γ⟩|` and
-congruent to `⟨w_F, γ⟩` modulo two. -/
+/-- **Fibre-functor parity for class infima.** On a class `γ` with an object of `𝒮`, the class
+infimum of a fibre-functor profile `μ_F` over `𝒮` is attained at an object `S` of class `γ`; it
+is at least `|⟨w_F, γ⟩|` and congruent to `⟨w_F, γ⟩` modulo two. -/
 theorem exists_classInf_eq (𝒮 : Set Obj) {γ : Λ} (hne : (classFibre 𝒮 F.cls γ).Nonempty) :
     ∃ S ∈ classFibre 𝒮 F.cls γ, classInf 𝒮 F.cls F.toProfile γ = F.mass S ∧
       |B F.w γ| ≤ F.mass S ∧ B F.w γ ≡ F.mass S [ZMOD 2] := by
@@ -340,7 +341,8 @@ theorem exists_classInf_eq (𝒮 : Set Obj) {γ : Λ} (hne : (classFibre 𝒮 F.
   · rw [← hS.2]
     exact F.modEq_mass S
 
-/-- The class infimum of a fibre-functor profile is at least `|⟨w_F, γ⟩|`. -/
+/-- On a class `γ` with an object of `𝒮`, the class infimum of a fibre-functor profile is at
+least `|⟨w_F, γ⟩|`. -/
 theorem abs_le_classInf (𝒮 : Set Obj) {γ : Λ} (hne : (classFibre 𝒮 F.cls γ).Nonempty) :
     (|B F.w γ| : ℝ) ≤ classInf 𝒮 F.cls F.toProfile γ := by
   obtain ⟨S, -, hSeq, habs, -⟩ := F.exists_classInf_eq 𝒮 hne
