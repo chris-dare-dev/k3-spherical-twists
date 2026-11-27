@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.CategoryTheory.MassProfile.ProjectiveJoin
 import K3Twists.RepresentationTheory.Quiver.Kronecker.HomProfile
 
 /-!
@@ -11,7 +12,9 @@ import K3Twists.RepresentationTheory.Quiver.Kronecker.HomProfile
 not trivial: on representations of the doubled Kronecker quiver with two arrows, relabelling the
 arrows moves the `Hom` profile of the representation `k ⇉ k` with arrows `(1, 0)` (all `B`
 arrows zero) to a different profile. The profile of `P` takes the value `dim Hom(P, P) ≥ 1` at
-`P`, while its relabelling takes the value `dim Hom(σ • P, P) = 0` there.
+`P`, while its relabelling takes the value `dim Hom(σ • P, P) = 0` there. The relabelling also
+carries the projective join of the `Hom` profiles of `P` and `σ • P` to the join of the
+relabelled profiles.
 -/
 
 open Module Profile Quiver.Kronecker DoubledRep
@@ -64,5 +67,14 @@ example (τ : Equiv.Perm (Fin 2)) (μ ν : Profile (DoubledRep k (Fin 2) k k)) :
       halfHilbertEDist Set.univ (τ • μ) (τ • ν) = halfHilbertEDist Set.univ μ ν :=
   ⟨thompsonEDist_smul_of_invariant (fun _ _ _ ↦ Set.mem_univ _) τ μ ν,
     halfHilbertEDist_smul_of_invariant (fun _ _ _ ↦ Set.mem_univ _) τ μ ν⟩
+
+/-- Relabelling the arrows carries the projective join of the `Hom` profiles of `P` and `σ • P`
+to the join of the relabelled profiles, normalized by the translated functional. -/
+example (ℓ : (DoubledRep k (Fin 2) k k → ℝ) →ₗ[ℝ] ℝ) (w : Fin 2 → ℝ) :
+    translate σ (projectiveJoin ℓ (fun i ↦ toReal
+      (homDimProfile (![P k, σ • P k] i) : Profile (DoubledRep k (Fin 2) k k))) w) =
+      projectiveJoin (ℓ ∘ₗ translate σ⁻¹) (fun i ↦ toReal
+        (homDimProfile (σ • ![P k, σ • P k] i) : Profile (DoubledRep k (Fin 2) k k))) w :=
+  translate_projectiveJoin_homProfile _ (fun τ M N ↦ by rw [homDim_smul]) σ ℓ _ w
 
 end ProfileModel

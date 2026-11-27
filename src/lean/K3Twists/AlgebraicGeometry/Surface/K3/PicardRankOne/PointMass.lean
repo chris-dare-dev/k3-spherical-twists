@@ -103,6 +103,21 @@ namespace PointMassHypotheses
 variable {Obj Γ Stab Pt : Type*} [Group Γ] [MulAction Γ Obj] [PseudoMetricSpace Stab]
   [MulAction Γ Stab] (I : PointMassHypotheses Obj Γ Stab Pt)
 
+/-! ### Former fields
+
+Sixteen inputs that `PointMassHypotheses` now inherits from `MassComparisonHypotheses` were once
+its own fields: `G`, `K`, `K_pos`, `S`, `Spherical`, `hcat`, `hom`, `hom_G`, `hom_comm`,
+`hom_diag`, `hom_smul`, `mass`, `mass_smul`, `one_le_hom_G`, `spherical_S` and `spherical_smul`.
+Dot notation such as `I.hom` reaches the inherited fields as before. Fifteen of them are still
+fields, through the parent, and Lean reserves the name `PointMassHypotheses.f` of a field `f`, so
+those full names cannot be declared again; their projections are now `MassComparisonHypotheses.f`
+(and `MassDistanceBound.mass`). The entropy `hcat` is no longer a field: it is the definition
+`MassComparisonHypotheses.hcat`, and the abbreviation below keeps its old name. -/
+
+/-- Categorical entropy at parameter `0`, `h_cat(Φ) = lim log h(G, Φⁿ G)/n` (`hcat_spec`): the
+definition `MassComparisonHypotheses.hcat`, under the name of the former field. -/
+noncomputable abbrev hcat (Φ : Γ) : ℝ := I.toMassComparisonHypotheses.hcat Φ
+
 /-! ### The constants of the comparison -/
 
 /-- The constant of the upper mass estimate, `C = m_τ(G)/C₁`. -/

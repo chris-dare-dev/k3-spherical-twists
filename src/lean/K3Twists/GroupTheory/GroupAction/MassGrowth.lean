@@ -34,9 +34,11 @@ of `B` (`MassComparisonHypotheses.IsTwistSystem.tendsto_log_lenMax`). The proof 
 
 The file also contains the formal envelope over any monoid (the extremal function
 `μ₀ = sup_k e^{-ηk} M_k`: `extremal_smul_le`, `le_extremal`, `extremal_tri`,
-`lenMax_le_of_subeigen`), whose only content is `BddAbove (e^{-ηk} M_k(P))`, and the periodic
-witness (`HomTwistSystem.le_homExponent_of_theta`): for two centres with `M = h(S, B) ≥ 2`, the
-word `(T_S T_B)ⁿ` gives `η ≥ log(M - 1)`.
+`lenMax_le_of_subeigen`), whose only content is `BddAbove (e^{-ηk} M_k(P))`. The periodic witness
+is in `AlgebraicGeometry/Surface/K3/PicardRankOne/PeriodicWitness.lean`: for two letters `a`, `b`
+with `M = h(S_a, S_b) ≥ 2`, the words `(T_a T_b)ⁿ` give `h(S_b, (T_a T_b)ⁿ S_a) ≥ M (M - 1)^{2n}`
+(`HomTwistSystem₀.theta_le_count`), hence `η ≥ log(M - 1)`
+(`HomTwistSystem₀.log_sub_one_le_homExponent`).
 
 ## Main definitions
 

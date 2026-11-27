@@ -47,6 +47,13 @@ the preprojective algebra of the `Ext` graph when no component of the graph is D
   Euler characteristic between `u` and `v` vanishes below the graph distance and counts the
   shortest walks at it; with exact dimensions, `Tor` vanishes below the distance and is nonzero at
   it.
+* **The same for any `Ext¹` matrix** `C`, where `(Cʲ)_{uv}` counts the paths of length `j` of the
+  `Ext` quiver: below the length of the shortest path from `u` to `v` the routed Euler
+  characteristic vanishes, and at that length it is the number of shortest paths
+  (`Matrix.routedEuler_of_pow_apply_eq_zero`); with exact dimensions, `Tor` has these dimensions
+  (`Matrix.routedTor_of_pow_apply_eq_zero`), so it starts in the degree of the shortest path
+  (`Matrix.routedTor_find_pos`) and vanishes in every degree when there is no path
+  (`Matrix.routedTor_eq_zero_of_forall_pow_apply_eq_zero`).
 
 ## The fields
 
@@ -335,3 +342,71 @@ theorem routedTor_dist_pos (tor : ℕ → Matrix V V ℕ)
     exact_mod_cast this
 
 end SimpleGraph
+
+/-! ### The Tor part of the transport rule for any `Ext¹` matrix -/
+
+namespace Matrix
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] (C : Matrix ι ι ℕ)
+
+/-- `(Cʲ)_{uv}` read in `ℤ`: the powers of a natural matrix commute with the cast. -/
+lemma map_natCast_pow_apply (j : ℕ) (u v : ι) :
+    ((C.map (Nat.cast : ℕ → ℤ)) ^ j) u v = ((C ^ j) u v : ℤ) := by
+  have h : (C.map (Nat.cast : ℕ → ℤ)) ^ j = (C ^ j).map (Nat.cast : ℕ → ℤ) := by
+    simpa using (map_pow (Nat.castRingHom ℤ).mapMatrix C j).symm
+  rw [h, map_apply]
+
+/-- **The routed Euler characteristic for any `Ext¹` matrix.** Let `C` be the matrix of dimensions
+of `Ext¹` between the marked spherical objects, so that `(Cʲ)_{uv}` counts the paths of length `j`
+from `u` to `v` in their `Ext` quiver, and let `euler m` be the matrix of Euler characteristics in
+internal degree `m` of the routed complexes. Assume the field `heuler`: it is `S_m(C)` (proved for
+the bar complex of the formal `Ext` algebra, `Matrix.barEuler_eq_chebyshevS`). If there is no path
+of length `j < d` from `u` to `v`, the routed Euler characteristic vanishes in the degrees below
+`d`, and in degree `d` it is the number `(C^d)_{uv}` of paths of length `d`.
+`SimpleGraph.routedEuler_eq_zero_of_lt_dist` is the case of one `Ext¹` per edge. -/
+theorem routedEuler_of_pow_apply_eq_zero (euler : ℕ → Matrix ι ι ℤ)
+    (heuler : ∀ m, euler m = (C.map (Nat.cast : ℕ → ℤ)).chebyshevS m) {u v : ι} {d : ℕ}
+    (hd : ∀ j < d, (C ^ j) u v = 0) :
+    (∀ m < d, euler m u v = 0) ∧ euler d u v = (C ^ d) u v := by
+  refine ⟨fun m hm => ?_, ?_⟩
+  · rw [heuler]
+    refine chebyshevS_apply_eq_zero _ fun j hj => ?_
+    rw [map_natCast_pow_apply, hd j (lt_of_le_of_lt hj hm), Nat.cast_zero]
+  · rw [heuler, chebyshevS_apply_eq_pow_apply _ fun j hj => by
+      rw [map_natCast_pow_apply, hd j hj, Nat.cast_zero], map_natCast_pow_apply]
+
+/-- **The Tor part of the transport rule for any `Ext¹` matrix, exact form.** Assume moreover
+the field `hdim`: the dimension of `Tor` in internal degree `m` is `S_m(C)`, which holds only when
+no component of the `Ext` quiver is Dynkin (classical Koszulity). If there is no path of length
+`j < d` from `u` to `v`, then `Tor` between them vanishes in the degrees below `d`, and in degree
+`d` its dimension is the number `(C^d)_{uv}` of paths of length `d`. -/
+theorem routedTor_of_pow_apply_eq_zero (tor : ℕ → Matrix ι ι ℕ)
+    (hdim : ∀ m, (tor m).map (Nat.cast : ℕ → ℤ) = (C.map (Nat.cast : ℕ → ℤ)).chebyshevS m)
+    {u v : ι} {d : ℕ} (hd : ∀ j < d, (C ^ j) u v = 0) :
+    (∀ m < d, tor m u v = 0) ∧ tor d u v = (C ^ d) u v := by
+  obtain ⟨h₁, h₂⟩ := C.routedEuler_of_pow_apply_eq_zero (fun m => (tor m).map Nat.cast) hdim hd
+  refine ⟨fun m hm => ?_, ?_⟩
+  · have := h₁ m hm
+    rw [map_apply] at this
+    exact_mod_cast this
+  · rw [map_apply] at h₂
+    exact_mod_cast h₂
+
+/-- **`Tor` starts at the length of the shortest path.** Under the field `hdim`, if the `Ext`
+quiver has a path from `u` to `v`, then `Tor` between them vanishes below the length `d` of the
+shortest such path and is nonzero in degree `d`. -/
+theorem routedTor_find_pos (tor : ℕ → Matrix ι ι ℕ)
+    (hdim : ∀ m, (tor m).map (Nat.cast : ℕ → ℤ) = (C.map (Nat.cast : ℕ → ℤ)).chebyshevS m)
+    {u v : ι} (h : ∃ j, (C ^ j) u v ≠ 0) :
+    (∀ m < Nat.find h, tor m u v = 0) ∧ 0 < tor (Nat.find h) u v := by
+  have hd : ∀ j < Nat.find h, (C ^ j) u v = 0 := fun j hj => not_not.1 (Nat.find_min h hj)
+  obtain ⟨h₁, h₂⟩ := C.routedTor_of_pow_apply_eq_zero tor hdim hd
+  exact ⟨h₁, h₂ ▸ Nat.pos_of_ne_zero (Nat.find_spec h)⟩
+
+/-- **With no path at all, `Tor` vanishes in every degree**, under the field `hdim`. -/
+theorem routedTor_eq_zero_of_forall_pow_apply_eq_zero (tor : ℕ → Matrix ι ι ℕ)
+    (hdim : ∀ m, (tor m).map (Nat.cast : ℕ → ℤ) = (C.map (Nat.cast : ℕ → ℤ)).chebyshevS m)
+    {u v : ι} (h : ∀ j, (C ^ j) u v = 0) (m : ℕ) : tor m u v = 0 :=
+  (C.routedTor_of_pow_apply_eq_zero tor hdim fun j _ => h j).1 m (Nat.lt_succ_self m)
+
+end Matrix
