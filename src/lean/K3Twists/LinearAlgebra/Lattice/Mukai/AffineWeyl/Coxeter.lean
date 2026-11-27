@@ -2,6 +2,7 @@
 Copyright (c) 2026 Chris Dare. All rights reserved.
 Released under the MIT license.
 -/
+import K3Twists.GroupTheory.Coxeter.TypeA
 import K3Twists.LinearAlgebra.Lattice.Mukai.AffineWeyl.SimpleReflection
 
 /-!
@@ -32,10 +33,11 @@ inputs of the Weyl-gallery theorems of `CategoryTheory.Triangulated.WeylGalleryH
   `β·Cᵢ > 0` does the same for words in the finite nodes (`isRootPositive_finiteRoot_iff`).
 * **Explicit words are computed on `ℤ^l`.** Root-positivity for the finite nodes is
   root-positivity for `rootForm finiteExt` on `ℤ^l` (`isRootPositive_finiteRoot_iff_rootForm`),
-  so the computations of `GroupTheory/Coxeter/GeometricRepresentation.lean` apply; for a chain
-  of curves (`finiteExt = extA n`) the longest word `longestWordA n` is root-positive and sends
-  `αᵢ` to `-α_{n-1-i}` for `n ≤ 6` (`isRootPositive_longestWordA`,
-  `reflectWord_longestWordA`).
+  so the computations of `GroupTheory/Coxeter/GeometricRepresentation.lean` and
+  `GroupTheory/Coxeter/TypeA.lean` apply; for a chain of curves (`finiteExt = extA n`) the
+  longest word `longestWordA n` is root-positive and sends `αᵢ` to `-α_{n-1-i}` for every `n`
+  (`isRootPositive_longestWordA'`, `reflectWord_longestWordA'`; the computed cases `n ≤ 6` are
+  `isRootPositive_longestWordA`, `reflectWord_longestWordA`).
 
 With the categorical fields of `WeylGalleryHypotheses` (the twist functors and the tilts, which
 have no geometric instance), the root-positive words here are the words for which the gallery
@@ -385,8 +387,9 @@ open BilinearForm CoxeterMatrix
 
 variable {b : N →ₗ[ℤ] N →ₗ[ℤ] ℤ}
 
-/-- **The longest word on a chain of curves** (checked for `n ≤ 6`): if the curves of the fibre
-form a chain, `finiteExt = extA n`, then `longestWordA n` is root-positive on the classes
+/-- **The longest word on a chain of curves** (the computed cases `n ≤ 6`; for every `n` this is
+`FundamentalCycle.isRootPositive_longestWordA'`): if the curves of the fibre form a chain,
+`finiteExt = extA n`, then `longestWordA n` is root-positive on the classes
 `αᵢ = (0, -Cᵢ, 0)`. -/
 theorem FundamentalCycle.isRootPositive_longestWordA (hb : ∀ x y, b x y = b y x) {n : ℕ}
     (F : FundamentalCycle b (Fin n)) (hext : F.finiteExt = extA n) (hn : n ≤ 6) :
@@ -394,7 +397,8 @@ theorem FundamentalCycle.isRootPositive_longestWordA (hb : ∀ x y, b x y = b y 
   rw [F.isRootPositive_finiteRoot_iff_rootForm hb, hext]
   exact CoxeterMatrix.isRootPositive_longestWordA hn
 
-/-- **On a chain of curves `w₀` sends `αᵢ` to `-α_{n-1-i}`** (checked for `n ≤ 6`). -/
+/-- **On a chain of curves `w₀` sends `αᵢ` to `-α_{n-1-i}`** (the computed cases `n ≤ 6`; for
+every `n` this is `FundamentalCycle.reflectWord_longestWordA'`). -/
 theorem FundamentalCycle.reflectWord_longestWordA (hb : ∀ x y, b x y = b y x) {n : ℕ}
     (F : FundamentalCycle b (Fin n)) (hext : F.finiteExt = extA n) (hn : n ≤ 6) (i : Fin n) :
     reflectWord (mukaiForm b) F.finiteRoot (longestWordA n) (F.finiteRoot i) =
@@ -403,6 +407,26 @@ theorem FundamentalCycle.reflectWord_longestWordA (hb : ∀ x y, b x y = b y x) 
     fun i j => by rw [F.mukaiForm_finiteRoot_eq_rootMatrix hb, hext]
   have h := reflectWord_of_rootForm (extA n) hG (longestWordA n) (stdRoot i)
   rw [rootMap_stdRoot, stdWord_longestWordA hn, map_neg, rootMap_stdRoot] at h
+  exact h
+
+/-- **The longest word on a chain of curves**: if the curves of the fibre form a chain,
+`finiteExt = extA n`, then `longestWordA n` is root-positive on the classes `αᵢ = (0, -Cᵢ, 0)`,
+for every `n`. -/
+theorem FundamentalCycle.isRootPositive_longestWordA' (hb : ∀ x y, b x y = b y x) {n : ℕ}
+    (F : FundamentalCycle b (Fin n)) (hext : F.finiteExt = extA n) :
+    IsRootPositive (mukaiForm b) F.finiteRoot (longestWordA n) := by
+  rw [F.isRootPositive_finiteRoot_iff_rootForm hb, hext]
+  exact CoxeterMatrix.isRootPositive_longestWordA' n
+
+/-- **On a chain of curves `w₀` sends `αᵢ` to `-α_{n-1-i}`**, for every `n`. -/
+theorem FundamentalCycle.reflectWord_longestWordA' (hb : ∀ x y, b x y = b y x) {n : ℕ}
+    (F : FundamentalCycle b (Fin n)) (hext : F.finiteExt = extA n) (i : Fin n) :
+    reflectWord (mukaiForm b) F.finiteRoot (longestWordA n) (F.finiteRoot i) =
+      -F.finiteRoot i.rev := by
+  have hG : ∀ i j, mukaiForm b (F.finiteRoot j) (F.finiteRoot i) = rootMatrix (extA n) j i :=
+    fun i j => by rw [F.mukaiForm_finiteRoot_eq_rootMatrix hb, hext]
+  have h := reflectWord_of_rootForm (extA n) hG (longestWordA n) (stdRoot i)
+  rw [rootMap_stdRoot, stdWord_longestWordA' i, map_neg, rootMap_stdRoot] at h
   exact h
 
 end Chain

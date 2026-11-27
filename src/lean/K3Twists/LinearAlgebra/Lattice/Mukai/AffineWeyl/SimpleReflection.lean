@@ -33,8 +33,8 @@ sign coherence each is positive or negative in the affine simple roots
   permutes the affine simple roots** (`mem_affineRootStabilizer_of_forall`).
 
 Every element of the extended affine Weyl group `W_aff ⊔ E(N)` preserves the roots of the fibre and
-fixes the class `δ` of a point (`isRoot_apply_iff_of_mem_extendedAffineWeyl`,
-`apply_corankUnit_of_mem_extendedAffineWeyl`); the elements of `W(R)` preserve the rank and the
+fixes the class `δ` of a point: it lies in `rootPreserving`
+(`extendedAffineWeyl_le_rootPreserving`); the elements of `W(R)` preserve the rank and the
 last coordinate of every class (`apply_fst_of_mem_finiteWeyl`, `apply_snd_snd_of_mem_finiteWeyl`)
 and move the middle one by a class of `⊕ ℤCᵢ` (`apply_snd_fst_sub_mem_of_mem_finiteWeyl`).
 

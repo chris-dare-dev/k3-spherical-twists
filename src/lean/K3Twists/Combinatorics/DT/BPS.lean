@@ -32,6 +32,12 @@ For a sign-coherent root form, which covers finite and connected affine type, `k
 from `A_{eᵢ} = 1` and `kac_reflect` by descent on the height (`KacData.ofSignCoherent`): the value
 on the real roots is **Weyl descent**, not an input.
 
+At an affine wall the quiver is connected of affine type with `l + 1` vertices, and the value at
+the imaginary roots enters as one more field (`KacData.IsAffine`): for `δ` a positive vector in
+the radical of the root form, `A_{nδ}(q) = q + l` for `n ≥ 1` (Bozec, Schiffmann and Vasserot,
+*On the number of points of nilpotent quiver varieties over finite fields*, arXiv:1701.01797,
+§1.6.2, from the classification of the indecomposable representations of Euclidean quivers).
+
 ## The BPS interface (`Quiver.BPSHypotheses`)
 
 The fields, with their sources:
@@ -78,6 +84,9 @@ assumed (`framedS_injective`).
   * the simple objects have `Ω = -1` (`omega_single`);
   * mutation at a vertex leaves `Ω` invariant, `Ω_{sᵢα} = Ω_α` (`omega_reflect`);
   * `Ω_α = 0` when `q(α) ≥ 2` (`omega_eq_zero`);
+  * at the imaginary roots of a connected affine quiver with `l + 1` vertices,
+    `Ω_{nδ} = -(l + 1)` (`omega_eq_neg_card_of_isAffine`; on the quiver side, without the CY3
+    local model, `bpsQ_eq_neg_card_of_isAffine`);
   * **Weyl descent**: `Ω = -1` on every positive real root (`omega_eq_neg_one_of_isRealRoot`), in
     particular on the classes of the new simple objects along a Weyl gallery, the prefix roots of
     a word (`omega_eq_neg_one_of_mem_stdPrefixRoots`).
@@ -172,6 +181,36 @@ def KacData.ofSignCoherent (he : ∀ i j, e i j = e j i) (hsc : IsSignCoherent e
   kac_eq_zero := kac_eq_zero
   kac_reflect := kac_reflect
 
+/-- **The Kac polynomials at the imaginary roots of a connected affine quiver.** The quiver is
+connected (`rootMatrix e` is indecomposable), its root form is negative semidefinite, and `δ` is a
+positive vector in the radical of the root form; so the quiver has affine type and `δ` is a
+positive multiple of its minimal positive imaginary root. The field `kac_smul` is the published
+value of the Kac polynomial at the imaginary roots, `A_{nδ}(q) = q + l` for `n ≥ 1`, where
+`l + 1 = |σ|` is the number of vertices (Bozec, Schiffmann and Vasserot, *On the number of points
+of nilpotent quiver varieties over finite fields*, arXiv:1701.01797, §1.6.2, which derives it
+from the classification of the indecomposable representations of Euclidean quivers). -/
+structure KacData.IsAffine {e : σ → σ → ℕ} (K : KacData e) (δ : σ → ℤ) : Prop where
+  /-- The quiver is connected. -/
+  isIndecomposable : (rootMatrix e).IsIndecomposable
+  /-- The root form is negative semidefinite. -/
+  rootForm_self_nonpos : ∀ v, rootForm e v v ≤ 0
+  /-- `δ` is a positive vector. -/
+  isPositiveVector : IsPositiveVector δ
+  /-- `δ` lies in the radical of the root form. -/
+  rootForm_eq_zero : ∀ v, rootForm e δ v = 0
+  /-- **`A_{nδ}(q) = q + l`** for `n ≥ 1`, with `l + 1` vertices (Bozec, Schiffmann and
+  Vasserot, arXiv:1701.01797, §1.6.2). -/
+  kac_smul : ∀ n : ℕ, 0 < n →
+    K.kac ((n : ℤ) • δ) = Polynomial.X + Polynomial.C ((Fintype.card σ : ℤ) - 1)
+
+/-- At `q = 1` the Kac polynomial of an imaginary root `nδ` of a connected affine quiver is the
+number `l + 1` of vertices. -/
+theorem KacData.IsAffine.eval_one_kac_smul {e : σ → σ → ℕ} {K : KacData e} {δ : σ → ℤ}
+    (h : K.IsAffine δ) {n : ℕ} (hn : 0 < n) :
+    (K.kac ((n : ℤ) • δ)).eval 1 = Fintype.card σ := by
+  rw [h.kac_smul n hn]
+  simp
+
 /-- **The BPS interface of a wall block** with `Ext`-quiver `e`: the Kac data of the quiver, the
 nilpotent BPS invariants `bpsQ` of its tripled quiver, the framed series `framed w` for each
 framing, the local BPS invariants `Ω` of the block, Mozgovoy's formula localized to the nilpotent
@@ -232,6 +271,23 @@ theorem omega_eq_zero (α : Pos σ) (h : rootForm e (dimVec α.1) (dimVec α.1) 
     H.Ω α.1 = 0 := by
   rw [H.omega_eq α, H.kac_eq_zero _ (isPositiveVector_dimVec α) h]
   simp
+
+/-- **`Ω^Q_{nδ} = -(l + 1)` on the quiver side**: at the imaginary roots `nδ`, `n ≥ 1`, of a
+connected affine quiver with `l + 1` vertices, from `bpsQ_eq` and the Kac value `q + l`, without
+the CY3 local model. -/
+theorem bpsQ_eq_neg_card_of_isAffine {δ : σ → ℤ} (hA : H.toKacData.IsAffine δ) (α : Pos σ)
+    {n : ℕ} (hn : 0 < n) (hα : dimVec α.1 = (n : ℤ) • δ) :
+    H.bpsQ α.1 = -(Fintype.card σ : ℤ) := by
+  rw [H.bpsQ_eq α, hα, hA.eval_one_kac_smul hn]
+
+/-- **`Ω_{nδ} = -(l + 1)`** at the imaginary roots `nδ`, `n ≥ 1`, of a connected affine quiver
+with `l + 1` vertices. At an affine ADE wall `l + 1` is the Euler characteristic of the
+exceptional fibre, a tree of `l` smooth rational curves; at the curve wall it is `χ(ℙ¹) = 2`.
+Uses the CY3 local model `localModel`. -/
+theorem omega_eq_neg_card_of_isAffine {δ : σ → ℤ} (hA : H.toKacData.IsAffine δ) (α : Pos σ)
+    {n : ℕ} (hn : 0 < n) (hα : dimVec α.1 = (n : ℤ) • δ) :
+    H.Ω α.1 = -(Fintype.card σ : ℤ) := by
+  rw [H.omega_eq α, hα, hA.eval_one_kac_smul hn]
 
 /-- **Mutation at a vertex leaves `Ω` invariant**: `Ω_{sᵢα} = Ω_α` for a positive class `α ≠ eᵢ`
 whose reflection `β = sᵢα` is positive. Uses the CY3 local model `localModel`. -/
